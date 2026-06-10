@@ -1,0 +1,670 @@
+<main class="page-shell">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Workspace</p>
+      <h1>{{ projectName }}</h1>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="ghost" (click)="loadCurrentUser()" [disabled]="!authenticated()">
+        Check API
+      </button>
+      <button type="button" class="primary" *ngIf="!authenticated()" (click)="login()">
+        Login
+      </button>
+      <button type="button" class="danger" *ngIf="authenticated()" (click)="logout()">
+        Logout
+      </button>
+    </div>
+  </header>
+
+  <section class="status-strip">
+    <div>
+      <span class="label">Keycloak</span>
+      <strong>{{ initializing() ? 'Initializing' : authenticated() ? 'Authenticated' : 'Signed out' }}</strong>
+    </div>
+    <div>
+      <span class="label">Backend</span>
+      <strong>{{ apiStatus() }}</strong>
+    </div>
+    <div>
+      <span class="label">Tasks</span>
+      <strong>{{ taskStatus() }}</strong>
+    </div>
+  </section>
+
+  <section class="content-grid">
+    <article class="panel">
+      <h2>Session</h2>
+      <ng-container *ngIf="authenticated(); else signedOut">
+        <dl>
+          <div>
+            <dt>Username</dt>
+            <dd>{{ profile()?.username || currentUser()?.username || 'Unavailable' }}</dd>
+          </div>
+          <div>
+            <dt>Email</dt>
+            <dd>{{ profile()?.email || currentUser()?.email || 'Unavailable' }}</dd>
+          </div>
+          <div>
+            <dt>Name</dt>
+            <dd>{{ currentUser()?.fullName || firstNameLastName() || 'Unavailable' }}</dd>
+          </div>
+        </dl>
+      </ng-container>
+
+      <ng-template #signedOut>
+        <p class="muted">Sign in with one of the Keycloak test users to continue.</p>
+      </ng-template>
+    </article>
+
+    <article class="panel">
+      <h2>Backend Identity</h2>
+      <ng-container *ngIf="currentUser(); else noBackendUser">
+        <dl>
+          <div>
+            <dt>User ID</dt>
+            <dd>{{ currentUser()?.id }}</dd>
+          </div>
+          <div>
+            <dt>Roles</dt>
+            <dd class="chips">
+              <span *ngFor="let role of roles()">{{ role }}</span>
+            </dd>
+          </div>
+        </dl>
+      </ng-container>
+
+      <ng-template #noBackendUser>
+        <p class="muted">The backend identity check will appear here after login.</p>
+      </ng-template>
+    </article>
+  </section>
+
+  <section class="project-board" *ngIf="authenticated()">
+    <article class="panel">
+      <h2>Create Project</h2>
+      <form class="project-form" (ngSubmit)="createProject()">
+        <label>
+          Project name
+          <input
+            type="text"
+            name="projectName"
+            [(ngModel)]="newProject.name"
+            placeholder="Internship Project Board"
+            required>
+        </label>
+
+        <label>
+          Description
+          <textarea
+            name="projectDescription"
+            [(ngModel)]="newProject.description"
+            rows="4"
+            placeholder="What is this project trying to deliver?"></textarea>
+        </label>
+
+        <div class="date-row">
+          <label>
+            Start date
+            <input type="date" name="projectStartDate" [(ngModel)]="newProject.startDate">
+          </label>
+
+          <label>
+            Due date
+            <input type="date" name="projectDueDate" [(ngModel)]="newProject.dueDate">
+          </label>
+        </div>
+
+        <button type="submit" class="primary" [disabled]="creatingProject()">
+          {{ creatingProject() ? 'Creating...' : 'Create Project' }}
+        </button>
+      </form>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <h2>Active Projects</h2>
+        <button type="button" class="ghost compact" (click)="loadProjects()">Refresh</button>
+      </div>
+
+      <div class="empty-state" *ngIf="projects().length === 0">
+        <strong>No projects yet</strong>
+        <p class="muted">Create the first project to confirm the frontend, backend, Keycloak, and PostgreSQL are all working together.</p>
+      </div>
+
+      <div class="project-list" *ngIf="projects().length > 0">
+        <article
+          class="project-card selectable"
+          *ngFor="let project of projects()"
+          [class.selected]="project.id === selectedProjectId()"
+          (click)="selectProject(project)">
+          <div>
+            <span class="status-pill">{{ project.status }}</span>
+            <h3>{{ project.name }}</h3>
+          </div>
+          <p class="muted" *ngIf="project.description">{{ project.description }}</p>
+          <p class="dates">
+            <span *ngIf="project.startDate">Starts {{ project.startDate }}</span>
+            <span *ngIf="project.dueDate">Due {{ project.dueDate }}</span>
+          </p>
+        </article>
+      </div>
+    </article>
+  </section>
+
+  <section class="project-settings-workspace" *ngIf="authenticated() && selectedProjectId()">
+    <article class="panel">
+      <div class="panel-heading">
+        <h2>Project Settings</h2>
+        <span class="status-pill">{{ selectedProject()?.status }}</span>
+      </div>
+
+      <form class="project-settings-form" (ngSubmit)="updateSelectedProject()">
+        <label>
+          Project name
+          <input
+            type="text"
+            name="editProjectName"
+            [(ngModel)]="editProject.name"
+            required>
+        </label>
+
+        <label>
+          Description
+          <textarea
+            name="editProjectDescription"
+            [(ngModel)]="editProject.description"
+            rows="3"></textarea>
+        </label>
+
+        <div class="date-row">
+          <label>
+            Start date
+            <input type="date" name="editProjectStartDate" [(ngModel)]="editProject.startDate">
+          </label>
+
+          <label>
+            Due date
+            <input type="date" name="editProjectDueDate" [(ngModel)]="editProject.dueDate">
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="primary" [disabled]="updatingProject()">
+            {{ updatingProject() ? 'Saving...' : 'Save Project' }}
+          </button>
+          <button type="button" class="danger" (click)="archiveSelectedProject()" [disabled]="archivingProject()">
+            {{ archivingProject() ? 'Archiving...' : 'Archive Project' }}
+          </button>
+        </div>
+      </form>
+    </article>
+  </section>
+
+  <section class="member-workspace" *ngIf="authenticated()">
+    <article class="panel">
+      <div class="panel-heading">
+        <h2>Project Members</h2>
+        <span class="muted">{{ memberStatus() }}</span>
+      </div>
+
+      <div class="board-empty" *ngIf="!selectedProjectId()">
+        <strong>No project selected</strong>
+        <p class="muted">Select a project to manage its members.</p>
+      </div>
+
+      <ng-container *ngIf="selectedProjectId()">
+        <div class="member-list" *ngIf="projectMembers().length > 0; else noMembers">
+          <article class="member-card" *ngFor="let member of projectMembers()">
+            <div>
+              <strong>{{ member.fullName }}</strong>
+              <span class="status-pill">{{ member.projectRole }}</span>
+            </div>
+            <p class="muted">{{ member.email }}</p>
+          </article>
+        </div>
+
+        <ng-template #noMembers>
+          <p class="muted">No members loaded for this project yet.</p>
+        </ng-template>
+
+        <form class="member-form" *ngIf="canManageProjectMembers(); else memberManagementLocked" (ngSubmit)="addProjectMember()">
+          <label>
+            Member email
+            <input
+              type="email"
+              name="memberEmail"
+              [(ngModel)]="newMember.email"
+              placeholder="teammate@example.com">
+          </label>
+
+          <label>
+            Role
+            <select name="memberRole" [(ngModel)]="newMember.projectRole">
+              <option *ngFor="let role of projectRoles" [value]="role">{{ role }}</option>
+            </select>
+          </label>
+
+          <button type="submit" class="primary" [disabled]="addingMember()">
+            {{ addingMember() ? 'Adding...' : 'Add Member' }}
+          </button>
+        </form>
+
+        <ng-template #memberManagementLocked>
+          <p class="muted locked-note">
+            Only project managers or administrators can add members and choose project roles.
+          </p>
+        </ng-template>
+      </ng-container>
+    </article>
+  </section>
+
+  <section class="summary-workspace" *ngIf="authenticated() && selectedProjectId()">
+    <article class="panel summary-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Project Summary</p>
+          <h2>{{ selectedProject()?.name }}</h2>
+        </div>
+        <strong class="completion-badge">{{ completionPercentage() }}% complete</strong>
+      </div>
+
+      <div class="progress-track" aria-hidden="true">
+        <span [style.width.%]="completionPercentage()"></span>
+      </div>
+
+      <div class="summary-grid">
+        <article class="summary-card">
+          <span>Total tasks</span>
+          <strong>{{ tasks().length }}</strong>
+        </article>
+
+        <article class="summary-card">
+          <span>To do</span>
+          <strong>{{ taskCountByStatus('TO_DO') }}</strong>
+        </article>
+
+        <article class="summary-card">
+          <span>In progress</span>
+          <strong>{{ taskCountByStatus('IN_PROGRESS') }}</strong>
+        </article>
+
+        <article class="summary-card">
+          <span>Review</span>
+          <strong>{{ taskCountByStatus('REVIEW') }}</strong>
+        </article>
+
+        <article class="summary-card success">
+          <span>Done</span>
+          <strong>{{ completedTaskCount() }}</strong>
+        </article>
+
+        <article class="summary-card warning">
+          <span>High priority</span>
+          <strong>{{ highPriorityTaskCount() }}</strong>
+        </article>
+
+        <article class="summary-card danger-card">
+          <span>Overdue</span>
+          <strong>{{ overdueTaskCount() }}</strong>
+        </article>
+      </div>
+    </article>
+  </section>
+
+  <section class="assigned-workspace" *ngIf="authenticated() && selectedProjectId()">
+    <article class="panel assigned-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Personal View</p>
+          <h2>My Assigned Tasks</h2>
+        </div>
+        <span class="status-pill">{{ myAssignedTasks().length }} assigned</span>
+      </div>
+
+      <div class="assigned-stats">
+        <span>To Do: {{ myAssignedTaskCountByStatus('TO_DO') }}</span>
+        <span>In Progress: {{ myAssignedTaskCountByStatus('IN_PROGRESS') }}</span>
+        <span>Review: {{ myAssignedTaskCountByStatus('REVIEW') }}</span>
+        <span>Done: {{ myAssignedTaskCountByStatus('DONE') }}</span>
+      </div>
+
+      <div class="empty-state" *ngIf="myAssignedTasks().length === 0">
+        <strong>No assigned tasks in this project</strong>
+        <p class="muted">Tasks assigned to your backend user will appear here for quick access.</p>
+      </div>
+
+      <div class="assigned-list" *ngIf="myAssignedTasks().length > 0">
+        <article
+          class="assigned-card selectable"
+          *ngFor="let task of myAssignedTasks()"
+          [class.selected]="task.id === selectedTaskId()"
+          (click)="selectTask(task)">
+          <div>
+            <span class="priority" [class.high]="task.priority === 'HIGH'" [class.low]="task.priority === 'LOW'">
+              {{ task.priority }}
+            </span>
+            <span class="status-pill">{{ formatStatus(task.status) }}</span>
+          </div>
+
+          <h3>{{ task.title }}</h3>
+          <p class="muted" *ngIf="task.description">{{ task.description }}</p>
+          <p class="dates">
+            <span *ngIf="task.dueDate">Due {{ task.dueDate }}</span>
+            <span *ngIf="!task.dueDate">No due date</span>
+          </p>
+        </article>
+      </div>
+    </article>
+  </section>
+
+  <section class="task-workspace" *ngIf="authenticated()">
+    <article class="panel">
+      <h2>Create Task</h2>
+      <p class="muted" *ngIf="selectedProject(); else noProjectForTask">
+        Adding task to <strong>{{ selectedProject()?.name }}</strong>
+      </p>
+
+      <ng-template #noProjectForTask>
+        <p class="muted">Select a project first, then create tasks for it.</p>
+      </ng-template>
+
+      <form class="project-form" (ngSubmit)="createTask()">
+        <label>
+          Task title
+          <input
+            type="text"
+            name="taskTitle"
+            [(ngModel)]="newTask.title"
+            placeholder="Design project board"
+            required>
+        </label>
+
+        <label>
+          Description
+          <textarea
+            name="taskDescription"
+            [(ngModel)]="newTask.description"
+            rows="4"
+            placeholder="What should be done in this task?"></textarea>
+        </label>
+
+        <div class="date-row">
+          <label>
+            Priority
+            <select name="taskPriority" [(ngModel)]="newTask.priority">
+              <option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</option>
+            </select>
+          </label>
+
+          <label>
+            Assignee
+            <select name="taskAssignee" [(ngModel)]="newTask.assigneeId">
+              <option [ngValue]="null">Assign to me</option>
+              <option *ngFor="let member of projectMembers()" [ngValue]="member.userId">
+                {{ member.fullName }}
+              </option>
+            </select>
+          </label>
+
+          <label>
+            Due date
+            <input type="date" name="taskDueDate" [(ngModel)]="newTask.dueDate">
+          </label>
+        </div>
+
+        <button type="submit" class="primary" [disabled]="creatingTask() || !selectedProjectId()">
+          {{ creatingTask() ? 'Creating...' : 'Create Task' }}
+        </button>
+      </form>
+    </article>
+
+    <article class="panel board-panel">
+      <div class="panel-heading">
+        <h2>Workflow Board</h2>
+        <button type="button" class="ghost compact" (click)="loadSelectedProjectTasks()" [disabled]="!selectedProjectId()">
+          Refresh
+        </button>
+      </div>
+
+      <div class="board-empty" *ngIf="!selectedProjectId()">
+        <strong>No project selected</strong>
+        <p class="muted">Choose an active project to load its task board.</p>
+      </div>
+
+      <ng-container *ngIf="selectedProjectId()">
+        <form class="task-filters">
+          <label>
+            Search tasks
+            <input
+              type="search"
+              name="taskSearch"
+              [(ngModel)]="taskFilters.search"
+              placeholder="Search title or description">
+          </label>
+
+          <label>
+            Priority
+            <select name="taskPriorityFilter" [(ngModel)]="taskFilters.priority">
+              <option value="">All priorities</option>
+              <option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</option>
+            </select>
+          </label>
+
+          <label>
+            Assignee
+            <select name="taskAssigneeFilter" [(ngModel)]="taskFilters.assigneeId">
+              <option [ngValue]="null">All assignees</option>
+              <option *ngFor="let member of projectMembers()" [ngValue]="member.userId">
+                {{ member.fullName }}
+              </option>
+            </select>
+          </label>
+
+          <button type="button" class="ghost compact" (click)="clearTaskFilters()" [disabled]="!hasTaskFilters()">
+            Clear
+          </button>
+        </form>
+
+        <p class="muted filter-summary" *ngIf="hasTaskFilters()">
+          Showing {{ filteredTasks().length }} of {{ tasks().length }} tasks.
+        </p>
+      </ng-container>
+
+      <div class="board-columns" *ngIf="selectedProjectId()">
+        <section class="board-column" *ngFor="let column of workflowColumns">
+          <header>
+            <h3>{{ column.title }}</h3>
+            <span>{{ tasksByStatus(column.status).length }}</span>
+          </header>
+
+          <article
+            class="task-card selectable"
+            *ngFor="let task of tasksByStatus(column.status)"
+            [class.selected]="task.id === selectedTaskId()"
+            (click)="selectTask(task)">
+            <div class="task-card-top">
+              <span class="priority" [class.high]="task.priority === 'HIGH'" [class.low]="task.priority === 'LOW'">
+                {{ task.priority }}
+              </span>
+              <span class="muted" *ngIf="task.dueDate">Due {{ task.dueDate }}</span>
+            </div>
+
+            <h4>{{ task.title }}</h4>
+            <p class="muted" *ngIf="task.description">{{ task.description }}</p>
+            <p class="assignee">Assigned to {{ task.assigneeName || 'Unassigned' }}</p>
+
+            <button
+              type="button"
+              class="ghost compact"
+              *ngIf="task.status !== 'DONE'"
+              (click)="$event.stopPropagation(); moveTaskForward(task)">
+              Move Forward
+            </button>
+          </article>
+
+          <p class="muted empty-column" *ngIf="tasksByStatus(column.status).length === 0">
+            No matching {{ column.title.toLowerCase() }} tasks.
+          </p>
+        </section>
+      </div>
+    </article>
+  </section>
+
+  <section class="detail-workspace" *ngIf="authenticated()">
+    <article class="panel detail-panel">
+      <div class="panel-heading">
+        <h2>Task Details</h2>
+        <span class="status-pill" *ngIf="selectedTask()">{{ formatStatus(selectedTask()?.status || '') }}</span>
+      </div>
+
+      <div class="board-empty" *ngIf="!selectedTask()">
+        <strong>No task selected</strong>
+        <p class="muted">Click a task card to view details and discussion.</p>
+      </div>
+
+      <ng-container *ngIf="selectedTask()">
+        <form class="edit-task-form" (ngSubmit)="updateSelectedTask()">
+          <label>
+            Task title
+            <input
+              type="text"
+              name="editTaskTitle"
+              [(ngModel)]="editTask.title"
+              required>
+          </label>
+
+          <label>
+            Description
+            <textarea
+              name="editTaskDescription"
+              [(ngModel)]="editTask.description"
+              rows="4"></textarea>
+          </label>
+
+          <div class="date-row">
+            <label>
+              Priority
+              <select name="editTaskPriority" [(ngModel)]="editTask.priority">
+                <option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</option>
+              </select>
+            </label>
+
+            <label>
+              Assignee
+              <select name="editTaskAssignee" [(ngModel)]="editTask.assigneeId">
+                <option [ngValue]="null">Unassigned</option>
+                <option *ngFor="let member of projectMembers()" [ngValue]="member.userId">
+                  {{ member.fullName }}
+                </option>
+              </select>
+            </label>
+
+            <label>
+              Due date
+              <input type="date" name="editTaskDueDate" [(ngModel)]="editTask.dueDate">
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="primary" [disabled]="updatingTask()">
+              {{ updatingTask() ? 'Saving...' : 'Save Changes' }}
+            </button>
+            <button type="button" class="danger" (click)="deleteSelectedTask()" [disabled]="deletingTask()">
+              {{ deletingTask() ? 'Deleting...' : 'Delete Task' }}
+            </button>
+          </div>
+        </form>
+
+        <dl class="detail-list">
+          <div>
+            <dt>Priority</dt>
+            <dd>{{ selectedTask()?.priority }}</dd>
+          </div>
+          <div>
+            <dt>Assignee</dt>
+            <dd>{{ selectedTask()?.assigneeName || 'Unassigned' }}</dd>
+          </div>
+          <div>
+            <dt>Due date</dt>
+            <dd>{{ selectedTask()?.dueDate || 'Not set' }}</dd>
+          </div>
+        </dl>
+      </ng-container>
+    </article>
+
+    <article class="panel comments-panel">
+      <div class="panel-heading">
+        <h2>Comments</h2>
+        <span class="muted">{{ commentStatus() }}</span>
+      </div>
+
+      <div class="board-empty" *ngIf="!selectedTask()">
+        <strong>No discussion loaded</strong>
+        <p class="muted">Select a task to load its comments.</p>
+      </div>
+
+      <ng-container *ngIf="selectedTask()">
+        <div class="comments-list" *ngIf="comments().length > 0; else noComments">
+          <article class="comment-card" *ngFor="let comment of comments()">
+            <div>
+              <strong>{{ comment.authorName }}</strong>
+              <span class="muted">{{ comment.createdAt | date:'medium' }}</span>
+            </div>
+            <p>{{ comment.content }}</p>
+          </article>
+        </div>
+
+        <ng-template #noComments>
+          <p class="muted">No comments yet. Add the first note for this task.</p>
+        </ng-template>
+
+        <form class="comment-form" (ngSubmit)="addComment()">
+          <label>
+            Add comment
+            <textarea
+              name="commentContent"
+              [(ngModel)]="newComment"
+              rows="3"
+              placeholder="Write an update, question, or decision..."></textarea>
+          </label>
+
+          <button type="submit" class="primary" [disabled]="addingComment()">
+            {{ addingComment() ? 'Adding...' : 'Add Comment' }}
+          </button>
+        </form>
+      </ng-container>
+    </article>
+
+    <article class="panel activity-panel">
+      <div class="panel-heading">
+        <h2>Activity</h2>
+        <span class="muted">{{ activityStatus() }}</span>
+      </div>
+
+      <div class="board-empty" *ngIf="!selectedTask()">
+        <strong>No activity loaded</strong>
+        <p class="muted">Select a task to load its timeline.</p>
+      </div>
+
+      <ng-container *ngIf="selectedTask()">
+        <div class="activity-list" *ngIf="activities().length > 0; else noActivities">
+          <article class="activity-card" *ngFor="let activity of activities()">
+            <span class="activity-dot"></span>
+            <div>
+              <strong>{{ activity.message }}</strong>
+              <p class="muted">{{ activity.createdAt | date:'medium' }}</p>
+            </div>
+          </article>
+        </div>
+
+        <ng-template #noActivities>
+          <p class="muted">No activity has been recorded for this task yet.</p>
+        </ng-template>
+      </ng-container>
+    </article>
+  </section>
+
+  <p class="error" *ngIf="error()">{{ error() }}</p>
+</main>

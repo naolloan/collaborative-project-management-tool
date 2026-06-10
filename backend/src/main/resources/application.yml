@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: collaborative-project-management-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/collab_pm?options=-c%20TimeZone=UTC}
+    username: ${SPRING_DATASOURCE_USERNAME:collab_pm_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:collab_pm_password}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/collab-pm}
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
