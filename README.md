@@ -17,7 +17,7 @@ This repository contains the early implementation of a Jira-like collaborative p
 
 ## Current Status
 
-The project is in initial scaffold stage. Core structure, configuration, and starter files are being created first so implementation can continue locally before GitHub access is restored.
+The project has a working early MVP with authentication, project management, project members, task workflow, task comments, task activity, local Docker services, and GitHub Actions CI.
 
 ## Local Development
 
@@ -73,3 +73,24 @@ If Angular starts on another port, such as `43297`, add that port to the same Ke
 - Web origins: `http://localhost:43297`, `http://127.0.0.1:43297`
 
 The backend CORS configuration allows local frontend development from any `localhost` or `127.0.0.1` port.
+
+## Docker Images
+
+The backend and frontend each have their own Dockerfile:
+
+- `backend/Dockerfile` builds the Spring Boot API into a runnable Java container.
+- `frontend/Dockerfile` builds the Angular app and serves it with Nginx.
+
+GitHub Actions currently verifies that both images can be built using `.github/workflows/docker-build.yml`.
+
+Local image build commands:
+
+```bash
+docker build -t collab-pm-backend:local ./backend
+docker build -t collab-pm-frontend:local ./frontend
+```
+
+Docker Hub publishing is the next infrastructure step. It will require Docker Hub repositories and these GitHub repository secrets:
+
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_TOKEN`
