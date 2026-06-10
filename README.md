@@ -94,3 +94,13 @@ Docker Hub publishing is the next infrastructure step. It will require Docker Hu
 
 - `DOCKERHUB_USERNAME`
 - `DOCKERHUB_TOKEN`
+
+Expected Docker Hub repositories:
+
+- `collab-pm-backend`
+- `collab-pm-frontend`
+
+After the repositories and secrets are configured, run the `Docker Hub Publish` workflow manually from the GitHub Actions tab. The workflow publishes both images with these tags:
+
+- `latest`
+- the current Git commit SHA
