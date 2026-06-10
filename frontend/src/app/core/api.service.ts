@@ -10,7 +10,7 @@ import { CreateTaskRequest, Task, TaskStatus, UpdateTaskRequest } from './dto/ta
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private readonly apiBaseUrl = 'http://localhost:8080/api';
+  private readonly apiBaseUrl = this.resolveApiBaseUrl();
 
   constructor(private readonly http: HttpClient) {
   }
@@ -73,5 +73,14 @@ export class ApiService {
 
   listTaskActivities(taskId: number): Observable<Activity[]> {
     return this.http.get<Activity[]>(`${this.apiBaseUrl}/tasks/${taskId}/activities`);
+  }
+
+  private resolveApiBaseUrl(): string {
+    const developmentPorts = ['4200', '43297'];
+    if (developmentPorts.includes(window.location.port)) {
+      return 'http://localhost:8080/api';
+    }
+
+    return '/api';
   }
 }
