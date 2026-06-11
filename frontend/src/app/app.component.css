@@ -287,6 +287,52 @@ button:disabled {
   white-space: nowrap;
 }
 
+.workspace-nav {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+  padding: 0.55rem;
+  border: 1px solid rgba(153, 223, 243, 0.75);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 18px 44px rgba(0, 119, 168, 0.09);
+  backdrop-filter: blur(14px);
+}
+
+.workspace-nav button {
+  display: grid;
+  min-height: 4rem;
+  align-content: center;
+  justify-items: start;
+  border-color: transparent;
+  border-radius: 18px;
+  background: transparent;
+  color: var(--muted);
+  text-align: left;
+}
+
+.workspace-nav button:hover:not(:disabled),
+.workspace-nav button.active {
+  background:
+    radial-gradient(circle at right top, rgba(255, 255, 255, 0.36), transparent 8rem),
+    linear-gradient(135deg, var(--primary), var(--primary-deep));
+  color: #fff;
+  box-shadow: 0 14px 30px rgba(0, 174, 233, 0.22);
+}
+
+.workspace-nav span {
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+.workspace-nav small {
+  margin-top: 0.22rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  opacity: 0.72;
+}
+
 .label {
   display: block;
   margin-bottom: 0.35rem;
@@ -1157,6 +1203,7 @@ dd {
 
   .status-strip,
   .workspace-focus,
+  .workspace-nav,
   .content-grid,
   .project-board,
   .unit-management-grid,
@@ -1178,6 +1225,10 @@ dd {
 
   .focus-metrics {
     justify-content: flex-start;
+  }
+
+  .workspace-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .member-form,

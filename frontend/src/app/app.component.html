@@ -55,7 +55,18 @@
     </div>
   </section>
 
-  <section class="content-grid">
+  <nav class="workspace-nav" *ngIf="authenticated()" aria-label="Workspace sections">
+    <button
+      type="button"
+      *ngFor="let item of workspaceNavItems"
+      [class.active]="activeWorkspace() === item.view"
+      (click)="setWorkspace(item.view)">
+      <span>{{ item.label }}</span>
+      <small>{{ item.helper }}</small>
+    </button>
+  </nav>
+
+  <section class="content-grid" *ngIf="!authenticated() || activeWorkspace() === 'dashboard'">
     <article class="panel identity-panel">
       <h2>Session</h2>
       <ng-container *ngIf="authenticated(); else signedOut">
@@ -103,7 +114,7 @@
     </article>
   </section>
 
-  <section class="project-board" *ngIf="authenticated()">
+  <section class="project-board" *ngIf="authenticated() && activeWorkspace() === 'projects'">
     <article class="panel create-panel">
       <h2>Create Project</h2>
       <form class="project-form" (ngSubmit)="createProject()">
@@ -189,7 +200,7 @@
     </article>
   </section>
 
-  <section class="unit-workspace" *ngIf="authenticated()">
+  <section class="unit-workspace" *ngIf="authenticated() && activeWorkspace() === 'units'">
     <article class="panel units-panel">
       <div class="panel-heading">
         <div>
@@ -311,7 +322,7 @@
     </article>
   </section>
 
-  <section class="project-settings-workspace" *ngIf="authenticated() && selectedProjectId()">
+  <section class="project-settings-workspace" *ngIf="authenticated() && selectedProjectId() && activeWorkspace() === 'projects'">
     <article class="panel settings-panel">
       <div class="panel-heading">
         <h2>Project Settings</h2>
@@ -370,7 +381,7 @@
     </article>
   </section>
 
-  <section class="member-workspace" *ngIf="authenticated()">
+  <section class="member-workspace" *ngIf="authenticated() && activeWorkspace() === 'members'">
     <article class="panel members-panel">
       <div class="panel-heading">
         <h2>Project Members</h2>
@@ -428,7 +439,7 @@
     </article>
   </section>
 
-  <section class="summary-workspace" *ngIf="authenticated() && selectedProjectId()">
+  <section class="summary-workspace" *ngIf="authenticated() && selectedProjectId() && activeWorkspace() === 'dashboard'">
     <article class="panel summary-panel">
       <div class="panel-heading">
         <div>
@@ -481,7 +492,7 @@
     </article>
   </section>
 
-  <section class="assigned-workspace" *ngIf="authenticated() && selectedProjectId()">
+  <section class="assigned-workspace" *ngIf="authenticated() && selectedProjectId() && activeWorkspace() === 'dashboard'">
     <article class="panel assigned-panel">
       <div class="panel-heading">
         <div>
@@ -527,7 +538,7 @@
     </article>
   </section>
 
-  <section class="task-workspace" *ngIf="authenticated()">
+  <section class="task-workspace" *ngIf="authenticated() && activeWorkspace() === 'tasks'">
     <article class="panel create-task-panel">
       <h2>Create Task</h2>
       <p class="muted" *ngIf="selectedProject(); else noProjectForTask">
@@ -680,7 +691,7 @@
     </article>
   </section>
 
-  <section class="detail-workspace" *ngIf="authenticated()">
+  <section class="detail-workspace" *ngIf="authenticated() && activeWorkspace() === 'tasks'">
     <article class="panel detail-panel">
       <div class="panel-heading">
         <h2>Task Details</h2>

@@ -12,6 +12,8 @@ import { ProjectMember, ProjectRole } from './core/dto/project-member';
 import { CreateProjectRequest, Project } from './core/dto/project';
 import { CreateTaskRequest, Task, TaskPriority, TaskStatus } from './core/dto/task';
 
+type WorkspaceView = 'dashboard' | 'projects' | 'units' | 'members' | 'tasks';
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -33,6 +35,7 @@ export class AppComponent implements OnInit {
   tasks = signal<Task[]>([]);
   comments = signal<Comment[]>([]);
   activities = signal<Activity[]>([]);
+  activeWorkspace = signal<WorkspaceView>('dashboard');
   apiStatus = signal('Not checked');
   projectStatus = signal('Not loaded');
   unitStatus = signal('Not loaded');
@@ -61,6 +64,13 @@ export class AppComponent implements OnInit {
   readonly priorities: TaskPriority[] = ['LOW', 'MEDIUM', 'HIGH'];
   readonly projectRoles: ProjectRole[] = ['MEMBER', 'MANAGER'];
   readonly organizationalUnitTypes: OrganizationalUnitType[] = ['HEAD_OFFICE', 'DEPARTMENT', 'BRANCH', 'DIVISION', 'TEAM'];
+  readonly workspaceNavItems: { view: WorkspaceView; label: string; helper: string }[] = [
+    { view: 'dashboard', label: 'Dashboard', helper: 'Overview' },
+    { view: 'projects', label: 'Projects', helper: 'Planning' },
+    { view: 'units', label: 'Units', helper: 'Bank structure' },
+    { view: 'members', label: 'Members', helper: 'Access' },
+    { view: 'tasks', label: 'Task Board', helper: 'Delivery' }
+  ];
   newProject: CreateProjectRequest = {
     name: '',
     description: '',
@@ -141,6 +151,10 @@ export class AppComponent implements OnInit {
 
   logout(): void {
     void this.authService.logout();
+  }
+
+  setWorkspace(view: WorkspaceView): void {
+    this.activeWorkspace.set(view);
   }
 
   loadCurrentUser(): void {
