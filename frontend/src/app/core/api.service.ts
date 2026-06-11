@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { Activity } from './dto/activity';
 import { Comment, CreateCommentRequest } from './dto/comment';
 import { CurrentUser } from './dto/current-user';
-import { OrganizationalUnit } from './dto/organizational-unit';
+import { OrganizationalUnit, OrganizationalUnitRequest } from './dto/organizational-unit';
 import { AddProjectMemberRequest, ProjectMember } from './dto/project-member';
 import { CreateProjectRequest, Project, UpdateProjectRequest } from './dto/project';
 import { CreateTaskRequest, Task, TaskStatus, UpdateTaskRequest } from './dto/task';
@@ -26,6 +26,18 @@ export class ApiService {
 
   listOrganizationalUnits(): Observable<OrganizationalUnit[]> {
     return this.http.get<OrganizationalUnit[]>(`${this.apiBaseUrl}/organizational-units`);
+  }
+
+  createOrganizationalUnit(request: OrganizationalUnitRequest): Observable<OrganizationalUnit> {
+    return this.http.post<OrganizationalUnit>(`${this.apiBaseUrl}/organizational-units`, request);
+  }
+
+  updateOrganizationalUnit(unitId: number, request: OrganizationalUnitRequest): Observable<OrganizationalUnit> {
+    return this.http.patch<OrganizationalUnit>(`${this.apiBaseUrl}/organizational-units/${unitId}`, request);
+  }
+
+  deactivateOrganizationalUnit(unitId: number): Observable<OrganizationalUnit> {
+    return this.http.patch<OrganizationalUnit>(`${this.apiBaseUrl}/organizational-units/${unitId}/deactivate`, {});
   }
 
   createProject(request: CreateProjectRequest): Observable<Project> {

@@ -318,6 +318,10 @@ button:disabled {
   margin-top: 1rem;
 }
 
+.unit-workspace {
+  margin-top: 1rem;
+}
+
 .project-settings-form {
   display: grid;
   gap: 1rem;
@@ -338,6 +342,67 @@ button:disabled {
 .project-form {
   display: grid;
   gap: 1rem;
+}
+
+.unit-management-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.9fr) minmax(320px, 1.1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.unit-status {
+  margin-top: -0.4rem;
+}
+
+.unit-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.unit-card {
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, #ffffff, var(--surface-soft)),
+    radial-gradient(circle at right top, rgba(0, 174, 233, 0.1), transparent 9rem);
+}
+
+.unit-card div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.unit-card strong {
+  color: var(--primary-dark);
+}
+
+.unit-card p {
+  margin: 0.65rem 0 0;
+}
+
+.unit-admin-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.unit-form {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.unit-form h3 {
+  margin: 0;
+  color: var(--primary-dark);
+  font-size: 0.98rem;
 }
 
 .create-panel,
@@ -1094,6 +1159,8 @@ dd {
   .workspace-focus,
   .content-grid,
   .project-board,
+  .unit-management-grid,
+  .unit-admin-panel,
   .summary-grid,
   .member-form,
   .task-filters,

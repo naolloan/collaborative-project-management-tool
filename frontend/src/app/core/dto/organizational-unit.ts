@@ -7,3 +7,9 @@ export interface OrganizationalUnit {
   description?: string | null;
   active: boolean;
 }
+
+export interface OrganizationalUnitRequest {
+  name: string;
+  type: OrganizationalUnitType;
+  description?: string | null;
+}

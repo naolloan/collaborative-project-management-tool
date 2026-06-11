@@ -7,7 +7,7 @@ import { ApiService } from './core/api.service';
 import { Activity } from './core/dto/activity';
 import { Comment } from './core/dto/comment';
 import { CurrentUser } from './core/dto/current-user';
-import { OrganizationalUnit } from './core/dto/organizational-unit';
+import { OrganizationalUnit, OrganizationalUnitType } from './core/dto/organizational-unit';
 import { ProjectMember, ProjectRole } from './core/dto/project-member';
 import { CreateProjectRequest, Project } from './core/dto/project';
 import { CreateTaskRequest, Task, TaskPriority, TaskStatus } from './core/dto/task';
@@ -35,6 +35,7 @@ export class AppComponent implements OnInit {
   activities = signal<Activity[]>([]);
   apiStatus = signal('Not checked');
   projectStatus = signal('Not loaded');
+  unitStatus = signal('Not loaded');
   memberStatus = signal('No project selected');
   taskStatus = signal('No project selected');
   commentStatus = signal('No task selected');
@@ -42,6 +43,9 @@ export class AppComponent implements OnInit {
   creatingProject = signal(false);
   updatingProject = signal(false);
   archivingProject = signal(false);
+  creatingUnit = signal(false);
+  updatingUnit = signal(false);
+  deactivatingUnit = signal(false);
   addingMember = signal(false);
   creatingTask = signal(false);
   updatingTask = signal(false);
@@ -56,6 +60,7 @@ export class AppComponent implements OnInit {
   ];
   readonly priorities: TaskPriority[] = ['LOW', 'MEDIUM', 'HIGH'];
   readonly projectRoles: ProjectRole[] = ['MEMBER', 'MANAGER'];
+  readonly organizationalUnitTypes: OrganizationalUnitType[] = ['HEAD_OFFICE', 'DEPARTMENT', 'BRANCH', 'DIVISION', 'TEAM'];
   newProject: CreateProjectRequest = {
     name: '',
     description: '',
@@ -69,6 +74,17 @@ export class AppComponent implements OnInit {
     organizationalUnitId: null as number | null,
     startDate: '',
     dueDate: ''
+  };
+  newUnit = {
+    name: '',
+    type: 'DEPARTMENT' as OrganizationalUnitType,
+    description: ''
+  };
+  editUnit = {
+    id: null as number | null,
+    name: '',
+    type: 'DEPARTMENT' as OrganizationalUnitType,
+    description: ''
   };
   newTask: CreateTaskRequest = {
     title: '',
@@ -173,16 +189,140 @@ export class AppComponent implements OnInit {
       return;
     }
 
+    this.unitStatus.set('Loading units...');
     this.apiService.listOrganizationalUnits().subscribe({
       next: (units) => {
         this.organizationalUnits.set(units);
+        this.unitStatus.set(`${units.length} active unit${units.length === 1 ? '' : 's'}`);
         if (!this.newProject.organizationalUnitId && units.length > 0) {
           this.newProject.organizationalUnitId = units[0].id;
         }
       },
       error: () => {
         this.organizationalUnits.set([]);
+        this.unitStatus.set('Unit load failed');
         this.error.set('Could not load organizational units.');
+      }
+    });
+  }
+
+  createOrganizationalUnit(): void {
+    const name = this.newUnit.name.trim();
+    if (!this.canManageOrganizationalUnits()) {
+      this.error.set('Only administrators can manage organizational units.');
+      return;
+    }
+
+    if (!name) {
+      this.error.set('Organizational unit name is required.');
+      return;
+    }
+
+    this.creatingUnit.set(true);
+    this.error.set(undefined);
+
+    this.apiService.createOrganizationalUnit({
+      name,
+      type: this.newUnit.type,
+      description: this.cleanOptional(this.newUnit.description)
+    }).subscribe({
+      next: (unit) => {
+        this.newUnit = {
+          name: '',
+          type: 'DEPARTMENT',
+          description: ''
+        };
+        this.creatingUnit.set(false);
+        this.editSelectedUnit(unit);
+        this.loadOrganizationalUnits();
+      },
+      error: () => {
+        this.creatingUnit.set(false);
+        this.error.set('Could not create the organizational unit. Check for duplicate names.');
+      }
+    });
+  }
+
+  editSelectedUnit(unit: OrganizationalUnit): void {
+    this.editUnit = {
+      id: unit.id,
+      name: unit.name,
+      type: unit.type,
+      description: unit.description ?? ''
+    };
+  }
+
+  updateSelectedUnit(): void {
+    const unitId = this.editUnit.id;
+    const name = this.editUnit.name.trim();
+
+    if (!this.canManageOrganizationalUnits()) {
+      this.error.set('Only administrators can manage organizational units.');
+      return;
+    }
+
+    if (!unitId) {
+      this.error.set('Select an organizational unit before saving changes.');
+      return;
+    }
+
+    if (!name) {
+      this.error.set('Organizational unit name is required.');
+      return;
+    }
+
+    this.updatingUnit.set(true);
+    this.error.set(undefined);
+
+    this.apiService.updateOrganizationalUnit(unitId, {
+      name,
+      type: this.editUnit.type,
+      description: this.cleanOptional(this.editUnit.description)
+    }).subscribe({
+      next: (unit) => {
+        this.updatingUnit.set(false);
+        this.editSelectedUnit(unit);
+        this.loadOrganizationalUnits();
+        this.loadProjects();
+      },
+      error: () => {
+        this.updatingUnit.set(false);
+        this.error.set('Could not update the organizational unit.');
+      }
+    });
+  }
+
+  deactivateSelectedUnit(): void {
+    const unitId = this.editUnit.id;
+
+    if (!this.canManageOrganizationalUnits()) {
+      this.error.set('Only administrators can manage organizational units.');
+      return;
+    }
+
+    if (!unitId) {
+      this.error.set('Select an organizational unit before deactivating it.');
+      return;
+    }
+
+    this.deactivatingUnit.set(true);
+    this.error.set(undefined);
+
+    this.apiService.deactivateOrganizationalUnit(unitId).subscribe({
+      next: () => {
+        this.deactivatingUnit.set(false);
+        this.editUnit = {
+          id: null,
+          name: '',
+          type: 'DEPARTMENT',
+          description: ''
+        };
+        this.loadOrganizationalUnits();
+        this.loadProjects();
+      },
+      error: () => {
+        this.deactivatingUnit.set(false);
+        this.error.set('Could not deactivate the organizational unit.');
       }
     });
   }
@@ -701,6 +841,10 @@ export class AppComponent implements OnInit {
 
     return this.projectMembers().some((member) =>
       member.email.toLowerCase() === currentUserEmail && member.projectRole === 'MANAGER');
+  }
+
+  canManageOrganizationalUnits(): boolean {
+    return this.roles().includes('ADMINISTRATOR');
   }
 
   formatStatus(status: TaskStatus | string): string {

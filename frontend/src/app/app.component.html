@@ -189,6 +189,128 @@
     </article>
   </section>
 
+  <section class="unit-workspace" *ngIf="authenticated()">
+    <article class="panel units-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Bank Structure</p>
+          <h2>Organizational Units</h2>
+        </div>
+        <button type="button" class="ghost compact" (click)="loadOrganizationalUnits()">
+          Refresh
+        </button>
+      </div>
+
+      <p class="muted unit-status">{{ unitStatus() }}</p>
+
+      <div class="unit-management-grid">
+        <div>
+          <div class="empty-state" *ngIf="organizationalUnits().length === 0">
+            <strong>No active units yet</strong>
+            <p class="muted">Administrators can create departments, branches, divisions, or teams here.</p>
+          </div>
+
+          <div class="unit-list" *ngIf="organizationalUnits().length > 0">
+            <article
+              class="unit-card selectable"
+              *ngFor="let unit of organizationalUnits()"
+              [class.selected]="unit.id === editUnit.id"
+              (click)="editSelectedUnit(unit)">
+              <div>
+                <strong>{{ unit.name }}</strong>
+                <span class="status-pill">{{ formatUnitType(unit.type) }}</span>
+              </div>
+              <p class="muted" *ngIf="unit.description">{{ unit.description }}</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="unit-admin-panel" *ngIf="canManageOrganizationalUnits(); else unitManagementLocked">
+          <form class="unit-form" (ngSubmit)="createOrganizationalUnit()">
+            <h3>Create Unit</h3>
+            <label>
+              Unit name
+              <input
+                type="text"
+                name="unitName"
+                [(ngModel)]="newUnit.name"
+                placeholder="Digital Banking Department">
+            </label>
+
+            <label>
+              Unit type
+              <select name="unitType" [(ngModel)]="newUnit.type">
+                <option *ngFor="let type of organizationalUnitTypes" [value]="type">{{ formatUnitType(type) }}</option>
+              </select>
+            </label>
+
+            <label>
+              Description
+              <textarea
+                name="unitDescription"
+                [(ngModel)]="newUnit.description"
+                rows="3"
+                placeholder="What kind of work does this unit own?"></textarea>
+            </label>
+
+            <button type="submit" class="primary" [disabled]="creatingUnit()">
+              {{ creatingUnit() ? 'Creating...' : 'Create Unit' }}
+            </button>
+          </form>
+
+          <form class="unit-form" (ngSubmit)="updateSelectedUnit()">
+            <h3>Edit Selected Unit</h3>
+            <p class="muted" *ngIf="!editUnit.id">Select a unit from the list to edit it.</p>
+
+            <label>
+              Unit name
+              <input
+                type="text"
+                name="editUnitName"
+                [(ngModel)]="editUnit.name"
+                [disabled]="!editUnit.id">
+            </label>
+
+            <label>
+              Unit type
+              <select name="editUnitType" [(ngModel)]="editUnit.type" [disabled]="!editUnit.id">
+                <option *ngFor="let type of organizationalUnitTypes" [value]="type">{{ formatUnitType(type) }}</option>
+              </select>
+            </label>
+
+            <label>
+              Description
+              <textarea
+                name="editUnitDescription"
+                [(ngModel)]="editUnit.description"
+                rows="3"
+                [disabled]="!editUnit.id"></textarea>
+            </label>
+
+            <div class="form-actions">
+              <button type="submit" class="primary" [disabled]="updatingUnit() || !editUnit.id">
+                {{ updatingUnit() ? 'Saving...' : 'Save Unit' }}
+              </button>
+              <button
+                type="button"
+                class="danger"
+                (click)="deactivateSelectedUnit()"
+                [disabled]="deactivatingUnit() || !editUnit.id">
+                {{ deactivatingUnit() ? 'Deactivating...' : 'Deactivate' }}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <ng-template #unitManagementLocked>
+          <p class="muted locked-note">
+            Only administrators can create, update, or deactivate bank organizational units.
+          </p>
+        </ng-template>
+      </div>
+    </article>
+  </section>
+
   <section class="project-settings-workspace" *ngIf="authenticated() && selectedProjectId()">
     <article class="panel settings-panel">
       <div class="panel-heading">
