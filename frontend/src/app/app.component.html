@@ -55,16 +55,46 @@
     </div>
   </section>
 
-  <nav class="workspace-nav" *ngIf="authenticated()" aria-label="Workspace sections">
-    <button
-      type="button"
-      *ngFor="let item of workspaceNavItems"
-      [class.active]="activeWorkspace() === item.view"
-      (click)="setWorkspace(item.view)">
-      <span>{{ item.label }}</span>
-      <small>{{ item.helper }}</small>
-    </button>
-  </nav>
+  <section class="workspace-shell" [class.authenticated-shell]="authenticated()">
+    <nav class="workspace-nav" *ngIf="authenticated()" aria-label="Workspace sections">
+      <button
+        type="button"
+        *ngFor="let item of workspaceNavItems"
+        [class.active]="activeWorkspace() === item.view"
+        (click)="setWorkspace(item.view)">
+        <span>{{ item.label }}</span>
+        <small>{{ item.helper }}</small>
+      </button>
+    </nav>
+
+    <div class="workspace-main">
+      <section class="page-heading" *ngIf="authenticated()" [ngSwitch]="activeWorkspace()">
+        <div *ngSwitchCase="'dashboard'">
+          <p class="eyebrow">Overview</p>
+          <h2>Delivery Dashboard</h2>
+          <p class="muted">Review identity, project health, and your assigned work in one focused view.</p>
+        </div>
+        <div *ngSwitchCase="'projects'">
+          <p class="eyebrow">Planning</p>
+          <h2>Projects</h2>
+          <p class="muted">Create projects, assign owning units, and maintain project details.</p>
+        </div>
+        <div *ngSwitchCase="'units'">
+          <p class="eyebrow">Bank Structure</p>
+          <h2>Organizational Units</h2>
+          <p class="muted">Manage COOP departments, branches, divisions, and delivery teams.</p>
+        </div>
+        <div *ngSwitchCase="'members'">
+          <p class="eyebrow">Access</p>
+          <h2>Project Members</h2>
+          <p class="muted">Control who belongs to the selected project and what project role they hold.</p>
+        </div>
+        <div *ngSwitchCase="'tasks'">
+          <p class="eyebrow">Delivery</p>
+          <h2>Task Board</h2>
+          <p class="muted">Create, move, discuss, and audit work items for the selected project.</p>
+        </div>
+      </section>
 
   <section class="content-grid" *ngIf="!authenticated() || activeWorkspace() === 'dashboard'">
     <article class="panel identity-panel">
@@ -843,6 +873,8 @@
         </ng-template>
       </ng-container>
     </article>
+  </section>
+    </div>
   </section>
 
   <p class="error" *ngIf="error()">{{ error() }}</p>
