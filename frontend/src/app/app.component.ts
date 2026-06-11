@@ -19,7 +19,7 @@ import { CreateTaskRequest, Task, TaskPriority, TaskStatus } from './core/dto/ta
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit {
-  projectName = 'Collaborative Project Management Tool';
+  projectName = 'COOP WorkFlow';
   authenticated = signal(false);
   initializing = signal(true);
   profile = signal<KeycloakProfile | undefined>(undefined);

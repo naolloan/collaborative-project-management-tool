@@ -1,13 +1,19 @@
 :root {
   color-scheme: light;
-  font-family: "Segoe UI", sans-serif;
-  --bg: #f4f7fb;
+  font-family: Arial, "Segoe UI", sans-serif;
+  --bg: #eaf8fd;
   --surface: #ffffff;
-  --text: #18212f;
-  --muted: #5c6778;
-  --border: #d8e0eb;
-  --primary: #155eef;
-  --accent: #0f766e;
+  --surface-soft: #f4fbff;
+  --text: #102431;
+  --muted: #607784;
+  --border: #ccebf7;
+  --primary: #00aee9;
+  --primary-deep: #0077a8;
+  --primary-dark: #06475f;
+  --accent: #00a6d6;
+  --success: #0f9f6e;
+  --warning: #f59e0b;
+  --danger: #c2413b;
 }
 
 * {
@@ -16,6 +22,9 @@
 
 body {
   margin: 0;
-  background: linear-gradient(180deg, #eef4ff 0%, #f8fbff 100%);
+  background:
+    radial-gradient(circle at top left, rgba(0, 174, 233, 0.24), transparent 34rem),
+    radial-gradient(circle at 82% 10%, rgba(0, 119, 168, 0.18), transparent 26rem),
+    linear-gradient(180deg, #f2fbff 0%, #ffffff 48%, #eaf8fd 100%);
   color: var(--text);
 }
