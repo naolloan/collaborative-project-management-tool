@@ -1,0 +1,146 @@
+<section class="content-grid">
+  <article class="panel identity-panel">
+    <h2>Session</h2>
+    <ng-container *ngIf="authenticated; else signedOut">
+      <dl>
+        <div>
+          <dt>Username</dt>
+          <dd>{{ username || 'Unavailable' }}</dd>
+        </div>
+        <div>
+          <dt>Email</dt>
+          <dd>{{ email || 'Unavailable' }}</dd>
+        </div>
+        <div>
+          <dt>Name</dt>
+          <dd>{{ fullName || 'Unavailable' }}</dd>
+        </div>
+      </dl>
+    </ng-container>
+
+    <ng-template #signedOut>
+      <p class="muted">Sign in with one of the Keycloak test users to continue.</p>
+    </ng-template>
+  </article>
+
+  <article class="panel identity-panel">
+    <h2>Backend Identity</h2>
+    <ng-container *ngIf="userId; else noBackendUser">
+      <dl>
+        <div>
+          <dt>User ID</dt>
+          <dd>{{ userId }}</dd>
+        </div>
+        <div>
+          <dt>Roles</dt>
+          <dd class="chips">
+            <span *ngFor="let role of roles">{{ role }}</span>
+          </dd>
+        </div>
+      </dl>
+    </ng-container>
+
+    <ng-template #noBackendUser>
+      <p class="muted">The backend identity check will appear here after login.</p>
+    </ng-template>
+  </article>
+</section>
+
+<section class="summary-workspace" *ngIf="authenticated && selectedProjectId">
+  <article class="panel summary-panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Project Summary</p>
+        <h2>{{ selectedProjectName }}</h2>
+      </div>
+      <strong class="completion-badge">{{ completionPercentage }}% complete</strong>
+    </div>
+
+    <div class="progress-track" aria-hidden="true">
+      <span [style.width.%]="completionPercentage"></span>
+    </div>
+
+    <div class="summary-grid">
+      <article class="summary-card">
+        <span>Total tasks</span>
+        <strong>{{ totalTasks }}</strong>
+      </article>
+
+      <article class="summary-card">
+        <span>To do</span>
+        <strong>{{ toDoTasks }}</strong>
+      </article>
+
+      <article class="summary-card">
+        <span>In progress</span>
+        <strong>{{ inProgressTasks }}</strong>
+      </article>
+
+      <article class="summary-card">
+        <span>Review</span>
+        <strong>{{ reviewTasks }}</strong>
+      </article>
+
+      <article class="summary-card success">
+        <span>Done</span>
+        <strong>{{ completedTasks }}</strong>
+      </article>
+
+      <article class="summary-card warning">
+        <span>High priority</span>
+        <strong>{{ highPriorityTasks }}</strong>
+      </article>
+
+      <article class="summary-card danger-card">
+        <span>Overdue</span>
+        <strong>{{ overdueTasks }}</strong>
+      </article>
+    </div>
+  </article>
+</section>
+
+<section class="assigned-workspace" *ngIf="authenticated && selectedProjectId">
+  <article class="panel assigned-panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Personal View</p>
+        <h2>My Assigned Tasks</h2>
+      </div>
+      <span class="status-pill">{{ assignedTasks.length }} assigned</span>
+    </div>
+
+    <div class="assigned-stats">
+      <span>To Do: {{ assignedToDoTasks }}</span>
+      <span>In Progress: {{ assignedInProgressTasks }}</span>
+      <span>Review: {{ assignedReviewTasks }}</span>
+      <span>Done: {{ assignedDoneTasks }}</span>
+    </div>
+
+    <div class="empty-state" *ngIf="assignedTasks.length === 0">
+      <strong>No assigned tasks in this project</strong>
+      <p class="muted">Tasks assigned to your backend user will appear here for quick access.</p>
+    </div>
+
+    <div class="assigned-list" *ngIf="assignedTasks.length > 0">
+      <article
+        class="assigned-card selectable"
+        *ngFor="let task of assignedTasks"
+        [class.selected]="task.id === selectedTaskId"
+        (click)="selectTask.emit(task)">
+        <div>
+          <span class="priority" [class.high]="task.priority === 'HIGH'" [class.low]="task.priority === 'LOW'">
+            {{ task.priority }}
+          </span>
+          <span class="status-pill">{{ formatStatus(task.status) }}</span>
+        </div>
+
+        <h3>{{ task.title }}</h3>
+        <p class="muted" *ngIf="task.description">{{ task.description }}</p>
+        <p class="dates">
+          <span *ngIf="task.dueDate">Due {{ task.dueDate }}</span>
+          <span *ngIf="!task.dueDate">No due date</span>
+        </p>
+      </article>
+    </div>
+  </article>
+</section>

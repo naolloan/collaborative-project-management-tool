@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { KeycloakProfile } from 'keycloak-js';
 import { AuthService } from './auth/auth.service';
@@ -11,15 +11,18 @@ import { OrganizationalUnit, OrganizationalUnitType } from './core/dto/organizat
 import { ProjectMember, ProjectRole } from './core/dto/project-member';
 import { CreateProjectRequest, Project } from './core/dto/project';
 import { CreateTaskRequest, Task, TaskPriority, TaskStatus } from './core/dto/task';
+import { DashboardPageComponent } from './pages/dashboard-page/dashboard-page.component';
+import { UnitsPageComponent } from './pages/units-page/units-page.component';
 
 type WorkspaceView = 'dashboard' | 'projects' | 'units' | 'members' | 'tasks';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DashboardPageComponent, UnitsPageComponent],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  styleUrl: './app.component.css',
+  encapsulation: ViewEncapsulation.None
 })
 export class AppComponent implements OnInit {
   projectName = 'COOP WorkFlow';

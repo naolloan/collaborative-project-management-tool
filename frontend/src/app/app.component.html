@@ -96,53 +96,32 @@
         </div>
       </section>
 
-  <section class="content-grid" *ngIf="!authenticated() || activeWorkspace() === 'dashboard'">
-    <article class="panel identity-panel">
-      <h2>Session</h2>
-      <ng-container *ngIf="authenticated(); else signedOut">
-        <dl>
-          <div>
-            <dt>Username</dt>
-            <dd>{{ profile()?.username || currentUser()?.username || 'Unavailable' }}</dd>
-          </div>
-          <div>
-            <dt>Email</dt>
-            <dd>{{ profile()?.email || currentUser()?.email || 'Unavailable' }}</dd>
-          </div>
-          <div>
-            <dt>Name</dt>
-            <dd>{{ currentUser()?.fullName || firstNameLastName() || 'Unavailable' }}</dd>
-          </div>
-        </dl>
-      </ng-container>
-
-      <ng-template #signedOut>
-        <p class="muted">Sign in with one of the Keycloak test users to continue.</p>
-      </ng-template>
-    </article>
-
-    <article class="panel identity-panel">
-      <h2>Backend Identity</h2>
-      <ng-container *ngIf="currentUser(); else noBackendUser">
-        <dl>
-          <div>
-            <dt>User ID</dt>
-            <dd>{{ currentUser()?.id }}</dd>
-          </div>
-          <div>
-            <dt>Roles</dt>
-            <dd class="chips">
-              <span *ngFor="let role of roles()">{{ role }}</span>
-            </dd>
-          </div>
-        </dl>
-      </ng-container>
-
-      <ng-template #noBackendUser>
-        <p class="muted">The backend identity check will appear here after login.</p>
-      </ng-template>
-    </article>
-  </section>
+  <app-dashboard-page
+    *ngIf="!authenticated() || activeWorkspace() === 'dashboard'"
+    [authenticated]="authenticated()"
+    [username]="profile()?.username || currentUser()?.username"
+    [email]="profile()?.email || currentUser()?.email"
+    [fullName]="currentUser()?.fullName || firstNameLastName()"
+    [userId]="currentUser()?.id"
+    [roles]="roles()"
+    [selectedProjectName]="selectedProject()?.name"
+    [selectedProjectId]="selectedProjectId()"
+    [selectedTaskId]="selectedTaskId()"
+    [totalTasks]="tasks().length"
+    [toDoTasks]="taskCountByStatus('TO_DO')"
+    [inProgressTasks]="taskCountByStatus('IN_PROGRESS')"
+    [reviewTasks]="taskCountByStatus('REVIEW')"
+    [completedTasks]="completedTaskCount()"
+    [highPriorityTasks]="highPriorityTaskCount()"
+    [overdueTasks]="overdueTaskCount()"
+    [completionPercentage]="completionPercentage()"
+    [assignedTasks]="myAssignedTasks()"
+    [assignedToDoTasks]="myAssignedTaskCountByStatus('TO_DO')"
+    [assignedInProgressTasks]="myAssignedTaskCountByStatus('IN_PROGRESS')"
+    [assignedReviewTasks]="myAssignedTaskCountByStatus('REVIEW')"
+    [assignedDoneTasks]="myAssignedTaskCountByStatus('DONE')"
+    (selectTask)="selectTask($event)">
+  </app-dashboard-page>
 
   <section class="project-board" *ngIf="authenticated() && activeWorkspace() === 'projects'">
     <article class="panel create-panel">
@@ -230,127 +209,23 @@
     </article>
   </section>
 
-  <section class="unit-workspace" *ngIf="authenticated() && activeWorkspace() === 'units'">
-    <article class="panel units-panel">
-      <div class="panel-heading">
-        <div>
-          <p class="eyebrow">Bank Structure</p>
-          <h2>Organizational Units</h2>
-        </div>
-        <button type="button" class="ghost compact" (click)="loadOrganizationalUnits()">
-          Refresh
-        </button>
-      </div>
-
-      <p class="muted unit-status">{{ unitStatus() }}</p>
-
-      <div class="unit-management-grid">
-        <div>
-          <div class="empty-state" *ngIf="organizationalUnits().length === 0">
-            <strong>No active units yet</strong>
-            <p class="muted">Administrators can create departments, branches, divisions, or teams here.</p>
-          </div>
-
-          <div class="unit-list" *ngIf="organizationalUnits().length > 0">
-            <article
-              class="unit-card selectable"
-              *ngFor="let unit of organizationalUnits()"
-              [class.selected]="unit.id === editUnit.id"
-              (click)="editSelectedUnit(unit)">
-              <div>
-                <strong>{{ unit.name }}</strong>
-                <span class="status-pill">{{ formatUnitType(unit.type) }}</span>
-              </div>
-              <p class="muted" *ngIf="unit.description">{{ unit.description }}</p>
-            </article>
-          </div>
-        </div>
-
-        <div class="unit-admin-panel" *ngIf="canManageOrganizationalUnits(); else unitManagementLocked">
-          <form class="unit-form" (ngSubmit)="createOrganizationalUnit()">
-            <h3>Create Unit</h3>
-            <label>
-              Unit name
-              <input
-                type="text"
-                name="unitName"
-                [(ngModel)]="newUnit.name"
-                placeholder="Digital Banking Department">
-            </label>
-
-            <label>
-              Unit type
-              <select name="unitType" [(ngModel)]="newUnit.type">
-                <option *ngFor="let type of organizationalUnitTypes" [value]="type">{{ formatUnitType(type) }}</option>
-              </select>
-            </label>
-
-            <label>
-              Description
-              <textarea
-                name="unitDescription"
-                [(ngModel)]="newUnit.description"
-                rows="3"
-                placeholder="What kind of work does this unit own?"></textarea>
-            </label>
-
-            <button type="submit" class="primary" [disabled]="creatingUnit()">
-              {{ creatingUnit() ? 'Creating...' : 'Create Unit' }}
-            </button>
-          </form>
-
-          <form class="unit-form" (ngSubmit)="updateSelectedUnit()">
-            <h3>Edit Selected Unit</h3>
-            <p class="muted" *ngIf="!editUnit.id">Select a unit from the list to edit it.</p>
-
-            <label>
-              Unit name
-              <input
-                type="text"
-                name="editUnitName"
-                [(ngModel)]="editUnit.name"
-                [disabled]="!editUnit.id">
-            </label>
-
-            <label>
-              Unit type
-              <select name="editUnitType" [(ngModel)]="editUnit.type" [disabled]="!editUnit.id">
-                <option *ngFor="let type of organizationalUnitTypes" [value]="type">{{ formatUnitType(type) }}</option>
-              </select>
-            </label>
-
-            <label>
-              Description
-              <textarea
-                name="editUnitDescription"
-                [(ngModel)]="editUnit.description"
-                rows="3"
-                [disabled]="!editUnit.id"></textarea>
-            </label>
-
-            <div class="form-actions">
-              <button type="submit" class="primary" [disabled]="updatingUnit() || !editUnit.id">
-                {{ updatingUnit() ? 'Saving...' : 'Save Unit' }}
-              </button>
-              <button
-                type="button"
-                class="danger"
-                (click)="deactivateSelectedUnit()"
-                [disabled]="deactivatingUnit() || !editUnit.id">
-                {{ deactivatingUnit() ? 'Deactivating...' : 'Deactivate' }}
-              </button>
-            </div>
-          </form>
-        </div>
-
-        <ng-template #unitManagementLocked>
-          <p class="muted locked-note">
-            Only administrators can create, update, or deactivate bank organizational units.
-          </p>
-        </ng-template>
-      </div>
-    </article>
-  </section>
+  <app-units-page
+    *ngIf="authenticated() && activeWorkspace() === 'units'"
+    [organizationalUnits]="organizationalUnits()"
+    [organizationalUnitTypes]="organizationalUnitTypes"
+    [unitStatus]="unitStatus()"
+    [canManage]="canManageOrganizationalUnits()"
+    [creatingUnit]="creatingUnit()"
+    [updatingUnit]="updatingUnit()"
+    [deactivatingUnit]="deactivatingUnit()"
+    [newUnit]="newUnit"
+    [editUnit]="editUnit"
+    (refreshUnits)="loadOrganizationalUnits()"
+    (createUnit)="createOrganizationalUnit()"
+    (selectUnit)="editSelectedUnit($event)"
+    (updateUnit)="updateSelectedUnit()"
+    (deactivateUnit)="deactivateSelectedUnit()">
+  </app-units-page>
 
   <section class="project-settings-workspace" *ngIf="authenticated() && selectedProjectId() && activeWorkspace() === 'projects'">
     <article class="panel settings-panel">
@@ -466,105 +341,6 @@
           </p>
         </ng-template>
       </ng-container>
-    </article>
-  </section>
-
-  <section class="summary-workspace" *ngIf="authenticated() && selectedProjectId() && activeWorkspace() === 'dashboard'">
-    <article class="panel summary-panel">
-      <div class="panel-heading">
-        <div>
-          <p class="eyebrow">Project Summary</p>
-          <h2>{{ selectedProject()?.name }}</h2>
-        </div>
-        <strong class="completion-badge">{{ completionPercentage() }}% complete</strong>
-      </div>
-
-      <div class="progress-track" aria-hidden="true">
-        <span [style.width.%]="completionPercentage()"></span>
-      </div>
-
-      <div class="summary-grid">
-        <article class="summary-card">
-          <span>Total tasks</span>
-          <strong>{{ tasks().length }}</strong>
-        </article>
-
-        <article class="summary-card">
-          <span>To do</span>
-          <strong>{{ taskCountByStatus('TO_DO') }}</strong>
-        </article>
-
-        <article class="summary-card">
-          <span>In progress</span>
-          <strong>{{ taskCountByStatus('IN_PROGRESS') }}</strong>
-        </article>
-
-        <article class="summary-card">
-          <span>Review</span>
-          <strong>{{ taskCountByStatus('REVIEW') }}</strong>
-        </article>
-
-        <article class="summary-card success">
-          <span>Done</span>
-          <strong>{{ completedTaskCount() }}</strong>
-        </article>
-
-        <article class="summary-card warning">
-          <span>High priority</span>
-          <strong>{{ highPriorityTaskCount() }}</strong>
-        </article>
-
-        <article class="summary-card danger-card">
-          <span>Overdue</span>
-          <strong>{{ overdueTaskCount() }}</strong>
-        </article>
-      </div>
-    </article>
-  </section>
-
-  <section class="assigned-workspace" *ngIf="authenticated() && selectedProjectId() && activeWorkspace() === 'dashboard'">
-    <article class="panel assigned-panel">
-      <div class="panel-heading">
-        <div>
-          <p class="eyebrow">Personal View</p>
-          <h2>My Assigned Tasks</h2>
-        </div>
-        <span class="status-pill">{{ myAssignedTasks().length }} assigned</span>
-      </div>
-
-      <div class="assigned-stats">
-        <span>To Do: {{ myAssignedTaskCountByStatus('TO_DO') }}</span>
-        <span>In Progress: {{ myAssignedTaskCountByStatus('IN_PROGRESS') }}</span>
-        <span>Review: {{ myAssignedTaskCountByStatus('REVIEW') }}</span>
-        <span>Done: {{ myAssignedTaskCountByStatus('DONE') }}</span>
-      </div>
-
-      <div class="empty-state" *ngIf="myAssignedTasks().length === 0">
-        <strong>No assigned tasks in this project</strong>
-        <p class="muted">Tasks assigned to your backend user will appear here for quick access.</p>
-      </div>
-
-      <div class="assigned-list" *ngIf="myAssignedTasks().length > 0">
-        <article
-          class="assigned-card selectable"
-          *ngFor="let task of myAssignedTasks()"
-          [class.selected]="task.id === selectedTaskId()"
-          (click)="selectTask(task)">
-          <div>
-            <span class="priority" [class.high]="task.priority === 'HIGH'" [class.low]="task.priority === 'LOW'">
-              {{ task.priority }}
-            </span>
-            <span class="status-pill">{{ formatStatus(task.status) }}</span>
-          </div>
-
-          <h3>{{ task.title }}</h3>
-          <p class="muted" *ngIf="task.description">{{ task.description }}</p>
-          <p class="dates">
-            <span *ngIf="task.dueDate">Due {{ task.dueDate }}</span>
-            <span *ngIf="!task.dueDate">No due date</span>
-          </p>
-        </article>
-      </div>
     </article>
   </section>
 
