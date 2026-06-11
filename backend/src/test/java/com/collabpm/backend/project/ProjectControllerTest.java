@@ -42,6 +42,9 @@ class ProjectControllerTest {
             1L,
             "Internship Board",
             "Planning the project management tool",
+            null,
+            null,
+            null,
             LocalDate.of(2026, 6, 9),
             null,
             "ACTIVE")));
@@ -58,12 +61,16 @@ class ProjectControllerTest {
         CreateProjectRequest request = new CreateProjectRequest(
             "Internship Board",
             "Planning the project management tool",
+            null,
             LocalDate.of(2026, 6, 9),
             null);
         given(projectService.createProject(eq(request), any(Authentication.class))).willReturn(new ProjectResponse(
             1L,
             request.name(),
             request.description(),
+            request.organizationalUnitId(),
+            null,
+            null,
             request.startDate(),
             request.dueDate(),
             "ACTIVE"));
@@ -90,12 +97,16 @@ class ProjectControllerTest {
         UpdateProjectRequest request = new UpdateProjectRequest(
             "Updated Internship Board",
             "Updated planning notes",
+            null,
             LocalDate.of(2026, 6, 10),
             LocalDate.of(2026, 7, 10));
         given(projectService.updateProject(eq(1L), eq(request), any(Authentication.class))).willReturn(new ProjectResponse(
             1L,
             request.name(),
             request.description(),
+            request.organizationalUnitId(),
+            null,
+            null,
             request.startDate(),
             request.dueDate(),
             "ACTIVE"));
@@ -122,6 +133,9 @@ class ProjectControllerTest {
             1L,
             "Internship Board",
             "Planning the project management tool",
+            null,
+            null,
+            null,
             LocalDate.of(2026, 6, 9),
             null,
             "ARCHIVED"));

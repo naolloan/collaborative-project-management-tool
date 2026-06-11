@@ -1,5 +1,7 @@
 package com.collabpm.backend.project;
 
+import com.collabpm.backend.organization.model.OrganizationalUnit;
+import com.collabpm.backend.organization.repository.OrganizationalUnitRepository;
 import com.collabpm.backend.project.dto.CreateProjectRequest;
 import com.collabpm.backend.project.dto.ProjectResponse;
 import com.collabpm.backend.project.dto.UpdateProjectRequest;
@@ -21,15 +23,18 @@ import org.springframework.web.server.ResponseStatusException;
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final OrganizationalUnitRepository organizationalUnitRepository;
     private final CurrentUserService currentUserService;
     private final ProjectAccessService projectAccessService;
 
     public ProjectService(
         ProjectRepository projectRepository,
+        OrganizationalUnitRepository organizationalUnitRepository,
         CurrentUserService currentUserService,
         ProjectAccessService projectAccessService
     ) {
         this.projectRepository = projectRepository;
+        this.organizationalUnitRepository = organizationalUnitRepository;
         this.currentUserService = currentUserService;
         this.projectAccessService = projectAccessService;
     }
@@ -51,10 +56,12 @@ public class ProjectService {
         validateDates(request);
 
         User creator = currentUserService.getOrCreateCurrentUser(authentication);
+        OrganizationalUnit organizationalUnit = resolveOrganizationalUnit(request.organizationalUnitId());
         Project project = new Project(
             request.name().trim(),
             normalizeDescription(request.description()),
             creator,
+            organizationalUnit,
             request.startDate(),
             request.dueDate());
         project.addMember(creator, ProjectRole.MANAGER);
@@ -68,9 +75,11 @@ public class ProjectService {
         projectAccessService.ensureCanManageProject(projectId, authentication);
         Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
+        OrganizationalUnit organizationalUnit = resolveOrganizationalUnit(request.organizationalUnitId());
 
         project.setName(request.name().trim());
         project.setDescription(normalizeDescription(request.description()));
+        project.setOrganizationalUnit(organizationalUnit);
         project.setStartDate(request.startDate());
         project.setDueDate(request.dueDate());
 
@@ -105,11 +114,30 @@ public class ProjectService {
         return description.trim();
     }
 
+    private OrganizationalUnit resolveOrganizationalUnit(Long organizationalUnitId) {
+        if (organizationalUnitId == null) {
+            return null;
+        }
+
+        OrganizationalUnit unit = organizationalUnitRepository.findById(organizationalUnitId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Organizational unit not found"));
+
+        if (!unit.isActive()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Organizational unit is inactive");
+        }
+
+        return unit;
+    }
+
     private ProjectResponse toResponse(Project project) {
+        OrganizationalUnit unit = project.getOrganizationalUnit();
         return new ProjectResponse(
             project.getId(),
             project.getName(),
             project.getDescription(),
+            unit == null ? null : unit.getId(),
+            unit == null ? null : unit.getName(),
+            unit == null ? null : unit.getType().name(),
             project.getStartDate(),
             project.getDueDate(),
             project.getStatus().name());

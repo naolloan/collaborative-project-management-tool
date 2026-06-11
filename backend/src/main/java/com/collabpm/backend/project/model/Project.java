@@ -1,6 +1,7 @@
 package com.collabpm.backend.project.model;
 
 import com.collabpm.backend.common.model.BaseEntity;
+import com.collabpm.backend.organization.model.OrganizationalUnit;
 import com.collabpm.backend.user.User;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -31,6 +32,10 @@ public class Project extends BaseEntity {
     @JoinColumn(name = "created_by")
     private User createdBy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organizational_unit_id")
+    private OrganizationalUnit organizationalUnit;
+
     private LocalDate startDate;
 
     private LocalDate dueDate;
@@ -45,10 +50,18 @@ public class Project extends BaseEntity {
     protected Project() {
     }
 
-    public Project(String name, String description, User createdBy, LocalDate startDate, LocalDate dueDate) {
+    public Project(
+        String name,
+        String description,
+        User createdBy,
+        OrganizationalUnit organizationalUnit,
+        LocalDate startDate,
+        LocalDate dueDate
+    ) {
         this.name = name;
         this.description = description;
         this.createdBy = createdBy;
+        this.organizationalUnit = organizationalUnit;
         this.startDate = startDate;
         this.dueDate = dueDate;
     }
@@ -71,6 +84,14 @@ public class Project extends BaseEntity {
 
     public User getCreatedBy() {
         return createdBy;
+    }
+
+    public OrganizationalUnit getOrganizationalUnit() {
+        return organizationalUnit;
+    }
+
+    public void setOrganizationalUnit(OrganizationalUnit organizationalUnit) {
+        this.organizationalUnit = organizationalUnit;
     }
 
     public LocalDate getStartDate() {

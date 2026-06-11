@@ -49,6 +49,7 @@
     </div>
     <div class="focus-metrics">
       <span>{{ projects().length }} Projects</span>
+      <span>{{ organizationalUnits().length }} Units</span>
       <span>{{ projectMembers().length }} Members</span>
       <span>{{ tasks().length }} Tasks</span>
     </div>
@@ -125,6 +126,16 @@
             placeholder="What is this project trying to deliver?"></textarea>
         </label>
 
+        <label>
+          Owning unit
+          <select name="projectOrganizationalUnit" [(ngModel)]="newProject.organizationalUnitId">
+            <option [ngValue]="null">No unit selected</option>
+            <option *ngFor="let unit of organizationalUnits()" [ngValue]="unit.id">
+              {{ unit.name }} - {{ formatUnitType(unit.type) }}
+            </option>
+          </select>
+        </label>
+
         <div class="date-row">
           <label>
             Start date
@@ -165,6 +176,10 @@
             <h3>{{ project.name }}</h3>
           </div>
           <p class="muted" *ngIf="project.description">{{ project.description }}</p>
+          <p class="unit-line">
+            {{ project.organizationalUnitName || 'No owning unit' }}
+            <span *ngIf="project.organizationalUnitType">/ {{ formatUnitType(project.organizationalUnitType) }}</span>
+          </p>
           <p class="dates">
             <span *ngIf="project.startDate">Starts {{ project.startDate }}</span>
             <span *ngIf="project.dueDate">Due {{ project.dueDate }}</span>
@@ -197,6 +212,16 @@
             name="editProjectDescription"
             [(ngModel)]="editProject.description"
             rows="3"></textarea>
+        </label>
+
+        <label>
+          Owning unit
+          <select name="editProjectOrganizationalUnit" [(ngModel)]="editProject.organizationalUnitId">
+            <option [ngValue]="null">No unit selected</option>
+            <option *ngFor="let unit of organizationalUnits()" [ngValue]="unit.id">
+              {{ unit.name }} - {{ formatUnitType(unit.type) }}
+            </option>
+          </select>
         </label>
 
         <div class="date-row">

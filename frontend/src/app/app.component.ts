@@ -7,6 +7,7 @@ import { ApiService } from './core/api.service';
 import { Activity } from './core/dto/activity';
 import { Comment } from './core/dto/comment';
 import { CurrentUser } from './core/dto/current-user';
+import { OrganizationalUnit } from './core/dto/organizational-unit';
 import { ProjectMember, ProjectRole } from './core/dto/project-member';
 import { CreateProjectRequest, Project } from './core/dto/project';
 import { CreateTaskRequest, Task, TaskPriority, TaskStatus } from './core/dto/task';
@@ -25,6 +26,7 @@ export class AppComponent implements OnInit {
   profile = signal<KeycloakProfile | undefined>(undefined);
   currentUser = signal<CurrentUser | undefined>(undefined);
   projects = signal<Project[]>([]);
+  organizationalUnits = signal<OrganizationalUnit[]>([]);
   projectMembers = signal<ProjectMember[]>([]);
   selectedProjectId = signal<number | undefined>(undefined);
   selectedTaskId = signal<number | undefined>(undefined);
@@ -57,12 +59,14 @@ export class AppComponent implements OnInit {
   newProject: CreateProjectRequest = {
     name: '',
     description: '',
+    organizationalUnitId: null,
     startDate: '',
     dueDate: ''
   };
   editProject = {
     name: '',
     description: '',
+    organizationalUnitId: null as number | null,
     startDate: '',
     dueDate: ''
   };
@@ -105,6 +109,7 @@ export class AppComponent implements OnInit {
       if (authenticated) {
         this.profile.set(await this.authService.loadProfile());
         this.loadCurrentUser();
+        this.loadOrganizationalUnits();
         this.loadProjects();
       }
     } catch {
@@ -163,6 +168,25 @@ export class AppComponent implements OnInit {
     });
   }
 
+  loadOrganizationalUnits(): void {
+    if (!this.authenticated()) {
+      return;
+    }
+
+    this.apiService.listOrganizationalUnits().subscribe({
+      next: (units) => {
+        this.organizationalUnits.set(units);
+        if (!this.newProject.organizationalUnitId && units.length > 0) {
+          this.newProject.organizationalUnitId = units[0].id;
+        }
+      },
+      error: () => {
+        this.organizationalUnits.set([]);
+        this.error.set('Could not load organizational units.');
+      }
+    });
+  }
+
   createProject(): void {
     const name = this.newProject.name.trim();
     if (!name) {
@@ -176,6 +200,7 @@ export class AppComponent implements OnInit {
     this.apiService.createProject({
       name,
       description: this.cleanOptional(this.newProject.description),
+      organizationalUnitId: this.newProject.organizationalUnitId || null,
       startDate: this.cleanOptional(this.newProject.startDate),
       dueDate: this.cleanOptional(this.newProject.dueDate)
     }).subscribe({
@@ -183,6 +208,7 @@ export class AppComponent implements OnInit {
         this.newProject = {
           name: '',
           description: '',
+          organizationalUnitId: this.organizationalUnits()[0]?.id ?? null,
           startDate: '',
           dueDate: ''
         };
@@ -231,6 +257,7 @@ export class AppComponent implements OnInit {
     this.apiService.updateProject(projectId, {
       name,
       description: this.cleanOptional(this.editProject.description),
+      organizationalUnitId: this.editProject.organizationalUnitId || null,
       startDate: this.cleanOptional(this.editProject.startDate),
       dueDate: this.cleanOptional(this.editProject.dueDate)
     }).subscribe({
@@ -680,6 +707,14 @@ export class AppComponent implements OnInit {
     return status.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
 
+  formatUnitType(type: string | null | undefined): string {
+    if (!type) {
+      return 'Unassigned';
+    }
+
+    return this.formatStatus(type);
+  }
+
   firstNameLastName(): string | undefined {
     const profile = this.profile();
     return [profile?.firstName, profile?.lastName].filter(Boolean).join(' ') || undefined;
@@ -711,6 +746,7 @@ export class AppComponent implements OnInit {
     this.editProject = {
       name: project.name,
       description: project.description ?? '',
+      organizationalUnitId: project.organizationalUnitId ?? null,
       startDate: project.startDate ?? '',
       dueDate: project.dueDate ?? ''
     };

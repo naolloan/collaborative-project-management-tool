@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { Activity } from './dto/activity';
 import { Comment, CreateCommentRequest } from './dto/comment';
 import { CurrentUser } from './dto/current-user';
+import { OrganizationalUnit } from './dto/organizational-unit';
 import { AddProjectMemberRequest, ProjectMember } from './dto/project-member';
 import { CreateProjectRequest, Project, UpdateProjectRequest } from './dto/project';
 import { CreateTaskRequest, Task, TaskStatus, UpdateTaskRequest } from './dto/task';
@@ -21,6 +22,10 @@ export class ApiService {
 
   listProjects(): Observable<Project[]> {
     return this.http.get<Project[]>(`${this.apiBaseUrl}/projects`);
+  }
+
+  listOrganizationalUnits(): Observable<OrganizationalUnit[]> {
+    return this.http.get<OrganizationalUnit[]>(`${this.apiBaseUrl}/organizational-units`);
   }
 
   createProject(request: CreateProjectRequest): Observable<Project> {
