@@ -39,8 +39,23 @@
     </div>
   </section>
 
+  <section class="workspace-focus" *ngIf="authenticated()">
+    <div>
+      <p class="eyebrow">Delivery Focus</p>
+      <h2>{{ selectedProject()?.name || 'Select a project to begin' }}</h2>
+      <p class="muted">
+        {{ selectedProject()?.description || 'Create or choose an active project to unlock members, workflow, comments, and activity tracking.' }}
+      </p>
+    </div>
+    <div class="focus-metrics">
+      <span>{{ projects().length }} Projects</span>
+      <span>{{ projectMembers().length }} Members</span>
+      <span>{{ tasks().length }} Tasks</span>
+    </div>
+  </section>
+
   <section class="content-grid">
-    <article class="panel">
+    <article class="panel identity-panel">
       <h2>Session</h2>
       <ng-container *ngIf="authenticated(); else signedOut">
         <dl>
@@ -64,7 +79,7 @@
       </ng-template>
     </article>
 
-    <article class="panel">
+    <article class="panel identity-panel">
       <h2>Backend Identity</h2>
       <ng-container *ngIf="currentUser(); else noBackendUser">
         <dl>
@@ -88,7 +103,7 @@
   </section>
 
   <section class="project-board" *ngIf="authenticated()">
-    <article class="panel">
+    <article class="panel create-panel">
       <h2>Create Project</h2>
       <form class="project-form" (ngSubmit)="createProject()">
         <label>
@@ -128,7 +143,7 @@
       </form>
     </article>
 
-    <article class="panel">
+    <article class="panel projects-panel">
       <div class="panel-heading">
         <h2>Active Projects</h2>
         <button type="button" class="ghost compact" (click)="loadProjects()">Refresh</button>
@@ -160,7 +175,7 @@
   </section>
 
   <section class="project-settings-workspace" *ngIf="authenticated() && selectedProjectId()">
-    <article class="panel">
+    <article class="panel settings-panel">
       <div class="panel-heading">
         <h2>Project Settings</h2>
         <span class="status-pill">{{ selectedProject()?.status }}</span>
@@ -209,7 +224,7 @@
   </section>
 
   <section class="member-workspace" *ngIf="authenticated()">
-    <article class="panel">
+    <article class="panel members-panel">
       <div class="panel-heading">
         <h2>Project Members</h2>
         <span class="muted">{{ memberStatus() }}</span>
@@ -366,7 +381,7 @@
   </section>
 
   <section class="task-workspace" *ngIf="authenticated()">
-    <article class="panel">
+    <article class="panel create-task-panel">
       <h2>Create Task</h2>
       <p class="muted" *ngIf="selectedProject(); else noProjectForTask">
         Adding task to <strong>{{ selectedProject()?.name }}</strong>

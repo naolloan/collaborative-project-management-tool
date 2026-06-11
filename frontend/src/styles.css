@@ -7,6 +7,7 @@
   --text: #102431;
   --muted: #607784;
   --border: #ccebf7;
+  --border-strong: #99dff3;
   --primary: #00aee9;
   --primary-deep: #0077a8;
   --primary-dark: #06475f;
@@ -27,4 +28,12 @@ body {
     radial-gradient(circle at 82% 10%, rgba(0, 119, 168, 0.18), transparent 26rem),
     linear-gradient(180deg, #f2fbff 0%, #ffffff 48%, #eaf8fd 100%);
   color: var(--text);
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  -webkit-font-smoothing: antialiased;
 }
