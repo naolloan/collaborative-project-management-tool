@@ -599,6 +599,16 @@ button:disabled {
   font-size: 1.35rem;
 }
 
+.project-briefing-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.project-briefing-grid strong {
+  font-size: 1rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
 .project-directory {
   display: grid;
   gap: 0.85rem;
