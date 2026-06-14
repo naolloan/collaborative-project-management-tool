@@ -96,6 +96,132 @@
   </article>
 </section>
 
+<section class="portfolio-workspace" *ngIf="authenticated">
+  <article class="panel portfolio-panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Portfolio Pulse</p>
+        <h2>Cross-Project Readiness</h2>
+      </div>
+      <strong class="completion-badge">{{ portfolioAlignmentRate }}% aligned</strong>
+    </div>
+
+    <p class="muted portfolio-copy">
+      Track unit ownership, timeline pressure, and emerging delivery risk across the active COOP portfolio.
+    </p>
+
+    <div class="summary-grid portfolio-summary-grid">
+      <article class="summary-card">
+        <span>Unit aligned</span>
+        <strong>{{ alignedProjectCount }}</strong>
+        <p class="muted">Projects mapped to an owning COOP unit.</p>
+      </article>
+
+      <article class="summary-card danger-card">
+        <span>Without owner</span>
+        <strong>{{ unassignedProjectCount }}</strong>
+        <p class="muted">Projects still missing a responsible unit.</p>
+      </article>
+
+      <article class="summary-card warning">
+        <span>Due soon</span>
+        <strong>{{ dueSoonProjectCount }}</strong>
+        <p class="muted">Projects with a due date in the next 14 days.</p>
+      </article>
+
+      <article class="summary-card">
+        <span>Needs attention</span>
+        <strong>{{ attentionProjectCount }}</strong>
+        <p class="muted">Projects needing owner or schedule follow-up.</p>
+      </article>
+    </div>
+  </article>
+
+  <article class="panel unit-coverage-panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Ownership Distribution</p>
+        <h2>Unit Coverage</h2>
+      </div>
+      <span class="status-pill">{{ unitCoverage.length }} units active</span>
+    </div>
+
+    <div class="empty-state" *ngIf="unitCoverage.length === 0">
+      <strong>No owned projects yet</strong>
+      <p class="muted">Assign projects to organizational units to unlock unit-level portfolio visibility.</p>
+    </div>
+
+    <div class="unit-coverage-list" *ngIf="unitCoverage.length > 0">
+      <article class="unit-coverage-card" *ngFor="let coverage of unitCoverage">
+        <div class="unit-coverage-header">
+          <div>
+            <h3>{{ coverage.unit.name }}</h3>
+            <p class="muted">{{ formatUnitType(coverage.unit.type) }}</p>
+          </div>
+          <strong>{{ coverage.projectCount }}</strong>
+        </div>
+
+        <div class="coverage-meter" aria-hidden="true">
+          <span [style.width.%]="coverage.coveragePercent"></span>
+        </div>
+
+        <p class="muted">{{ coverage.coveragePercent }}% of active projects currently sit with this unit.</p>
+      </article>
+    </div>
+  </article>
+</section>
+
+<section class="watchlist-workspace" *ngIf="authenticated">
+  <article class="panel watchlist-panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Watchlist</p>
+        <h2>Projects Requiring Attention</h2>
+      </div>
+      <span class="status-pill">{{ portfolioWatchlist.length }} tracked</span>
+    </div>
+
+    <div class="empty-state" *ngIf="portfolioWatchlist.length === 0">
+      <strong>No watchlist items right now</strong>
+      <p class="muted">As project timelines and ownership data change, the highest-priority projects will surface here.</p>
+    </div>
+
+    <div class="watchlist-grid" *ngIf="portfolioWatchlist.length > 0">
+      <article class="watch-card" *ngFor="let item of portfolioWatchlist">
+        <div class="watch-card-top">
+          <span class="project-phase">{{ formatStatus(item.project.status) }}</span>
+          <span
+            class="status-pill"
+            [class.good-tone]="item.healthTone === 'good'"
+            [class.warning-tone]="item.healthTone === 'warning'"
+            [class.danger-tone]="item.healthTone === 'danger'"
+            [class.neutral-tone]="item.healthTone === 'neutral'">
+            {{ item.healthLabel }}
+          </span>
+        </div>
+
+        <h3>{{ item.project.name }}</h3>
+        <p class="muted" *ngIf="item.project.description">{{ item.project.description }}</p>
+
+        <dl class="portfolio-detail-list">
+          <div>
+            <dt>Owner</dt>
+            <dd>{{ item.ownerLabel }}</dd>
+          </div>
+          <div>
+            <dt>Timeline</dt>
+            <dd>{{ item.timeline }}</dd>
+          </div>
+          <div>
+            <dt>Unit Type</dt>
+            <dd>{{ formatUnitType(item.project.organizationalUnitType) }}</dd>
+          </div>
+        </dl>
+      </article>
+    </div>
+  </article>
+</section>
+
 <section class="summary-workspace" *ngIf="authenticated && selectedProjectId">
   <article class="panel summary-panel">
     <div class="panel-heading">
@@ -215,6 +341,12 @@
         <span class="metric-label">Overdue Work</span>
         <strong>{{ overdueTasks }}</strong>
         <p class="muted">Work items that have passed their due date and remain open.</p>
+      </article>
+
+      <article class="operating-card">
+        <span class="metric-label">Projects Due Soon</span>
+        <strong>{{ dueSoonProjectCount }}</strong>
+        <p class="muted">Projects approaching delivery windows within the next two weeks.</p>
       </article>
 
       <article class="operating-card">

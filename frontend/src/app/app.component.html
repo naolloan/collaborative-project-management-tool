@@ -148,6 +148,8 @@
     [unitCount]="organizationalUnits().length"
     [memberCount]="projectMembers().length"
     [activeRolesLabel]="primaryRoleLabel()"
+    [projects]="projects()"
+    [organizationalUnits]="organizationalUnits()"
     (selectTask)="selectTask($event)">
   </app-dashboard-page>
 

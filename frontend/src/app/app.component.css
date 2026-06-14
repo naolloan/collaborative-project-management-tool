@@ -917,16 +917,121 @@ select:focus {
   margin-top: 1rem;
 }
 
-.summary-workspace {
-  margin-top: 1rem;
-}
-
-.assigned-workspace {
-  margin-top: 1rem;
-}
-
+.portfolio-workspace,
+.watchlist-workspace,
+.summary-workspace,
+.assigned-workspace,
 .operating-rhythm {
   margin-top: 1rem;
+}
+
+.portfolio-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 1rem;
+}
+
+.portfolio-copy {
+  margin: 0 0 1rem;
+}
+
+.portfolio-summary-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.portfolio-summary-grid .summary-card p {
+  position: relative;
+  z-index: 1;
+  margin: 0.5rem 0 0;
+}
+
+.unit-coverage-list,
+.watchlist-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.unit-coverage-card,
+.watch-card {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: linear-gradient(135deg, #ffffff, var(--surface-soft));
+}
+
+.unit-coverage-header,
+.watch-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.unit-coverage-header h3,
+.watch-card h3 {
+  margin: 0;
+  color: var(--primary-dark);
+  font-size: 1rem;
+}
+
+.unit-coverage-header p,
+.watch-card p {
+  margin: 0.45rem 0 0;
+}
+
+.unit-coverage-header strong {
+  color: var(--primary-dark);
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.coverage-meter {
+  height: 0.6rem;
+  overflow: hidden;
+  margin: 0.85rem 0 0.75rem;
+  border-radius: 999px;
+  background: #dff6ff;
+}
+
+.coverage-meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary), #72d8f2, var(--primary-deep));
+}
+
+.portfolio-detail-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.portfolio-detail-list > div {
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.good-tone {
+  background: #eafaf4;
+  color: var(--success);
+}
+
+.warning-tone {
+  background: #fff8e8;
+  color: #9a6700;
+}
+
+.danger-tone {
+  background: #fff2f1;
+  color: var(--danger);
+}
+
+.neutral-tone {
+  background: #eef7fb;
+  color: var(--muted);
 }
 
 .operating-grid {
@@ -1538,6 +1643,9 @@ dd {
   .workspace-focus,
   .workspace-nav,
   .executive-overview,
+  .portfolio-workspace,
+  .portfolio-summary-grid,
+  .portfolio-detail-list,
   .project-command-strip,
   .unit-management-grid,
   .unit-admin-panel,
@@ -1581,7 +1689,9 @@ dd {
 
   .project-card-meta,
   .project-card-header,
-  .task-card-footer {
+  .task-card-footer,
+  .unit-coverage-header,
+  .watch-card-top {
     align-items: stretch;
     flex-direction: column;
   }
