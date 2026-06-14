@@ -12,6 +12,7 @@ import { ProjectMember, ProjectRole } from './core/dto/project-member';
 import { CreateProjectRequest, Project } from './core/dto/project';
 import { CreateTaskRequest, Task, TaskPriority, TaskStatus } from './core/dto/task';
 import { DashboardPageComponent } from './pages/dashboard-page/dashboard-page.component';
+import { ProjectsPageComponent } from './pages/projects-page/projects-page.component';
 import { UnitsPageComponent } from './pages/units-page/units-page.component';
 
 type WorkspaceView = 'dashboard' | 'projects' | 'units' | 'members' | 'tasks';
@@ -19,7 +20,7 @@ type WorkspaceView = 'dashboard' | 'projects' | 'units' | 'members' | 'tasks';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule, DashboardPageComponent, UnitsPageComponent],
+  imports: [CommonModule, FormsModule, DashboardPageComponent, ProjectsPageComponent, UnitsPageComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
   encapsulation: ViewEncapsulation.None

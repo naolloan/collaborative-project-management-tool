@@ -123,91 +123,23 @@
     (selectTask)="selectTask($event)">
   </app-dashboard-page>
 
-  <section class="project-board" *ngIf="authenticated() && activeWorkspace() === 'projects'">
-    <article class="panel create-panel">
-      <h2>Create Project</h2>
-      <form class="project-form" (ngSubmit)="createProject()">
-        <label>
-          Project name
-          <input
-            type="text"
-            name="projectName"
-            [(ngModel)]="newProject.name"
-            placeholder="Internship Project Board"
-            required>
-        </label>
-
-        <label>
-          Description
-          <textarea
-            name="projectDescription"
-            [(ngModel)]="newProject.description"
-            rows="4"
-            placeholder="What is this project trying to deliver?"></textarea>
-        </label>
-
-        <label>
-          Owning unit
-          <select name="projectOrganizationalUnit" [(ngModel)]="newProject.organizationalUnitId">
-            <option [ngValue]="null">No unit selected</option>
-            <option *ngFor="let unit of organizationalUnits()" [ngValue]="unit.id">
-              {{ unit.name }} - {{ formatUnitType(unit.type) }}
-            </option>
-          </select>
-        </label>
-
-        <div class="date-row">
-          <label>
-            Start date
-            <input type="date" name="projectStartDate" [(ngModel)]="newProject.startDate">
-          </label>
-
-          <label>
-            Due date
-            <input type="date" name="projectDueDate" [(ngModel)]="newProject.dueDate">
-          </label>
-        </div>
-
-        <button type="submit" class="primary" [disabled]="creatingProject()">
-          {{ creatingProject() ? 'Creating...' : 'Create Project' }}
-        </button>
-      </form>
-    </article>
-
-    <article class="panel projects-panel">
-      <div class="panel-heading">
-        <h2>Active Projects</h2>
-        <button type="button" class="ghost compact" (click)="loadProjects()">Refresh</button>
-      </div>
-
-      <div class="empty-state" *ngIf="projects().length === 0">
-        <strong>No projects yet</strong>
-        <p class="muted">Create the first project to confirm the frontend, backend, Keycloak, and PostgreSQL are all working together.</p>
-      </div>
-
-      <div class="project-list" *ngIf="projects().length > 0">
-        <article
-          class="project-card selectable"
-          *ngFor="let project of projects()"
-          [class.selected]="project.id === selectedProjectId()"
-          (click)="selectProject(project)">
-          <div>
-            <span class="status-pill">{{ project.status }}</span>
-            <h3>{{ project.name }}</h3>
-          </div>
-          <p class="muted" *ngIf="project.description">{{ project.description }}</p>
-          <p class="unit-line">
-            {{ project.organizationalUnitName || 'No owning unit' }}
-            <span *ngIf="project.organizationalUnitType">/ {{ formatUnitType(project.organizationalUnitType) }}</span>
-          </p>
-          <p class="dates">
-            <span *ngIf="project.startDate">Starts {{ project.startDate }}</span>
-            <span *ngIf="project.dueDate">Due {{ project.dueDate }}</span>
-          </p>
-        </article>
-      </div>
-    </article>
-  </section>
+  <app-projects-page
+    *ngIf="authenticated() && activeWorkspace() === 'projects'"
+    [projects]="projects()"
+    [organizationalUnits]="organizationalUnits()"
+    [selectedProjectId]="selectedProjectId()"
+    [selectedProject]="selectedProject()"
+    [newProject]="newProject"
+    [editProject]="editProject"
+    [creatingProject]="creatingProject()"
+    [updatingProject]="updatingProject()"
+    [archivingProject]="archivingProject()"
+    (createProject)="createProject()"
+    (refreshProjects)="loadProjects()"
+    (selectProject)="selectProject($event)"
+    (updateProject)="updateSelectedProject()"
+    (archiveProject)="archiveSelectedProject()">
+  </app-projects-page>
 
   <app-units-page
     *ngIf="authenticated() && activeWorkspace() === 'units'"
@@ -226,65 +158,6 @@
     (updateUnit)="updateSelectedUnit()"
     (deactivateUnit)="deactivateSelectedUnit()">
   </app-units-page>
-
-  <section class="project-settings-workspace" *ngIf="authenticated() && selectedProjectId() && activeWorkspace() === 'projects'">
-    <article class="panel settings-panel">
-      <div class="panel-heading">
-        <h2>Project Settings</h2>
-        <span class="status-pill">{{ selectedProject()?.status }}</span>
-      </div>
-
-      <form class="project-settings-form" (ngSubmit)="updateSelectedProject()">
-        <label>
-          Project name
-          <input
-            type="text"
-            name="editProjectName"
-            [(ngModel)]="editProject.name"
-            required>
-        </label>
-
-        <label>
-          Description
-          <textarea
-            name="editProjectDescription"
-            [(ngModel)]="editProject.description"
-            rows="3"></textarea>
-        </label>
-
-        <label>
-          Owning unit
-          <select name="editProjectOrganizationalUnit" [(ngModel)]="editProject.organizationalUnitId">
-            <option [ngValue]="null">No unit selected</option>
-            <option *ngFor="let unit of organizationalUnits()" [ngValue]="unit.id">
-              {{ unit.name }} - {{ formatUnitType(unit.type) }}
-            </option>
-          </select>
-        </label>
-
-        <div class="date-row">
-          <label>
-            Start date
-            <input type="date" name="editProjectStartDate" [(ngModel)]="editProject.startDate">
-          </label>
-
-          <label>
-            Due date
-            <input type="date" name="editProjectDueDate" [(ngModel)]="editProject.dueDate">
-          </label>
-        </div>
-
-        <div class="form-actions">
-          <button type="submit" class="primary" [disabled]="updatingProject()">
-            {{ updatingProject() ? 'Saving...' : 'Save Project' }}
-          </button>
-          <button type="button" class="danger" (click)="archiveSelectedProject()" [disabled]="archivingProject()">
-            {{ archivingProject() ? 'Archiving...' : 'Archive Project' }}
-          </button>
-        </div>
-      </form>
-    </article>
-  </section>
 
   <section class="member-workspace" *ngIf="authenticated() && activeWorkspace() === 'members'">
     <article class="panel members-panel">
