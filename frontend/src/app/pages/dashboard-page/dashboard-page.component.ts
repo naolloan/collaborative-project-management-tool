@@ -31,6 +31,10 @@ export class DashboardPageComponent {
   @Input() assignedInProgressTasks = 0;
   @Input() assignedReviewTasks = 0;
   @Input() assignedDoneTasks = 0;
+  @Input() projectCount = 0;
+  @Input() unitCount = 0;
+  @Input() memberCount = 0;
+  @Input() activeRolesLabel = '';
 
   @Output() selectTask = new EventEmitter<Task>();
 

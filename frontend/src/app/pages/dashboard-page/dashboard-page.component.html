@@ -1,6 +1,49 @@
-<section class="content-grid">
+<section class="executive-overview">
+  <article class="panel executive-panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Command Overview</p>
+        <h2>Operational Snapshot</h2>
+      </div>
+      <span class="status-pill">{{ activeRolesLabel || 'No backend role loaded' }}</span>
+    </div>
+
+    <div class="executive-grid">
+      <article class="executive-stat">
+        <span>Projects</span>
+        <strong>{{ projectCount }}</strong>
+        <p class="muted">Active delivery workspaces under current access.</p>
+      </article>
+
+      <article class="executive-stat">
+        <span>Units</span>
+        <strong>{{ unitCount }}</strong>
+        <p class="muted">COOP structures available for ownership and visibility.</p>
+      </article>
+
+      <article class="executive-stat">
+        <span>Members</span>
+        <strong>{{ memberCount }}</strong>
+        <p class="muted">Team members loaded for the selected project.</p>
+      </article>
+
+      <article class="executive-stat">
+        <span>Task Completion</span>
+        <strong>{{ completionPercentage }}%</strong>
+        <p class="muted">Progress against currently loaded work items.</p>
+      </article>
+    </div>
+  </article>
+
   <article class="panel identity-panel">
-    <h2>Session</h2>
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Identity</p>
+        <h2>Session Profile</h2>
+      </div>
+      <span class="status-pill">{{ authenticated ? 'Signed In' : 'Signed Out' }}</span>
+    </div>
+
     <ng-container *ngIf="authenticated; else signedOut">
       <dl>
         <div>
@@ -24,7 +67,14 @@
   </article>
 
   <article class="panel identity-panel">
-    <h2>Backend Identity</h2>
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Access Context</p>
+        <h2>Backend Identity</h2>
+      </div>
+      <span class="status-pill" *ngIf="userId">Verified</span>
+    </div>
+
     <ng-container *ngIf="userId; else noBackendUser">
       <dl>
         <div>
@@ -140,6 +190,37 @@
           <span *ngIf="task.dueDate">Due {{ task.dueDate }}</span>
           <span *ngIf="!task.dueDate">No due date</span>
         </p>
+      </article>
+    </div>
+  </article>
+</section>
+
+<section class="operating-rhythm" *ngIf="authenticated">
+  <article class="panel operating-panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Execution Focus</p>
+        <h2>Delivery Readiness</h2>
+      </div>
+    </div>
+
+    <div class="operating-grid">
+      <article class="operating-card">
+        <span class="metric-label">Priority Watch</span>
+        <strong>{{ highPriorityTasks }}</strong>
+        <p class="muted">High-priority tasks that may require closer follow-up.</p>
+      </article>
+
+      <article class="operating-card warning-card">
+        <span class="metric-label">Overdue Work</span>
+        <strong>{{ overdueTasks }}</strong>
+        <p class="muted">Work items that have passed their due date and remain open.</p>
+      </article>
+
+      <article class="operating-card">
+        <span class="metric-label">Assigned to Me</span>
+        <strong>{{ assignedTasks.length }}</strong>
+        <p class="muted">Personally assigned tasks in the currently selected project.</p>
       </article>
     </div>
   </article>

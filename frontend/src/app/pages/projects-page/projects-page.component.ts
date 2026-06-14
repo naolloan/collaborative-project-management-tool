@@ -40,4 +40,77 @@ export class ProjectsPageComponent {
 
     return type.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
+
+  projectPhase(project: Project): string {
+    if (project.dueDate) {
+      const dueDate = new Date(`${project.dueDate}T00:00:00`);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / 86400000);
+
+      if (diffDays < 0) {
+        return 'Needs Attention';
+      }
+
+      if (diffDays <= 7) {
+        return 'Due Soon';
+      }
+    }
+
+    if (project.startDate) {
+      return 'In Delivery';
+    }
+
+    return 'Planning';
+  }
+
+  projectSchedule(project: Project): string {
+    if (project.startDate && project.dueDate) {
+      return `${project.startDate} - ${project.dueDate}`;
+    }
+
+    if (project.dueDate) {
+      return `Due ${project.dueDate}`;
+    }
+
+    if (project.startDate) {
+      return `Started ${project.startDate}`;
+    }
+
+    return 'Schedule not defined';
+  }
+
+  selectedProjectSummary(): string {
+    if (!this.selectedProject) {
+      return 'Select a project to review ownership, timeline, and governance details.';
+    }
+
+    return this.selectedProject.description || 'No project summary has been added yet.';
+  }
+
+  selectedProjectSchedule(): string {
+    if (!this.selectedProject) {
+      return 'Schedule not defined';
+    }
+
+    return this.projectSchedule(this.selectedProject);
+  }
+
+  selectedProjectPhase(): string {
+    if (!this.selectedProject) {
+      return 'Planning';
+    }
+
+    return this.projectPhase(this.selectedProject);
+  }
+
+  ownedProjectCount(): number {
+    return this.projects.filter((project) => Boolean(project.organizationalUnitName)).length;
+  }
+
+  selectedProjectCountLabel(): string {
+    return this.selectedProject ? '1' : '0';
+  }
 }
+
+

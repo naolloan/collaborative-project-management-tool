@@ -1,6 +1,13 @@
-<section class="project-board">
-  <article class="panel create-panel">
-    <h2>Create Project</h2>
+<section class="project-command-strip">
+  <article class="panel project-command-panel create-panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Project Intake</p>
+        <h2>Create Project</h2>
+      </div>
+      <span class="status-pill">{{ organizationalUnits.length }} units available</span>
+    </div>
+
     <form class="project-form" (ngSubmit)="createProject.emit()">
       <label>
         Project name
@@ -8,7 +15,7 @@
           type="text"
           name="projectName"
           [(ngModel)]="newProject.name"
-          placeholder="Internship Project Board"
+          placeholder="Enterprise workflow modernization"
           required>
       </label>
 
@@ -18,18 +25,25 @@
           name="projectDescription"
           [(ngModel)]="newProject.description"
           rows="4"
-          placeholder="What is this project trying to deliver?"></textarea>
+          placeholder="Summarize the delivery goal, expected outcomes, and unit stakeholders."></textarea>
       </label>
 
-      <label>
-        Owning unit
-        <select name="projectOrganizationalUnit" [(ngModel)]="newProject.organizationalUnitId">
-          <option [ngValue]="null">No unit selected</option>
-          <option *ngFor="let unit of organizationalUnits" [ngValue]="unit.id">
-            {{ unit.name }} - {{ formatUnitType(unit.type) }}
-          </option>
-        </select>
-      </label>
+      <div class="project-form-grid">
+        <label>
+          Owning unit
+          <select name="projectOrganizationalUnit" [(ngModel)]="newProject.organizationalUnitId">
+            <option [ngValue]="null">No unit selected</option>
+            <option *ngFor="let unit of organizationalUnits" [ngValue]="unit.id">
+              {{ unit.name }} - {{ formatUnitType(unit.type) }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Delivery posture
+          <input type="text" value="Standard execution workflow" readonly>
+        </label>
+      </div>
 
       <div class="date-row">
         <label>
@@ -49,45 +63,102 @@
     </form>
   </article>
 
-  <article class="panel projects-panel">
+  <article class="panel project-overview-panel">
     <div class="panel-heading">
-      <h2>Active Projects</h2>
+      <div>
+        <p class="eyebrow">Project Directory</p>
+        <h2>Active Projects</h2>
+      </div>
       <button type="button" class="ghost compact" (click)="refreshProjects.emit()">Refresh</button>
+    </div>
+
+    <div class="project-overview-metrics">
+      <article>
+        <span>Total active</span>
+        <strong>{{ projects.length }}</strong>
+      </article>
+      <article>
+        <span>Owned by units</span>
+        <strong>{{ ownedProjectCount() }}</strong>
+      </article>
+      <article>
+        <span>Selected</span>
+        <strong>{{ selectedProjectCountLabel() }}</strong>
+      </article>
     </div>
 
     <div class="empty-state" *ngIf="projects.length === 0">
       <strong>No projects yet</strong>
-      <p class="muted">Create the first project to confirm the frontend, backend, Keycloak, and PostgreSQL are all working together.</p>
+      <p class="muted">Create the first project to verify the delivery workspace is ready for real COOP execution tracking.</p>
     </div>
 
-    <div class="project-list" *ngIf="projects.length > 0">
+    <div class="project-directory" *ngIf="projects.length > 0">
       <article
-        class="project-card selectable"
+        class="project-card selectable project-directory-card"
         *ngFor="let project of projects"
         [class.selected]="project.id === selectedProjectId"
         (click)="selectProject.emit(project)">
-        <div>
-          <span class="status-pill">{{ project.status }}</span>
-          <h3>{{ project.name }}</h3>
+        <div class="project-card-header">
+          <div>
+            <span class="status-pill">{{ project.status }}</span>
+            <h3>{{ project.name }}</h3>
+          </div>
+          <span class="project-phase">{{ projectPhase(project) }}</span>
         </div>
+
         <p class="muted" *ngIf="project.description">{{ project.description }}</p>
-        <p class="unit-line">
-          {{ project.organizationalUnitName || 'No owning unit' }}
-          <span *ngIf="project.organizationalUnitType">/ {{ formatUnitType(project.organizationalUnitType) }}</span>
-        </p>
-        <p class="dates">
-          <span *ngIf="project.startDate">Starts {{ project.startDate }}</span>
-          <span *ngIf="project.dueDate">Due {{ project.dueDate }}</span>
-        </p>
+        <p class="muted" *ngIf="!project.description">No summary has been added for this project yet.</p>
+
+        <div class="project-card-meta">
+          <p class="unit-line">
+            {{ project.organizationalUnitName || 'No owning unit' }}
+            <span *ngIf="project.organizationalUnitType">/ {{ formatUnitType(project.organizationalUnitType) }}</span>
+          </p>
+          <p class="dates">{{ projectSchedule(project) }}</p>
+        </div>
       </article>
     </div>
   </article>
 </section>
 
-<section class="project-settings-workspace" *ngIf="selectedProjectId">
+<section class="project-settings-workspace project-settings-grid" *ngIf="selectedProjectId">
+  <article class="panel project-briefing-panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Selected Project</p>
+        <h2>{{ selectedProject?.name }}</h2>
+      </div>
+      <span class="status-pill">{{ selectedProject?.status }}</span>
+    </div>
+
+    <p class="muted project-briefing-copy">{{ selectedProjectSummary() }}</p>
+
+    <div class="project-briefing-grid">
+      <article>
+        <span>Owning unit</span>
+        <strong>{{ selectedProject?.organizationalUnitName || 'Unassigned' }}</strong>
+      </article>
+      <article>
+        <span>Unit type</span>
+        <strong>{{ formatUnitType(selectedProject?.organizationalUnitType) }}</strong>
+      </article>
+      <article>
+        <span>Schedule</span>
+        <strong>{{ selectedProjectSchedule() }}</strong>
+      </article>
+      <article>
+        <span>Delivery phase</span>
+        <strong>{{ selectedProjectPhase() }}</strong>
+      </article>
+    </div>
+  </article>
+
   <article class="panel settings-panel">
     <div class="panel-heading">
-      <h2>Project Settings</h2>
+      <div>
+        <p class="eyebrow">Governance</p>
+        <h2>Project Settings</h2>
+      </div>
       <span class="status-pill">{{ selectedProject?.status }}</span>
     </div>
 

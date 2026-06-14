@@ -795,17 +795,19 @@ export class AppComponent implements OnInit {
   }
 
   overdueTaskCount(): number {
+    return this.tasks().filter((task) => this.isTaskOverdue(task)).length;
+  }
+
+  isTaskOverdue(task: Task): boolean {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    return this.tasks().filter((task) => {
-      if (!task.dueDate || task.status === 'DONE') {
-        return false;
-      }
+    if (!task.dueDate || task.status === 'DONE') {
+      return false;
+    }
 
-      const dueDate = new Date(`${task.dueDate}T00:00:00`);
-      return dueDate < today;
-    }).length;
+    const dueDate = new Date(`${task.dueDate}T00:00:00`);
+    return dueDate < today;
   }
 
   myAssignedTasks(): Task[] {
@@ -884,6 +886,15 @@ export class AppComponent implements OnInit {
 
   roles(): string[] {
     return this.currentUser()?.roles ?? [];
+  }
+
+  primaryRoleLabel(): string {
+    const roles = this.roles();
+    if (roles.length === 0) {
+      return 'Access Pending';
+    }
+
+    return roles.map((role) => this.formatStatus(role)).join(' / ');
   }
 
   private cleanOptional(value: string | null | undefined): string | null {

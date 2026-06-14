@@ -1,6 +1,6 @@
 :root {
   color-scheme: light;
-  font-family: Arial, "Segoe UI", sans-serif;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
   --bg: #eaf8fd;
   --surface: #ffffff;
   --surface-soft: #f4fbff;
@@ -24,9 +24,11 @@
 body {
   margin: 0;
   background:
+    linear-gradient(90deg, rgba(0, 174, 233, 0.04) 0, rgba(0, 174, 233, 0.04) 1px, transparent 1px, transparent 72px),
+    linear-gradient(rgba(0, 174, 233, 0.04) 0, rgba(0, 174, 233, 0.04) 1px, transparent 1px, transparent 72px),
     radial-gradient(circle at top left, rgba(0, 174, 233, 0.24), transparent 34rem),
     radial-gradient(circle at 82% 10%, rgba(0, 119, 168, 0.18), transparent 26rem),
-    linear-gradient(180deg, #f2fbff 0%, #ffffff 48%, #eaf8fd 100%);
+    linear-gradient(180deg, #edf8fc 0%, #ffffff 45%, #e8f7fb 100%);
   color: var(--text);
 }
 

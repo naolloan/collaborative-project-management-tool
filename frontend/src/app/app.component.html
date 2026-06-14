@@ -1,26 +1,46 @@
 <main class="page-shell">
   <header class="topbar">
     <div class="brand-lockup">
-      <div class="coop-mark" aria-hidden="true">
-        <span>co</span><span>op</span>
-      </div>
+      <img class="coop-logo" src="brand/coop-logo.svg" alt="Cooperative Bank of Oromia logo">
       <div>
-        <p class="eyebrow">Cooperative Bank of Oromia Internal Workspace</p>
+        <p class="eyebrow">Cooperative Bank of Oromia Internal Delivery Platform</p>
         <h1>{{ projectName }}</h1>
-        <p class="hero-copy">A digital-first project and task command center for coordinated delivery.</p>
+        <p class="hero-copy">A portfolio-grade command center for bank programs, delivery teams, and execution visibility.</p>
       </div>
     </div>
 
-    <div class="actions">
-      <button type="button" class="ghost" (click)="loadCurrentUser()" [disabled]="!authenticated()">
-        Check API
-      </button>
-      <button type="button" class="primary" *ngIf="!authenticated()" (click)="login()">
-        Login
-      </button>
-      <button type="button" class="danger" *ngIf="authenticated()" (click)="logout()">
-        Logout
-      </button>
+    <div class="topbar-side">
+      <div class="topbar-meta" *ngIf="authenticated(); else signedOutTopbar">
+        <div class="meta-card">
+          <span class="meta-label">Workspace Role</span>
+          <strong>{{ primaryRoleLabel() }}</strong>
+        </div>
+        <div class="meta-card">
+          <span class="meta-label">Signed In As</span>
+          <strong>{{ currentUser()?.fullName || firstNameLastName() || profile()?.username || 'Current User' }}</strong>
+        </div>
+      </div>
+
+      <ng-template #signedOutTopbar>
+        <div class="topbar-meta">
+          <div class="meta-card">
+            <span class="meta-label">Status</span>
+            <strong>Awaiting authentication</strong>
+          </div>
+        </div>
+      </ng-template>
+
+      <div class="actions">
+        <button type="button" class="ghost" (click)="loadCurrentUser()" [disabled]="!authenticated()">
+          Refresh Identity
+        </button>
+        <button type="button" class="primary" *ngIf="!authenticated()" (click)="login()">
+          Sign In
+        </button>
+        <button type="button" class="danger" *ngIf="authenticated()" (click)="logout()">
+          Sign Out
+        </button>
+      </div>
     </div>
   </header>
 
@@ -36,6 +56,10 @@
     <div>
       <span class="label">Tasks</span>
       <strong>{{ taskStatus() }}</strong>
+    </div>
+    <div>
+      <span class="label">Portfolio</span>
+      <strong>{{ projects().length }} projects / {{ organizationalUnits().length }} units</strong>
     </div>
   </section>
 
@@ -120,6 +144,10 @@
     [assignedInProgressTasks]="myAssignedTaskCountByStatus('IN_PROGRESS')"
     [assignedReviewTasks]="myAssignedTaskCountByStatus('REVIEW')"
     [assignedDoneTasks]="myAssignedTaskCountByStatus('DONE')"
+    [projectCount]="projects().length"
+    [unitCount]="organizationalUnits().length"
+    [memberCount]="projectMembers().length"
+    [activeRolesLabel]="primaryRoleLabel()"
     (selectTask)="selectTask($event)">
   </app-dashboard-page>
 
@@ -217,9 +245,52 @@
     </article>
   </section>
 
+  <section class="task-command-bar" *ngIf="authenticated() && activeWorkspace() === 'tasks'">
+    <article class="panel task-context-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Task Operations</p>
+          <h2>{{ selectedProject()?.name || 'Select a project to begin' }}</h2>
+        </div>
+        <button type="button" class="ghost compact" (click)="loadSelectedProjectTasks()" [disabled]="!selectedProjectId()">
+          Refresh Board
+        </button>
+      </div>
+
+      <p class="muted task-context-copy">
+        {{ selectedProject()?.description || 'Choose an active project to view workflow, assign work, and review execution health.' }}
+      </p>
+
+      <div class="task-command-metrics">
+        <article>
+          <span>Loaded tasks</span>
+          <strong>{{ tasks().length }}</strong>
+        </article>
+        <article>
+          <span>High priority</span>
+          <strong>{{ highPriorityTaskCount() }}</strong>
+        </article>
+        <article>
+          <span>Overdue</span>
+          <strong>{{ overdueTaskCount() }}</strong>
+        </article>
+        <article>
+          <span>Assigned to me</span>
+          <strong>{{ myAssignedTasks().length }}</strong>
+        </article>
+      </div>
+    </article>
+  </section>
+
   <section class="task-workspace" *ngIf="authenticated() && activeWorkspace() === 'tasks'">
-    <article class="panel create-task-panel">
-      <h2>Create Task</h2>
+    <article class="panel create-task-panel task-intake-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Work Intake</p>
+          <h2>Create Task</h2>
+        </div>
+        <span class="status-pill" *ngIf="selectedProjectId()">{{ taskStatus() }}</span>
+      </div>
       <p class="muted" *ngIf="selectedProject(); else noProjectForTask">
         Adding task to <strong>{{ selectedProject()?.name }}</strong>
       </p>
@@ -248,7 +319,7 @@
             placeholder="What should be done in this task?"></textarea>
         </label>
 
-        <div class="date-row">
+        <div class="date-row task-intake-grid">
           <label>
             Priority
             <select name="taskPriority" [(ngModel)]="newTask.priority">
@@ -280,10 +351,11 @@
 
     <article class="panel board-panel">
       <div class="panel-heading">
-        <h2>Workflow Board</h2>
-        <button type="button" class="ghost compact" (click)="loadSelectedProjectTasks()" [disabled]="!selectedProjectId()">
-          Refresh
-        </button>
+        <div>
+          <p class="eyebrow">Workflow</p>
+          <h2>Execution Board</h2>
+        </div>
+        <span class="status-pill">{{ filteredTasks().length }} visible</span>
       </div>
 
       <div class="board-empty" *ngIf="!selectedProjectId()">
@@ -333,7 +405,10 @@
       <div class="board-columns" *ngIf="selectedProjectId()">
         <section class="board-column" *ngFor="let column of workflowColumns">
           <header>
-            <h3>{{ column.title }}</h3>
+            <div>
+              <h3>{{ column.title }}</h3>
+              <small>{{ tasksByStatus(column.status).length }} work items</small>
+            </div>
             <span>{{ tasksByStatus(column.status).length }}</span>
           </header>
 
@@ -346,20 +421,26 @@
               <span class="priority" [class.high]="task.priority === 'HIGH'" [class.low]="task.priority === 'LOW'">
                 {{ task.priority }}
               </span>
-              <span class="muted" *ngIf="task.dueDate">Due {{ task.dueDate }}</span>
+              <span class="task-due" [class.overdue]="isTaskOverdue(task)">
+                {{ task.dueDate ? ('Due ' + task.dueDate) : 'No due date' }}
+              </span>
             </div>
 
             <h4>{{ task.title }}</h4>
             <p class="muted" *ngIf="task.description">{{ task.description }}</p>
+            <p class="muted" *ngIf="!task.description">No task summary has been added.</p>
             <p class="assignee">Assigned to {{ task.assigneeName || 'Unassigned' }}</p>
 
-            <button
-              type="button"
-              class="ghost compact"
-              *ngIf="task.status !== 'DONE'"
-              (click)="$event.stopPropagation(); moveTaskForward(task)">
-              Move Forward
-            </button>
+            <div class="task-card-footer">
+              <span class="task-owner">{{ task.createdByName || 'Created by current workspace' }}</span>
+              <button
+                type="button"
+                class="ghost compact"
+                *ngIf="task.status !== 'DONE'"
+                (click)="$event.stopPropagation(); moveTaskForward(task)">
+                Move Forward
+              </button>
+            </div>
           </article>
 
           <p class="muted empty-column" *ngIf="tasksByStatus(column.status).length === 0">

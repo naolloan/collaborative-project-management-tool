@@ -51,31 +51,15 @@
   z-index: 1;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.15rem;
 }
 
-.coop-mark {
-  display: grid;
-  place-items: center;
-  width: 5.2rem;
-  height: 5.2rem;
+.coop-logo {
+  width: clamp(11rem, 20vw, 14rem);
+  max-width: 100%;
+  height: auto;
   flex: 0 0 auto;
-  border-radius: 26px;
-  background:
-    radial-gradient(circle at 28% 34%, #ffffff 0 17%, transparent 18%),
-    radial-gradient(circle at 66% 34%, #ffffff 0 17%, transparent 18%),
-    linear-gradient(135deg, var(--primary), #1abbe9);
-  color: #fff;
-  font-size: 1.35rem;
-  font-weight: 900;
-  letter-spacing: -0.12em;
-  line-height: 0.82;
-  text-transform: lowercase;
-  box-shadow: 0 18px 34px rgba(0, 174, 233, 0.32);
-}
-
-.coop-mark span {
-  display: block;
+  filter: drop-shadow(0 16px 28px rgba(0, 119, 168, 0.16));
 }
 
 .hero-copy {
@@ -83,6 +67,42 @@
   margin: 0.65rem 0 0;
   color: var(--muted);
   font-weight: 700;
+}
+
+.topbar-side {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.8rem;
+  min-width: min(28rem, 100%);
+}
+
+.topbar-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.meta-card {
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(153, 223, 243, 0.72);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: 0 16px 30px rgba(0, 119, 168, 0.08);
+}
+
+.meta-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.meta-card strong {
+  color: var(--primary-dark);
+  font-size: 0.95rem;
 }
 
 .panel {
@@ -202,7 +222,7 @@ button:disabled {
 
 .status-strip {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1px;
   overflow: hidden;
   margin-bottom: 1rem;
@@ -391,21 +411,241 @@ button:disabled {
   font-size: 0.98rem;
 }
 
-.content-grid {
+.executive-overview {
   display: grid;
-  grid-template-columns: minmax(260px, 0.9fr) minmax(260px, 1.1fr);
+  grid-template-columns: minmax(0, 1.25fr) minmax(250px, 0.7fr) minmax(250px, 0.75fr);
   gap: 1rem;
 }
 
-.project-board {
+.executive-panel {
+  background:
+    linear-gradient(135deg, rgba(8, 74, 96, 0.98), rgba(0, 119, 168, 0.92)),
+    radial-gradient(circle at right top, rgba(255, 255, 255, 0.2), transparent 14rem);
+  color: #fff;
+}
+
+.executive-panel::before {
+  background: linear-gradient(90deg, #83ddf6, rgba(255, 255, 255, 0.8), transparent);
+}
+
+.executive-panel .panel-heading h2,
+.executive-panel .eyebrow,
+.executive-panel .muted {
+  color: #fff;
+}
+
+.executive-panel .status-pill {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.executive-grid {
   display: grid;
-  grid-template-columns: minmax(300px, 0.72fr) minmax(0, 1.28fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.executive-stat {
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.executive-stat span,
+.metric-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.executive-stat strong {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: clamp(1.5rem, 2.5vw, 2.15rem);
+}
+
+.executive-stat p {
+  margin: 0;
+}
+
+.project-command-strip {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.72fr) minmax(0, 1.28fr);
   gap: 1rem;
   margin-top: 1rem;
+}
+
+.project-command-panel,
+.project-overview-panel,
+.project-briefing-panel {
+  min-height: 100%;
+}
+
+.project-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.72fr);
+  gap: 0.75rem;
+}
+
+.project-overview-metrics,
+.project-briefing-grid,
+.task-command-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.project-overview-metrics article,
+.project-briefing-grid article,
+.task-command-metrics article {
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: linear-gradient(135deg, #ffffff, var(--surface-soft));
+}
+
+.project-overview-metrics span,
+.project-briefing-grid span,
+.task-command-metrics span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.project-overview-metrics strong,
+.project-briefing-grid strong,
+.task-command-metrics strong {
+  color: var(--primary-dark);
+  font-size: 1.35rem;
+}
+
+.project-directory {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.project-directory-card {
+  padding: 1.1rem;
+}
+
+.project-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.project-phase {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.32rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(0, 174, 233, 0.1);
+  color: var(--primary-deep);
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.project-card-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: end;
+  flex-wrap: wrap;
 }
 
 .project-settings-workspace {
   margin-top: 1rem;
+}
+
+.project-settings-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.75fr) minmax(0, 1.25fr);
+  gap: 1rem;
+}
+
+.project-briefing-copy {
+  margin: 0 0 1rem;
+}
+
+.task-command-bar {
+  margin-top: 1rem;
+}
+
+.task-context-panel {
+  background:
+    linear-gradient(135deg, rgba(6, 71, 95, 0.97), rgba(0, 119, 168, 0.9)),
+    radial-gradient(circle at right top, rgba(255, 255, 255, 0.2), transparent 18rem);
+  color: #fff;
+}
+
+.task-context-panel::before {
+  background: linear-gradient(90deg, #91def5, rgba(255, 255, 255, 0.86), transparent);
+}
+
+.task-context-panel .panel-heading h2,
+.task-context-panel .eyebrow,
+.task-context-panel .muted,
+.task-context-panel strong,
+.task-context-panel span {
+  color: #fff;
+}
+
+.task-context-copy {
+  max-width: 50rem;
+  margin: 0 0 1rem;
+  opacity: 0.82;
+}
+
+.task-intake-panel {
+  position: sticky;
+  top: 1rem;
+}
+
+.task-intake-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.board-column header small {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.task-due {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.task-due.overdue {
+  color: var(--danger);
+}
+
+.task-card-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 0.85rem;
+}
+
+.task-owner {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
 }
 
 .unit-workspace {
@@ -671,6 +911,38 @@ select:focus {
 
 .assigned-workspace {
   margin-top: 1rem;
+}
+
+.operating-rhythm {
+  margin-top: 1rem;
+}
+
+.operating-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.operating-card {
+  padding: 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: linear-gradient(135deg, #ffffff, #f2fbff);
+}
+
+.operating-card strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--primary-dark);
+  font-size: 1.75rem;
+}
+
+.operating-card p {
+  margin: 0;
+}
+
+.warning-card {
+  background: linear-gradient(135deg, #fff8e8, #fffdf7);
 }
 
 .assigned-panel .eyebrow {
@@ -1232,9 +1504,14 @@ dd {
     flex-direction: column;
   }
 
-  .coop-mark {
-    width: 4.4rem;
-    height: 4.4rem;
+  .coop-logo {
+    width: min(13rem, 100%);
+  }
+
+  .topbar-side,
+  .topbar-meta {
+    grid-template-columns: 1fr;
+    min-width: 0;
   }
 
   .actions {
@@ -1248,11 +1525,15 @@ dd {
   .status-strip,
   .workspace-focus,
   .workspace-nav,
-  .content-grid,
-  .project-board,
+  .executive-overview,
+  .project-command-strip,
   .unit-management-grid,
   .unit-admin-panel,
   .summary-grid,
+  .executive-grid,
+  .operating-grid,
+  .project-form-grid,
+  .project-settings-grid,
   .member-form,
   .task-filters,
   .task-workspace,
@@ -1284,6 +1565,13 @@ dd {
   .member-form,
   .task-filters {
     align-items: stretch;
+  }
+
+  .project-card-meta,
+  .project-card-header,
+  .task-card-footer {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .board-columns {
