@@ -2,7 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { OrganizationalUnit } from '../../core/dto/organizational-unit';
-import { CreateProjectRequest, Project } from '../../core/dto/project';
+import { CreateProjectRequest, Project, ProjectHealth, ProjectLifecycleStatus } from '../../core/dto/project';
+
+type HealthTone = 'good' | 'warning' | 'danger' | 'neutral';
 
 @Component({
   selector: 'app-projects-page',
@@ -22,7 +24,11 @@ export class ProjectsPageComponent {
     organizationalUnitId: number | null;
     startDate: string;
     dueDate: string;
+    status: ProjectLifecycleStatus;
+    health: ProjectHealth;
   };
+  @Input({ required: true }) projectLifecycleStatuses: ProjectLifecycleStatus[] = [];
+  @Input({ required: true }) projectHealthOptions: ProjectHealth[] = [];
   @Input({ required: true }) creatingProject = false;
   @Input({ required: true }) updatingProject = false;
   @Input({ required: true }) archivingProject = false;
@@ -38,30 +44,56 @@ export class ProjectsPageComponent {
       return 'Unassigned';
     }
 
-    return type.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
+    return this.formatLabel(type);
   }
 
-  projectPhase(project: Project): string {
-    if (project.dueDate) {
-      const dueDate = new Date(`${project.dueDate}T00:00:00`);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / 86400000);
-
-      if (diffDays < 0) {
-        return 'Needs Attention';
-      }
-
-      if (diffDays <= 7) {
-        return 'Due Soon';
-      }
+  formatProjectStatus(status: string | null | undefined): string {
+    if (!status) {
+      return 'Planned';
     }
 
-    if (project.startDate) {
-      return 'In Delivery';
+    return this.formatLabel(status);
+  }
+
+  formatProjectHealth(health: string | null | undefined): string {
+    if (!health) {
+      return 'On Track';
     }
 
-    return 'Planning';
+    return this.formatLabel(health);
+  }
+
+  projectHealthTone(project: Project | undefined): HealthTone {
+    const normalized = (project?.health || '').trim().toUpperCase();
+    switch (normalized) {
+      case 'ON_TRACK':
+        return 'good';
+      case 'AT_RISK':
+        return 'warning';
+      case 'OFF_TRACK':
+      case 'BLOCKED':
+        return 'danger';
+      default:
+        return 'neutral';
+    }
+  }
+
+  projectPhase(status: string | null | undefined): string {
+    const normalizedStatus = (status || '').trim().toUpperCase();
+    switch (normalizedStatus) {
+      case 'PLANNED':
+        return 'Planning';
+      case 'ACTIVE':
+        return 'In Delivery';
+      case 'ON_HOLD':
+        return 'On Hold';
+      case 'COMPLETED':
+        return 'Completed';
+      case 'ARCHIVED':
+        return 'Archived';
+      default:
+        return 'Planning';
+    }
   }
 
   projectSchedule(project: Project): string {
@@ -101,7 +133,7 @@ export class ProjectsPageComponent {
       return 'Planning';
     }
 
-    return this.projectPhase(this.selectedProject);
+    return this.projectPhase(this.selectedProject.status);
   }
 
   ownedProjectCount(): number {
@@ -111,6 +143,12 @@ export class ProjectsPageComponent {
   selectedProjectCountLabel(): string {
     return this.selectedProject ? '1' : '0';
   }
+
+  activeDeliveryCount(): number {
+    return this.projects.filter((project) => project.status === 'ACTIVE').length;
+  }
+
+  private formatLabel(value: string): string {
+    return value.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
+  }
 }
-
-

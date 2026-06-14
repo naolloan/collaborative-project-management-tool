@@ -9,7 +9,7 @@ import { Comment } from './core/dto/comment';
 import { CurrentUser } from './core/dto/current-user';
 import { OrganizationalUnit, OrganizationalUnitType } from './core/dto/organizational-unit';
 import { ProjectMember, ProjectRole } from './core/dto/project-member';
-import { CreateProjectRequest, Project } from './core/dto/project';
+import { CreateProjectRequest, Project, ProjectHealth, ProjectLifecycleStatus } from './core/dto/project';
 import { CreateTaskRequest, Task, TaskPriority, TaskStatus } from './core/dto/task';
 import { DashboardPageComponent } from './pages/dashboard-page/dashboard-page.component';
 import { ProjectsPageComponent } from './pages/projects-page/projects-page.component';
@@ -68,6 +68,8 @@ export class AppComponent implements OnInit {
   ];
   readonly priorities: TaskPriority[] = ['LOW', 'MEDIUM', 'HIGH'];
   readonly projectRoles: ProjectRole[] = ['MEMBER', 'MANAGER'];
+  readonly projectLifecycleStatuses: ProjectLifecycleStatus[] = ['PLANNED', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'ARCHIVED'];
+  readonly projectHealthOptions: ProjectHealth[] = ['ON_TRACK', 'AT_RISK', 'OFF_TRACK', 'BLOCKED'];
   readonly organizationalUnitTypes: OrganizationalUnitType[] = ['HEAD_OFFICE', 'DEPARTMENT', 'BRANCH', 'DIVISION', 'TEAM'];
   readonly workspaceNavItems: { view: WorkspaceView; label: string; helper: string }[] = [
     { view: 'dashboard', label: 'Dashboard', helper: 'Overview' },
@@ -82,14 +84,18 @@ export class AppComponent implements OnInit {
     description: '',
     organizationalUnitId: null,
     startDate: '',
-    dueDate: ''
+    dueDate: '',
+    status: 'PLANNED',
+    health: 'ON_TRACK'
   };
   editProject = {
     name: '',
     description: '',
     organizationalUnitId: null as number | null,
     startDate: '',
-    dueDate: ''
+    dueDate: '',
+    status: 'PLANNED' as ProjectLifecycleStatus,
+    health: 'ON_TRACK' as ProjectHealth
   };
   newUnit = {
     name: '',
@@ -362,7 +368,9 @@ export class AppComponent implements OnInit {
       description: this.cleanOptional(this.newProject.description),
       organizationalUnitId: this.newProject.organizationalUnitId || null,
       startDate: this.cleanOptional(this.newProject.startDate),
-      dueDate: this.cleanOptional(this.newProject.dueDate)
+      dueDate: this.cleanOptional(this.newProject.dueDate),
+      status: this.newProject.status,
+      health: this.newProject.health
     }).subscribe({
       next: () => {
         this.newProject = {
@@ -370,7 +378,9 @@ export class AppComponent implements OnInit {
           description: '',
           organizationalUnitId: this.organizationalUnits()[0]?.id ?? null,
           startDate: '',
-          dueDate: ''
+          dueDate: '',
+          status: 'PLANNED',
+          health: 'ON_TRACK'
         };
         this.creatingProject.set(false);
         this.loadProjects();
@@ -419,7 +429,9 @@ export class AppComponent implements OnInit {
       description: this.cleanOptional(this.editProject.description),
       organizationalUnitId: this.editProject.organizationalUnitId || null,
       startDate: this.cleanOptional(this.editProject.startDate),
-      dueDate: this.cleanOptional(this.editProject.dueDate)
+      dueDate: this.cleanOptional(this.editProject.dueDate),
+      status: this.editProject.status,
+      health: this.editProject.health
     }).subscribe({
       next: (project) => {
         this.updatingProject.set(false);
@@ -975,7 +987,9 @@ export class AppComponent implements OnInit {
       description: project.description ?? '',
       organizationalUnitId: project.organizationalUnitId ?? null,
       startDate: project.startDate ?? '',
-      dueDate: project.dueDate ?? ''
+      dueDate: project.dueDate ?? '',
+      status: project.status ?? 'PLANNED',
+      health: project.health ?? 'ON_TRACK'
     };
   }
 
@@ -1021,7 +1035,7 @@ export class AppComponent implements OnInit {
 
   private isProjectClosed(project: Project): boolean {
     const normalizedStatus = (project.status || '').trim().toUpperCase();
-    return ['DONE', 'COMPLETED', 'CLOSED', 'ARCHIVED', 'DELIVERED'].includes(normalizedStatus);
+    return ['COMPLETED', 'ARCHIVED', 'CLOSED', 'DELIVERED', 'DONE'].includes(normalizedStatus);
   }
 
   private nextStatus(status: TaskStatus): TaskStatus | undefined {

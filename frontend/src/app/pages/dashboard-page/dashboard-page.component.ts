@@ -184,25 +184,19 @@ export class DashboardPageComponent implements OnChanges {
       return 'Closed out';
     }
 
+    if (project.health) {
+      return this.formatStatus(project.health);
+    }
+
     if (!this.hasOwningUnit(project)) {
       return 'Needs owner alignment';
-    }
-
-    const remainingDays = this.daysUntil(project.dueDate);
-    if (remainingDays !== null && remainingDays < 0) {
-      const overdueDays = Math.abs(remainingDays);
-      return 'Past due by ' + overdueDays + ' day' + (overdueDays === 1 ? '' : 's');
-    }
-
-    if (remainingDays !== null && remainingDays <= 14) {
-      return 'Due in ' + remainingDays + ' day' + (remainingDays === 1 ? '' : 's');
     }
 
     if (!project.dueDate) {
       return 'Schedule not set';
     }
 
-    return 'On track';
+    return 'On Track';
   }
 
   private projectHealthTone(project: Project): HealthTone {
@@ -210,19 +204,18 @@ export class DashboardPageComponent implements OnChanges {
       return 'good';
     }
 
-    if (!this.hasOwningUnit(project) || this.isOverdue(project)) {
-      return 'danger';
+    const normalized = (project.health || '').trim().toUpperCase();
+    switch (normalized) {
+      case 'ON_TRACK':
+        return 'good';
+      case 'AT_RISK':
+        return 'warning';
+      case 'OFF_TRACK':
+      case 'BLOCKED':
+        return 'danger';
+      default:
+        return 'neutral';
     }
-
-    if (this.isDueSoon(project)) {
-      return 'warning';
-    }
-
-    if (!project.dueDate) {
-      return 'neutral';
-    }
-
-    return 'good';
   }
 
   private projectUrgencyScore(project: Project): number {
@@ -234,6 +227,13 @@ export class DashboardPageComponent implements OnChanges {
 
     if (!this.hasOwningUnit(project)) {
       score += 3;
+    }
+
+    const normalizedHealth = (project.health || '').trim().toUpperCase();
+    if (normalizedHealth === 'OFF_TRACK' || normalizedHealth === 'BLOCKED') {
+      score += 4;
+    } else if (normalizedHealth === 'AT_RISK') {
+      score += 2;
     }
 
     const remainingDays = this.daysUntil(project.dueDate);
@@ -254,7 +254,14 @@ export class DashboardPageComponent implements OnChanges {
   }
 
   private needsAttention(project: Project): boolean {
-    return !this.isClosedProject(project) && (!this.hasOwningUnit(project) || this.isOverdue(project) || this.isDueSoon(project));
+    const normalizedHealth = (project.health || '').trim().toUpperCase();
+    return !this.isClosedProject(project)
+      && (!this.hasOwningUnit(project)
+        || this.isOverdue(project)
+        || this.isDueSoon(project)
+        || normalizedHealth === 'AT_RISK'
+        || normalizedHealth === 'OFF_TRACK'
+        || normalizedHealth === 'BLOCKED');
   }
 
   private isDueSoon(project: Project): boolean {
@@ -269,7 +276,7 @@ export class DashboardPageComponent implements OnChanges {
 
   private isClosedProject(project: Project): boolean {
     const normalizedStatus = (project.status || '').trim().toUpperCase();
-    return ['DONE', 'COMPLETED', 'CLOSED', 'ARCHIVED', 'DELIVERED'].includes(normalizedStatus);
+    return ['COMPLETED', 'ARCHIVED', 'CLOSED', 'DELIVERED', 'DONE'].includes(normalizedStatus);
   }
 
   private daysUntil(dateValue: string | null | undefined): number | null {

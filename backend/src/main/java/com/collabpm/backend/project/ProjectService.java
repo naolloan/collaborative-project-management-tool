@@ -13,6 +13,7 @@ import com.collabpm.backend.user.CurrentUserService;
 import com.collabpm.backend.user.SystemRole;
 import com.collabpm.backend.user.User;
 import java.util.List;
+import java.util.Locale;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -43,8 +44,8 @@ public class ProjectService {
     public List<ProjectResponse> listProjects(Authentication authentication) {
         User currentUser = currentUserService.getOrCreateCurrentUser(authentication);
         List<Project> projects = currentUser.getSystemRole() == SystemRole.ADMINISTRATOR
-            ? projectRepository.findAllByStatusOrderByCreatedAtDesc(ProjectStatus.ACTIVE)
-            : projectRepository.findDistinctByMembersUserIdAndStatusOrderByCreatedAtDesc(currentUser.getId(), ProjectStatus.ACTIVE);
+            ? projectRepository.findAllByStatusNotOrderByCreatedAtDesc(ProjectStatus.ARCHIVED)
+            : projectRepository.findDistinctByMembersUserIdAndStatusNotOrderByCreatedAtDesc(currentUser.getId(), ProjectStatus.ARCHIVED);
 
         return projects.stream()
             .map(this::toResponse)
@@ -63,7 +64,9 @@ public class ProjectService {
             creator,
             organizationalUnit,
             request.startDate(),
-            request.dueDate());
+            request.dueDate(),
+            resolveProjectStatus(request.status()),
+            normalizeProjectHealth(request.health()));
         project.addMember(creator, ProjectRole.MANAGER);
 
         return toResponse(projectRepository.save(project));
@@ -82,6 +85,8 @@ public class ProjectService {
         project.setOrganizationalUnit(organizationalUnit);
         project.setStartDate(request.startDate());
         project.setDueDate(request.dueDate());
+        project.setStatus(resolveProjectStatus(request.status()));
+        project.setHealth(normalizeProjectHealth(request.health()));
 
         return toResponse(project);
     }
@@ -98,6 +103,31 @@ public class ProjectService {
 
     private void validateDates(CreateProjectRequest request) {
         validateDates(request.startDate(), request.dueDate());
+    }
+
+    private ProjectStatus resolveProjectStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return ProjectStatus.PLANNED;
+        }
+
+        try {
+            return ProjectStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project status is invalid");
+        }
+    }
+
+    private String normalizeProjectHealth(String health) {
+        if (health == null || health.isBlank()) {
+            return "ON_TRACK";
+        }
+
+        String normalized = health.trim().toUpperCase(Locale.ROOT);
+        if (!List.of("ON_TRACK", "AT_RISK", "OFF_TRACK", "BLOCKED").contains(normalized)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project health is invalid");
+        }
+
+        return normalized;
     }
 
     private void validateDates(java.time.LocalDate startDate, java.time.LocalDate dueDate) {
@@ -140,6 +170,7 @@ public class ProjectService {
             unit == null ? null : unit.getType().name(),
             project.getStartDate(),
             project.getDueDate(),
-            project.getStatus().name());
+            project.getStatus().name(),
+            project.getHealth());
     }
 }

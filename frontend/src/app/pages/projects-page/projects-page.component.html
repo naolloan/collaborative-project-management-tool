@@ -40,8 +40,24 @@
         </label>
 
         <label>
+          Lifecycle status
+          <select name="projectStatus" [(ngModel)]="newProject.status">
+            <option *ngFor="let status of projectLifecycleStatuses" [ngValue]="status">{{ formatProjectStatus(status) }}</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="project-form-grid project-governance-grid">
+        <label>
+          Delivery health
+          <select name="projectHealth" [(ngModel)]="newProject.health">
+            <option *ngFor="let health of projectHealthOptions" [ngValue]="health">{{ formatProjectHealth(health) }}</option>
+          </select>
+        </label>
+
+        <label>
           Delivery posture
-          <input type="text" value="Standard execution workflow" readonly>
+          <input type="text" [value]="projectPhase(newProject.status)" readonly>
         </label>
       </div>
 
@@ -82,8 +98,8 @@
         <strong>{{ ownedProjectCount() }}</strong>
       </article>
       <article>
-        <span>Selected</span>
-        <strong>{{ selectedProjectCountLabel() }}</strong>
+        <span>In delivery</span>
+        <strong>{{ activeDeliveryCount() }}</strong>
       </article>
     </div>
 
@@ -100,21 +116,31 @@
         (click)="selectProject.emit(project)">
         <div class="project-card-header">
           <div>
-            <span class="status-pill">{{ project.status }}</span>
+            <span class="status-pill">{{ formatProjectStatus(project.status) }}</span>
             <h3>{{ project.name }}</h3>
           </div>
-          <span class="project-phase">{{ projectPhase(project) }}</span>
+          <span class="project-phase">{{ projectPhase(project.status) }}</span>
         </div>
 
         <p class="muted" *ngIf="project.description">{{ project.description }}</p>
         <p class="muted" *ngIf="!project.description">No summary has been added for this project yet.</p>
 
-        <div class="project-card-meta">
+        <div class="project-card-meta project-card-meta-stack">
           <p class="unit-line">
             {{ project.organizationalUnitName || 'No owning unit' }}
             <span *ngIf="project.organizationalUnitType">/ {{ formatUnitType(project.organizationalUnitType) }}</span>
           </p>
-          <p class="dates">{{ projectSchedule(project) }}</p>
+          <div class="project-card-pills">
+            <span
+              class="status-pill"
+              [class.good-tone]="projectHealthTone(project) === 'good'"
+              [class.warning-tone]="projectHealthTone(project) === 'warning'"
+              [class.danger-tone]="projectHealthTone(project) === 'danger'"
+              [class.neutral-tone]="projectHealthTone(project) === 'neutral'">
+              {{ formatProjectHealth(project.health) }}
+            </span>
+            <span class="dates">{{ projectSchedule(project) }}</span>
+          </div>
         </div>
       </article>
     </div>
@@ -128,7 +154,17 @@
         <p class="eyebrow">Selected Project</p>
         <h2>{{ selectedProject?.name }}</h2>
       </div>
-      <span class="status-pill">{{ selectedProject?.status }}</span>
+      <div class="project-briefing-statuses">
+        <span class="status-pill">{{ formatProjectStatus(selectedProject?.status) }}</span>
+        <span
+          class="status-pill"
+          [class.good-tone]="projectHealthTone(selectedProject) === 'good'"
+          [class.warning-tone]="projectHealthTone(selectedProject) === 'warning'"
+          [class.danger-tone]="projectHealthTone(selectedProject) === 'danger'"
+          [class.neutral-tone]="projectHealthTone(selectedProject) === 'neutral'">
+          {{ formatProjectHealth(selectedProject?.health) }}
+        </span>
+      </div>
     </div>
 
     <p class="muted project-briefing-copy">{{ selectedProjectSummary() }}</p>
@@ -143,12 +179,20 @@
         <strong>{{ formatUnitType(selectedProject?.organizationalUnitType) }}</strong>
       </article>
       <article>
-        <span>Schedule</span>
+        <span>Timeline</span>
         <strong>{{ selectedProjectSchedule() }}</strong>
       </article>
       <article>
         <span>Delivery phase</span>
         <strong>{{ selectedProjectPhase() }}</strong>
+      </article>
+      <article>
+        <span>Lifecycle status</span>
+        <strong>{{ formatProjectStatus(selectedProject?.status) }}</strong>
+      </article>
+      <article>
+        <span>Health</span>
+        <strong>{{ formatProjectHealth(selectedProject?.health) }}</strong>
       </article>
     </div>
   </article>
@@ -159,7 +203,7 @@
         <p class="eyebrow">Governance</p>
         <h2>Project Settings</h2>
       </div>
-      <span class="status-pill">{{ selectedProject?.status }}</span>
+      <span class="status-pill">{{ formatProjectStatus(selectedProject?.status) }}</span>
     </div>
 
     <form class="project-settings-form" (ngSubmit)="updateProject.emit()">
@@ -189,6 +233,22 @@
           </option>
         </select>
       </label>
+
+      <div class="project-form-grid project-governance-grid">
+        <label>
+          Lifecycle status
+          <select name="editProjectStatus" [(ngModel)]="editProject.status">
+            <option *ngFor="let status of projectLifecycleStatuses" [ngValue]="status">{{ formatProjectStatus(status) }}</option>
+          </select>
+        </label>
+
+        <label>
+          Delivery health
+          <select name="editProjectHealth" [(ngModel)]="editProject.health">
+            <option *ngFor="let health of projectHealthOptions" [ngValue]="health">{{ formatProjectHealth(health) }}</option>
+          </select>
+        </label>
+      </div>
 
       <div class="date-row">
         <label>

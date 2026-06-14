@@ -6,6 +6,6 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProjectRepository extends JpaRepository<Project, Long> {
-    List<Project> findAllByStatusOrderByCreatedAtDesc(ProjectStatus status);
-    List<Project> findDistinctByMembersUserIdAndStatusOrderByCreatedAtDesc(Long userId, ProjectStatus status);
+    List<Project> findAllByStatusNotOrderByCreatedAtDesc(ProjectStatus status);
+    List<Project> findDistinctByMembersUserIdAndStatusNotOrderByCreatedAtDesc(Long userId, ProjectStatus status);
 }

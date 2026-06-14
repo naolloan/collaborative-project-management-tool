@@ -9,6 +9,8 @@ public record UpdateProjectRequest(
     String description,
     Long organizationalUnitId,
     LocalDate startDate,
-    LocalDate dueDate
+    LocalDate dueDate,
+    String status,
+    String health
 ) {
 }

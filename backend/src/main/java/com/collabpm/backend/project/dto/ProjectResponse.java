@@ -11,6 +11,7 @@ public record ProjectResponse(
     String organizationalUnitType,
     LocalDate startDate,
     LocalDate dueDate,
-    String status
+    String status,
+    String health
 ) {
 }

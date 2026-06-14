@@ -42,7 +42,10 @@ public class Project extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ProjectStatus status = ProjectStatus.ACTIVE;
+    private ProjectStatus status = ProjectStatus.PLANNED;
+
+    @Column(nullable = false)
+    private String health = "ON_TRACK";
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectMember> members = new ArrayList<>();
@@ -56,7 +59,9 @@ public class Project extends BaseEntity {
         User createdBy,
         OrganizationalUnit organizationalUnit,
         LocalDate startDate,
-        LocalDate dueDate
+        LocalDate dueDate,
+        ProjectStatus status,
+        String health
     ) {
         this.name = name;
         this.description = description;
@@ -64,6 +69,8 @@ public class Project extends BaseEntity {
         this.organizationalUnit = organizationalUnit;
         this.startDate = startDate;
         this.dueDate = dueDate;
+        this.status = status == null ? ProjectStatus.PLANNED : status;
+        this.health = health == null || health.isBlank() ? "ON_TRACK" : health;
     }
 
     public String getName() {
@@ -116,6 +123,14 @@ public class Project extends BaseEntity {
 
     public void setStatus(ProjectStatus status) {
         this.status = status;
+    }
+
+    public String getHealth() {
+        return health;
+    }
+
+    public void setHealth(String health) {
+        this.health = health;
     }
 
     public List<ProjectMember> getMembers() {

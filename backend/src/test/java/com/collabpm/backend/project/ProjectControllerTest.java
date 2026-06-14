@@ -47,13 +47,15 @@ class ProjectControllerTest {
             null,
             LocalDate.of(2026, 6, 9),
             null,
-            "ACTIVE")));
+            "ACTIVE",
+            "ON_TRACK")));
 
         mockMvc.perform(get("/api/projects").with(jwt()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$", hasSize(1)))
             .andExpect(jsonPath("$[0].name").value("Internship Board"))
-            .andExpect(jsonPath("$[0].status").value("ACTIVE"));
+            .andExpect(jsonPath("$[0].status").value("ACTIVE"))
+            .andExpect(jsonPath("$[0].health").value("ON_TRACK"));
     }
 
     @Test
@@ -63,7 +65,9 @@ class ProjectControllerTest {
             "Planning the project management tool",
             null,
             LocalDate.of(2026, 6, 9),
-            null);
+            null,
+            "PLANNED",
+            "ON_TRACK");
         given(projectService.createProject(eq(request), any(Authentication.class))).willReturn(new ProjectResponse(
             1L,
             request.name(),
@@ -73,7 +77,8 @@ class ProjectControllerTest {
             null,
             request.startDate(),
             request.dueDate(),
-            "ACTIVE"));
+            request.status(),
+            request.health()));
 
         mockMvc.perform(post("/api/projects")
                 .with(jwt())
@@ -83,13 +88,16 @@ class ProjectControllerTest {
                       "name": "Internship Board",
                       "description": "Planning the project management tool",
                       "startDate": "2026-06-09",
-                      "dueDate": null
+                      "dueDate": null,
+                      "status": "PLANNED",
+                      "health": "ON_TRACK"
                     }
                     """))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.id").value(1))
             .andExpect(jsonPath("$.name").value("Internship Board"))
-            .andExpect(jsonPath("$.status").value("ACTIVE"));
+            .andExpect(jsonPath("$.status").value("PLANNED"))
+            .andExpect(jsonPath("$.health").value("ON_TRACK"));
     }
 
     @Test
@@ -99,7 +107,9 @@ class ProjectControllerTest {
             "Updated planning notes",
             null,
             LocalDate.of(2026, 6, 10),
-            LocalDate.of(2026, 7, 10));
+            LocalDate.of(2026, 7, 10),
+            "ACTIVE",
+            "AT_RISK");
         given(projectService.updateProject(eq(1L), eq(request), any(Authentication.class))).willReturn(new ProjectResponse(
             1L,
             request.name(),
@@ -109,7 +119,8 @@ class ProjectControllerTest {
             null,
             request.startDate(),
             request.dueDate(),
-            "ACTIVE"));
+            request.status(),
+            request.health()));
 
         mockMvc.perform(patch("/api/projects/1")
                 .with(jwt())
@@ -119,12 +130,15 @@ class ProjectControllerTest {
                       "name": "Updated Internship Board",
                       "description": "Updated planning notes",
                       "startDate": "2026-06-10",
-                      "dueDate": "2026-07-10"
+                      "dueDate": "2026-07-10",
+                      "status": "ACTIVE",
+                      "health": "AT_RISK"
                     }
                     """))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(1))
-            .andExpect(jsonPath("$.name").value("Updated Internship Board"));
+            .andExpect(jsonPath("$.name").value("Updated Internship Board"))
+            .andExpect(jsonPath("$.health").value("AT_RISK"));
     }
 
     @Test
@@ -138,7 +152,8 @@ class ProjectControllerTest {
             null,
             LocalDate.of(2026, 6, 9),
             null,
-            "ARCHIVED"));
+            "ARCHIVED",
+            "ON_TRACK"));
 
         mockMvc.perform(patch("/api/projects/1/archive").with(jwt()))
             .andExpect(status().isOk())
