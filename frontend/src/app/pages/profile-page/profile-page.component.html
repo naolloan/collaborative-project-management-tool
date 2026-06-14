@@ -1,0 +1,166 @@
+<section class="profile-workspace" *ngIf="authenticated; else signedOutProfile">
+  <section class="profile-overview">
+    <article class="panel profile-hero">
+      <div class="profile-identity">
+        <div class="profile-avatar" aria-hidden="true">{{ initials(displayName) }}</div>
+
+        <div class="profile-copy">
+          <p class="eyebrow">Account Profile</p>
+          <h2>{{ displayName || 'Current User' }}</h2>
+          <p class="muted">{{ email || username || 'Identity details are not available yet.' }}</p>
+
+          <div class="profile-inline-meta">
+            <span class="status-pill">{{ primaryRoleLabel || 'Access Pending' }}</span>
+            <span class="unit-line">{{ username || 'Username unavailable' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <dl class="profile-summary-list">
+        <div>
+          <dt>User ID</dt>
+          <dd>{{ userId || 'Pending backend sync' }}</dd>
+        </div>
+        <div>
+          <dt>Organizational Unit</dt>
+          <dd>Awaiting backend user-unit sync</dd>
+        </div>
+        <div>
+          <dt>Portfolio Reach</dt>
+          <dd>{{ projectCount }} projects / {{ unitCount }} units</dd>
+        </div>
+      </dl>
+    </article>
+
+    <article class="panel profile-workload-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">My Work</p>
+          <h2>Personal Delivery Snapshot</h2>
+        </div>
+        <span class="status-pill">{{ assignedTaskCount }} assigned</span>
+      </div>
+
+      <div class="profile-stat-list">
+        <div class="profile-stat-row">
+          <span>In Progress</span>
+          <strong>{{ assignedInProgressTasks }}</strong>
+        </div>
+        <div class="profile-stat-row">
+          <span>In Review</span>
+          <strong>{{ assignedReviewTasks }}</strong>
+        </div>
+        <div class="profile-stat-row">
+          <span>Done</span>
+          <strong>{{ assignedDoneTasks }}</strong>
+        </div>
+        <div class="profile-stat-row warning-row">
+          <span>High Priority</span>
+          <strong>{{ highPriorityAssignedTasks }}</strong>
+        </div>
+        <div class="profile-stat-row danger-row">
+          <span>Overdue</span>
+          <strong>{{ overdueAssignedTasks }}</strong>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="profile-detail-grid">
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Access</p>
+          <h2>Access Summary</h2>
+        </div>
+      </div>
+
+      <dl class="profile-section-list">
+        <div>
+          <dt>Primary Access</dt>
+          <dd>{{ primaryRoleLabel || 'Access Pending' }}</dd>
+        </div>
+        <div>
+          <dt>Workspace Roles</dt>
+          <dd class="chips">
+            <span *ngFor="let role of roles">{{ role }}</span>
+            <span *ngIf="roles.length === 0">No roles loaded</span>
+          </dd>
+        </div>
+        <div>
+          <dt>Loaded collaborators</dt>
+          <dd>{{ projectMemberCount }}</dd>
+        </div>
+      </dl>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Current Focus</p>
+          <h2>{{ selectedProjectName || 'No active project selected' }}</h2>
+        </div>
+      </div>
+
+      <p class="muted profile-focus-copy">
+        {{ selectedProjectDescription || 'Select a project from the workspace to load current delivery context, owner, and timeline information here.' }}
+      </p>
+
+      <dl class="profile-section-list">
+        <div>
+          <dt>Owning unit</dt>
+          <dd>{{ selectedProjectUnitName }}</dd>
+        </div>
+        <div>
+          <dt>Timeline</dt>
+          <dd>{{ selectedProjectTimeline }}</dd>
+        </div>
+        <div>
+          <dt>Assigned tasks in focus</dt>
+          <dd>{{ assignedTaskCount }}</dd>
+        </div>
+      </dl>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Session Support</p>
+          <h2>Support Context</h2>
+        </div>
+      </div>
+
+      <dl class="profile-section-list">
+        <div>
+          <dt>Session state</dt>
+          <dd>{{ sessionStatus || 'Session state unavailable' }}</dd>
+        </div>
+        <div>
+          <dt>Backend status</dt>
+          <dd>{{ backendStatus || 'Backend status unavailable' }}</dd>
+        </div>
+        <div>
+          <dt>Experience mode</dt>
+          <dd>Wide workspace / business-first dashboard</dd>
+        </div>
+      </dl>
+
+      <div class="profile-action-row">
+        <button type="button" class="ghost" (click)="refreshProfile.emit()">Refresh Profile</button>
+      </div>
+
+      <p class="muted support-note">
+        Technical and support-oriented session details are intentionally kept here instead of the main dashboard.
+      </p>
+    </article>
+  </section>
+</section>
+
+<ng-template #signedOutProfile>
+  <article class="panel">
+    <div class="empty-state">
+      <strong>Sign in to view your profile</strong>
+      <p class="muted">Identity, access context, and personal delivery information will appear here after authentication.</p>
+    </div>
+  </article>
+</ng-template>

@@ -14,13 +14,14 @@ import { CreateTaskRequest, Task, TaskPriority, TaskStatus } from './core/dto/ta
 import { DashboardPageComponent } from './pages/dashboard-page/dashboard-page.component';
 import { ProjectsPageComponent } from './pages/projects-page/projects-page.component';
 import { UnitsPageComponent } from './pages/units-page/units-page.component';
+import { ProfilePageComponent } from './pages/profile-page/profile-page.component';
 
-type WorkspaceView = 'dashboard' | 'projects' | 'units' | 'members' | 'tasks';
+type WorkspaceView = 'dashboard' | 'projects' | 'units' | 'members' | 'tasks' | 'profile';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule, DashboardPageComponent, ProjectsPageComponent, UnitsPageComponent],
+  imports: [CommonModule, FormsModule, DashboardPageComponent, ProjectsPageComponent, UnitsPageComponent, ProfilePageComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
   encapsulation: ViewEncapsulation.None
@@ -73,7 +74,8 @@ export class AppComponent implements OnInit {
     { view: 'projects', label: 'Projects', helper: 'Planning' },
     { view: 'units', label: 'Units', helper: 'Bank structure' },
     { view: 'members', label: 'Members', helper: 'Access' },
-    { view: 'tasks', label: 'Task Board', helper: 'Delivery' }
+    { view: 'tasks', label: 'Task Board', helper: 'Delivery' },
+    { view: 'profile', label: 'Profile', helper: 'Account' }
   ];
   newProject: CreateProjectRequest = {
     name: '',
@@ -897,6 +899,58 @@ export class AppComponent implements OnInit {
     return roles.map((role) => this.formatStatus(role)).join(' / ');
   }
 
+  currentOperatorLabel(): string {
+    return this.currentUser()?.fullName || this.firstNameLastName() || this.profile()?.username || 'Current User';
+  }
+
+  portfolioDueSoonProjectCount(): number {
+    return this.projects().filter((project) => {
+      const remainingDays = this.daysUntil(project.dueDate);
+      return !this.isProjectClosed(project) && remainingDays !== null && remainingDays >= 0 && remainingDays <= 14;
+    }).length;
+  }
+
+  myOverdueAssignedTaskCount(): number {
+    return this.myAssignedTasks().filter((task) => this.isTaskOverdue(task)).length;
+  }
+
+  myHighPriorityAssignedTaskCount(): number {
+    return this.myAssignedTasks().filter((task) => task.priority === 'HIGH').length;
+  }
+
+  selectedProjectUnitLabel(): string {
+    return this.selectedProject()?.organizationalUnitName || 'No owning unit assigned';
+  }
+
+  selectedProjectTimelineLabel(): string {
+    const project = this.selectedProject();
+    if (!project) {
+      return 'Select a project from the workspace to load current focus';
+    }
+
+    if (project.startDate && project.dueDate) {
+      return this.formatDate(project.startDate) + ' - ' + this.formatDate(project.dueDate);
+    }
+
+    if (project.dueDate) {
+      return 'Due ' + this.formatDate(project.dueDate);
+    }
+
+    if (project.startDate) {
+      return 'Started ' + this.formatDate(project.startDate);
+    }
+
+    return 'Timeline not yet defined';
+  }
+
+  sessionStatusLabel(): string {
+    if (this.initializing()) {
+      return 'Initializing authentication';
+    }
+
+    return this.authenticated() ? 'Authenticated via Keycloak' : 'Awaiting sign-in';
+  }
+
   private cleanOptional(value: string | null | undefined): string | null {
     if (!value || !value.trim()) {
       return null;
@@ -923,6 +977,51 @@ export class AppComponent implements OnInit {
       startDate: project.startDate ?? '',
       dueDate: project.dueDate ?? ''
     };
+  }
+
+  private daysUntil(dateValue: string | null | undefined): number | null {
+    const dueDate = this.parseDate(dateValue);
+    if (!dueDate) {
+      return null;
+    }
+
+    const today = new Date();
+    const currentDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const targetDay = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+    return Math.round((targetDay.getTime() - currentDay.getTime()) / 86400000);
+  }
+
+  private parseDate(dateValue: string | null | undefined): Date | null {
+    if (!dateValue) {
+      return null;
+    }
+
+    const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateValue);
+    if (dateMatch) {
+      const [, year, month, day] = dateMatch;
+      return new Date(Number(year), Number(month) - 1, Number(day));
+    }
+
+    const parsed = new Date(dateValue);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  private formatDate(dateValue: string | null | undefined): string {
+    const parsed = this.parseDate(dateValue);
+    if (!parsed) {
+      return 'Date not set';
+    }
+
+    return parsed.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  }
+
+  private isProjectClosed(project: Project): boolean {
+    const normalizedStatus = (project.status || '').trim().toUpperCase();
+    return ['DONE', 'COMPLETED', 'CLOSED', 'ARCHIVED', 'DELIVERED'].includes(normalizedStatus);
   }
 
   private nextStatus(status: TaskStatus): TaskStatus | undefined {

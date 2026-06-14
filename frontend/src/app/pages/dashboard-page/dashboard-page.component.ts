@@ -28,11 +28,6 @@ interface UnitCoverageItem {
 })
 export class DashboardPageComponent implements OnChanges {
   @Input() authenticated = false;
-  @Input() username: string | null | undefined;
-  @Input() email: string | null | undefined;
-  @Input() fullName: string | null | undefined;
-  @Input() userId: number | null | undefined;
-  @Input() roles: string[] = [];
   @Input() selectedProjectName: string | null | undefined;
   @Input() selectedProjectId: number | undefined;
   @Input() selectedTaskId: number | undefined;
@@ -52,7 +47,6 @@ export class DashboardPageComponent implements OnChanges {
   @Input() projectCount = 0;
   @Input() unitCount = 0;
   @Input() memberCount = 0;
-  @Input() activeRolesLabel = '';
   @Input() projects: Project[] = [];
   @Input() organizationalUnits: OrganizationalUnit[] = [];
 
@@ -76,6 +70,25 @@ export class DashboardPageComponent implements OnChanges {
 
   formatUnitType(type: string | undefined | null): string {
     return type ? this.formatStatus(type) : 'Unassigned';
+  }
+
+  selectedProject(): Project | undefined {
+    return this.projects.find((project) => project.id === this.selectedProjectId);
+  }
+
+  selectedProjectOwnerLabel(): string {
+    const project = this.selectedProject();
+    return project ? this.projectOwnerLabel(project) : 'No owning unit assigned';
+  }
+
+  selectedProjectTimeline(): string {
+    const project = this.selectedProject();
+    return project ? this.projectTimeline(project) : 'Timeline not yet defined';
+  }
+
+  selectedProjectHealthLabel(): string {
+    const project = this.selectedProject();
+    return project ? this.projectHealthLabel(project) : 'Select a project to load delivery context';
   }
 
   private rebuildPortfolioView(): void {

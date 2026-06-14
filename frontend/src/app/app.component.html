@@ -12,12 +12,12 @@
     <div class="topbar-side">
       <div class="topbar-meta" *ngIf="authenticated(); else signedOutTopbar">
         <div class="meta-card">
-          <span class="meta-label">Workspace Role</span>
-          <strong>{{ primaryRoleLabel() }}</strong>
+          <span class="meta-label">Portfolio Footprint</span>
+          <strong>{{ projects().length }} Projects / {{ organizationalUnits().length }} Units</strong>
         </div>
         <div class="meta-card">
-          <span class="meta-label">Signed In As</span>
-          <strong>{{ currentUser()?.fullName || firstNameLastName() || profile()?.username || 'Current User' }}</strong>
+          <span class="meta-label">Current Operator</span>
+          <strong>{{ currentOperatorLabel() }}</strong>
         </div>
       </div>
 
@@ -31,8 +31,8 @@
       </ng-template>
 
       <div class="actions">
-        <button type="button" class="ghost" (click)="loadCurrentUser()" [disabled]="!authenticated()">
-          Refresh Identity
+        <button type="button" class="ghost" *ngIf="authenticated()" (click)="setWorkspace('profile')">
+          Profile
         </button>
         <button type="button" class="primary" *ngIf="!authenticated()" (click)="login()">
           Sign In
@@ -44,26 +44,26 @@
     </div>
   </header>
 
-  <section class="status-strip">
-    <div>
-      <span class="label">Keycloak</span>
-      <strong>{{ initializing() ? 'Initializing' : authenticated() ? 'Authenticated' : 'Signed out' }}</strong>
-    </div>
-    <div>
-      <span class="label">Backend</span>
-      <strong>{{ apiStatus() }}</strong>
-    </div>
-    <div>
-      <span class="label">Tasks</span>
-      <strong>{{ taskStatus() }}</strong>
-    </div>
+  <section class="status-strip" *ngIf="authenticated() && activeWorkspace() !== 'profile'">
     <div>
       <span class="label">Portfolio</span>
       <strong>{{ projects().length }} projects / {{ organizationalUnits().length }} units</strong>
     </div>
+    <div>
+      <span class="label">Current Focus</span>
+      <strong>{{ selectedProject()?.name || 'No active project selected' }}</strong>
+    </div>
+    <div>
+      <span class="label">My Work</span>
+      <strong>{{ myAssignedTasks().length }} assigned / {{ myAssignedTaskCountByStatus('IN_PROGRESS') }} in progress</strong>
+    </div>
+    <div>
+      <span class="label">Timeline Pressure</span>
+      <strong>{{ portfolioDueSoonProjectCount() }} due soon / {{ overdueTaskCount() }} overdue tasks</strong>
+    </div>
   </section>
 
-  <section class="workspace-focus" *ngIf="authenticated()">
+  <section class="workspace-focus" *ngIf="authenticated() && activeWorkspace() !== 'profile'">
     <div>
       <p class="eyebrow">Delivery Focus</p>
       <h2>{{ selectedProject()?.name || 'Select a project to begin' }}</h2>
@@ -96,7 +96,7 @@
         <div *ngSwitchCase="'dashboard'">
           <p class="eyebrow">Overview</p>
           <h2>Delivery Dashboard</h2>
-          <p class="muted">Review identity, project health, and your assigned work in one focused view.</p>
+          <p class="muted">Review portfolio health, current project delivery, and your personal work focus in one business-facing view.</p>
         </div>
         <div *ngSwitchCase="'projects'">
           <p class="eyebrow">Planning</p>
@@ -118,16 +118,16 @@
           <h2>Task Board</h2>
           <p class="muted">Create, move, discuss, and audit work items for the selected project.</p>
         </div>
+        <div *ngSwitchCase="'profile'">
+          <p class="eyebrow">Account</p>
+          <h2>Profile</h2>
+          <p class="muted">Review identity, access context, personal work indicators, and support-oriented session details.</p>
+        </div>
       </section>
 
   <app-dashboard-page
     *ngIf="!authenticated() || activeWorkspace() === 'dashboard'"
     [authenticated]="authenticated()"
-    [username]="profile()?.username || currentUser()?.username"
-    [email]="profile()?.email || currentUser()?.email"
-    [fullName]="currentUser()?.fullName || firstNameLastName()"
-    [userId]="currentUser()?.id"
-    [roles]="roles()"
     [selectedProjectName]="selectedProject()?.name"
     [selectedProjectId]="selectedProjectId()"
     [selectedTaskId]="selectedTaskId()"
@@ -147,7 +147,6 @@
     [projectCount]="projects().length"
     [unitCount]="organizationalUnits().length"
     [memberCount]="projectMembers().length"
-    [activeRolesLabel]="primaryRoleLabel()"
     [projects]="projects()"
     [organizationalUnits]="organizationalUnits()"
     (selectTask)="selectTask($event)">
@@ -188,6 +187,33 @@
     (updateUnit)="updateSelectedUnit()"
     (deactivateUnit)="deactivateSelectedUnit()">
   </app-units-page>
+
+  <app-profile-page
+    *ngIf="authenticated() && activeWorkspace() === 'profile'"
+    [authenticated]="authenticated()"
+    [displayName]="currentOperatorLabel()"
+    [username]="profile()?.username || currentUser()?.username"
+    [email]="profile()?.email || currentUser()?.email"
+    [userId]="currentUser()?.id"
+    [roles]="roles()"
+    [primaryRoleLabel]="primaryRoleLabel()"
+    [assignedTaskCount]="myAssignedTasks().length"
+    [assignedInProgressTasks]="myAssignedTaskCountByStatus('IN_PROGRESS')"
+    [assignedReviewTasks]="myAssignedTaskCountByStatus('REVIEW')"
+    [assignedDoneTasks]="myAssignedTaskCountByStatus('DONE')"
+    [overdueAssignedTasks]="myOverdueAssignedTaskCount()"
+    [highPriorityAssignedTasks]="myHighPriorityAssignedTaskCount()"
+    [projectCount]="projects().length"
+    [unitCount]="organizationalUnits().length"
+    [projectMemberCount]="projectMembers().length"
+    [selectedProjectName]="selectedProject()?.name"
+    [selectedProjectDescription]="selectedProject()?.description"
+    [selectedProjectUnitName]="selectedProjectUnitLabel()"
+    [selectedProjectTimeline]="selectedProjectTimelineLabel()"
+    [backendStatus]="apiStatus()"
+    [sessionStatus]="sessionStatusLabel()"
+    (refreshProfile)="loadCurrentUser()">
+  </app-profile-page>
 
   <section class="member-workspace" *ngIf="authenticated() && activeWorkspace() === 'members'">
     <article class="panel members-panel">

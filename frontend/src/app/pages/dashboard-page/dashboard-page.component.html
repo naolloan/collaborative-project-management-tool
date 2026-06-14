@@ -2,97 +2,116 @@
   <article class="panel executive-panel">
     <div class="panel-heading">
       <div>
-        <p class="eyebrow">Command Overview</p>
-        <h2>Operational Snapshot</h2>
+        <p class="eyebrow">Portfolio Overview</p>
+        <h2>Delivery Command View</h2>
       </div>
-      <span class="status-pill">{{ activeRolesLabel || 'No backend role loaded' }}</span>
+      <span class="status-pill">{{ authenticated ? 'Business View' : 'Sign In Required' }}</span>
     </div>
 
     <div class="executive-grid">
       <article class="executive-stat">
         <span>Projects</span>
         <strong>{{ projectCount }}</strong>
-        <p class="muted">Active delivery workspaces under current access.</p>
+        <p class="muted">Active delivery workspaces under the current portfolio scope.</p>
       </article>
 
       <article class="executive-stat">
         <span>Units</span>
         <strong>{{ unitCount }}</strong>
-        <p class="muted">COOP structures available for ownership and visibility.</p>
+        <p class="muted">COOP structures participating in current delivery ownership.</p>
       </article>
 
       <article class="executive-stat">
-        <span>Members</span>
-        <strong>{{ memberCount }}</strong>
-        <p class="muted">Team members loaded for the selected project.</p>
+        <span>Due Soon</span>
+        <strong>{{ dueSoonProjectCount }}</strong>
+        <p class="muted">Projects approaching their delivery window within the next two weeks.</p>
       </article>
 
       <article class="executive-stat">
-        <span>Task Completion</span>
-        <strong>{{ completionPercentage }}%</strong>
-        <p class="muted">Progress against currently loaded work items.</p>
+        <span>Needs Attention</span>
+        <strong>{{ attentionProjectCount }}</strong>
+        <p class="muted">Projects needing ownership, timeline, or follow-up action.</p>
       </article>
     </div>
   </article>
 
-  <article class="panel identity-panel">
+  <article class="panel focus-panel">
     <div class="panel-heading">
       <div>
-        <p class="eyebrow">Identity</p>
-        <h2>Session Profile</h2>
+        <p class="eyebrow">Current Focus</p>
+        <h2>{{ selectedProjectName || 'No active project selected' }}</h2>
       </div>
-      <span class="status-pill">{{ authenticated ? 'Signed In' : 'Signed Out' }}</span>
+      <span class="status-pill" *ngIf="selectedProject()">{{ formatStatus(selectedProject()?.status || '') }}</span>
     </div>
 
-    <ng-container *ngIf="authenticated; else signedOut">
-      <dl>
-        <div>
-          <dt>Username</dt>
-          <dd>{{ username || 'Unavailable' }}</dd>
-        </div>
-        <div>
-          <dt>Email</dt>
-          <dd>{{ email || 'Unavailable' }}</dd>
-        </div>
-        <div>
-          <dt>Name</dt>
-          <dd>{{ fullName || 'Unavailable' }}</dd>
-        </div>
-      </dl>
-    </ng-container>
+    <div class="empty-state" *ngIf="!selectedProject()">
+      <strong>{{ authenticated ? 'Choose a project to load delivery context' : 'Sign in to load portfolio data' }}</strong>
+      <p class="muted">
+        {{ authenticated ? 'Selecting a project will surface its owner, timeline, completion, and collaboration context here.' : 'Portfolio and project insight will appear here after authentication.' }}
+      </p>
+    </div>
 
-    <ng-template #signedOut>
-      <p class="muted">Sign in with one of the Keycloak test users to continue.</p>
-    </ng-template>
+    <ng-container *ngIf="selectedProject() as project">
+      <p class="muted focus-copy">
+        {{ project.description || 'This project does not yet have a summary. Add project detail so leadership and contributors understand the delivery intent.' }}
+      </p>
+
+      <div class="focus-details">
+        <article>
+          <span>Health</span>
+          <strong>{{ selectedProjectHealthLabel() }}</strong>
+        </article>
+
+        <article>
+          <span>Owning unit</span>
+          <strong>{{ selectedProjectOwnerLabel() }}</strong>
+        </article>
+
+        <article>
+          <span>Timeline</span>
+          <strong>{{ selectedProjectTimeline() }}</strong>
+        </article>
+
+        <article>
+          <span>Loaded members</span>
+          <strong>{{ memberCount }}</strong>
+        </article>
+      </div>
+    </ng-container>
   </article>
 
-  <article class="panel identity-panel">
+  <article class="panel readiness-panel">
     <div class="panel-heading">
       <div>
-        <p class="eyebrow">Access Context</p>
-        <h2>Backend Identity</h2>
+        <p class="eyebrow">Immediate Pressure</p>
+        <h2>Execution Signals</h2>
       </div>
-      <span class="status-pill" *ngIf="userId">Verified</span>
     </div>
 
-    <ng-container *ngIf="userId; else noBackendUser">
-      <dl>
-        <div>
-          <dt>User ID</dt>
-          <dd>{{ userId }}</dd>
-        </div>
-        <div>
-          <dt>Roles</dt>
-          <dd class="chips">
-            <span *ngFor="let role of roles">{{ role }}</span>
-          </dd>
-        </div>
-      </dl>
-    </ng-container>
+    <div class="empty-state" *ngIf="!authenticated">
+      <strong>Sign in to load personal and delivery indicators</strong>
+      <p class="muted">Assigned work, overdue tasks, and project pressure indicators will appear after authentication.</p>
+    </div>
 
-    <ng-template #noBackendUser>
-      <p class="muted">The backend identity check will appear here after login.</p>
-    </ng-template>
+    <div class="readiness-list" *ngIf="authenticated">
+      <article class="readiness-item danger">
+        <span>Overdue Tasks</span>
+        <strong>{{ overdueTasks }}</strong>
+        <p class="muted">Open work items that are already past their due date.</p>
+      </article>
+
+      <article class="readiness-item warning">
+        <span>High Priority</span>
+        <strong>{{ highPriorityTasks }}</strong>
+        <p class="muted">Priority work items that may require closer follow-up.</p>
+      </article>
+
+      <article class="readiness-item">
+        <span>Assigned to Me</span>
+        <strong>{{ assignedTasks.length }}</strong>
+        <p class="muted">Personally assigned work items in the currently selected project.</p>
+      </article>
+    </div>
   </article>
 </section>
 
@@ -316,43 +335,6 @@
           <span *ngIf="task.dueDate">Due {{ task.dueDate }}</span>
           <span *ngIf="!task.dueDate">No due date</span>
         </p>
-      </article>
-    </div>
-  </article>
-</section>
-
-<section class="operating-rhythm" *ngIf="authenticated">
-  <article class="panel operating-panel">
-    <div class="panel-heading">
-      <div>
-        <p class="eyebrow">Execution Focus</p>
-        <h2>Delivery Readiness</h2>
-      </div>
-    </div>
-
-    <div class="operating-grid">
-      <article class="operating-card">
-        <span class="metric-label">Priority Watch</span>
-        <strong>{{ highPriorityTasks }}</strong>
-        <p class="muted">High-priority tasks that may require closer follow-up.</p>
-      </article>
-
-      <article class="operating-card warning-card">
-        <span class="metric-label">Overdue Work</span>
-        <strong>{{ overdueTasks }}</strong>
-        <p class="muted">Work items that have passed their due date and remain open.</p>
-      </article>
-
-      <article class="operating-card">
-        <span class="metric-label">Projects Due Soon</span>
-        <strong>{{ dueSoonProjectCount }}</strong>
-        <p class="muted">Projects approaching delivery windows within the next two weeks.</p>
-      </article>
-
-      <article class="operating-card">
-        <span class="metric-label">Assigned to Me</span>
-        <strong>{{ assignedTasks.length }}</strong>
-        <p class="muted">Personally assigned tasks in the currently selected project.</p>
       </article>
     </div>
   </article>
