@@ -165,7 +165,7 @@ Authorization should continue to use multiple dimensions:
 - project membership
 - organizational context where relevant
 
-Project membership remains the clearest operational access boundary. Organizational unit context should enhance reporting and ownership visibility first, and can later become stricter where needed.
+Project membership remains the clearest operational access boundary. Organizational unit context should enhance reporting and team alignment visibility first, and can later become stricter where needed.
 
 ## 6. Roles and Access Design
 
@@ -214,9 +214,10 @@ The main data entities for the current product direction are:
 - One user may belong to one organizational unit in the current release.
 - One user may have one preference record.
 - One user can belong to many projects through ProjectMember.
-- One organizational unit can own many projects.
-- One project can have many members, milestones, and tasks.
-- One task belongs to one project and has one assignee in the current release.
+- One project can collaborate with many team units through a project-team join relationship.
+- One project can have many members, milestones, sprints, and tasks.
+- One sprint belongs to one project and can contain many tasks.
+- One task belongs to one project, may optionally belong to one sprint, and has one assignee in the current release.
 - One task can have many comments and many activity records.
 - One user can have many notifications.
 
@@ -257,7 +258,6 @@ The main data entities for the current product direction are:
 - name
 - description
 - created_by
-- organizational_unit_id
 - start_date
 - due_date
 - status
@@ -265,6 +265,21 @@ The main data entities for the current product direction are:
 - created_at
 - updated_at
 - archived_at
+
+#### ProjectTeam
+- project_id
+- team_id
+
+#### Sprint
+- id
+- project_id
+- name
+- goal
+- start_date
+- end_date
+- status
+- created_at
+- updated_at
 
 #### ProjectMilestone
 - id
@@ -287,6 +302,7 @@ The main data entities for the current product direction are:
 #### Task
 - id
 - project_id
+- sprint_id
 - title
 - description
 - status
@@ -342,6 +358,11 @@ Project health:
 - AT_RISK
 - OFF_TRACK
 
+Sprint status:
+- PLANNED
+- ACTIVE
+- COMPLETED
+
 Task status:
 - TO_DO
 - IN_PROGRESS
@@ -370,9 +391,11 @@ The backend should organize API responsibilities around these modules:
 - /api/me/preferences
 - /api/organizational-units
 - /api/projects
+- /api/projects/{projectId}/sprints
 - /api/projects/{projectId}/members
 - /api/projects/{projectId}/milestones
 - /api/projects/{projectId}/tasks
+- /api/sprints/{sprintId}
 - /api/tasks/{taskId}/comments
 - /api/tasks/{taskId}/activity
 - /api/dashboard
@@ -386,8 +409,9 @@ Suggested responsibilities include:
 - update of user preferences
 - create, list, update, and deactivate organizational units
 - create, list, update, and archive projects
-- filter projects by status, health, and unit
+- filter projects by status, health, and team
 - add and remove project members
+- create and update sprints
 - create and update milestones
 - create, edit, assign, and move tasks
 - list board tasks by project
@@ -403,7 +427,7 @@ DTOs should:
 - validate input clearly
 - avoid exposing persistence internals
 - keep API contracts stable for frontend work
-- include unit, status, and health information where needed for business views
+- include team alignment, status, sprint, and health information where needed for business views
 - avoid exposing unnecessary security or token details
 
 ## 9. Dashboard and Reporting Design
@@ -414,16 +438,18 @@ Dashboard data may be built from either composed entity lists or dedicated summa
 Likely summary groupings include:
 
 - portfolio overview metrics
-- unit coverage summary
+- team coverage summary
 - project watchlist
 - selected project summary
+- sprint planning summary
 - personal assigned work summary
 
 ### 9.2 Reporting Scope for the Current Phase
 The current reporting scope should remain practical:
 
-- unit-level summary counts
-- project-level progress and health summary
+- unit-level and team-level summary counts
+- project-level progress and computed health summary
+- sprint-level progress summary
 - personal assigned work summary
 - due soon and overdue indicators
 - audit visibility for key actions
@@ -448,7 +474,7 @@ The UI should feel like an internal COOP operating system for delivery work:
 - clear navigation
 - dense but readable information grouping
 - consistent visual language across dashboard, projects, units, and tasks
-- strong use of business terminology such as units, portfolio, delivery, ownership, milestones, and watchlist
+- strong use of business terminology such as teams, portfolio, delivery, sprints, milestones, and watchlist
 
 ## 11. Local Development and Deployment Design
 
@@ -493,7 +519,7 @@ The frontend should include tests for:
 
 - dashboard rendering and derived business metrics
 - profile page behavior
-- project and milestone forms
+- project and sprint forms
 - task filters and board behavior
 - notification center behavior where applicable
 
@@ -502,7 +528,8 @@ Critical end-to-end flows should include:
 
 - authentication
 - dashboard load for an authenticated user
-- project creation and unit assignment
+- project creation and team assignment
+- sprint creation
 - milestone creation
 - member management
 - task creation and status movement
@@ -528,10 +555,11 @@ A practical implementation sequence for the next product phase is:
 1. align requirements and system design documents
 2. widen the application shell and simplify the dashboard content model
 3. introduce the dedicated profile page
-4. add project lifecycle status and health controls
-5. add milestone management
-6. add notification center behavior and reminder flows
-7. expand reporting and audit review polish
+4. shift projects to multi-team collaboration and computed health
+5. add sprint planning and sprint-aware task management
+6. add milestone management
+7. add notification center behavior and reminder flows
+8. expand reporting and audit review polish
 
 This phased approach keeps the project realistic while still moving it toward an enterprise-quality result.
 
@@ -556,4 +584,4 @@ Likely future extensions include:
 
 ## 16. Conclusion
 
-This design provides a practical architecture for the next phase of COOP WorkFlow. It keeps the existing technical foundation while shifting the product toward a more coherent enterprise experience: a wider workspace, a cleaner business dashboard, a dedicated profile area, stronger project structure through status and milestones, and a clearer path for notifications, reporting, and audit visibility.
+This design provides a practical architecture for the next phase of COOP WorkFlow. It keeps the existing technical foundation while shifting the product toward a more coherent enterprise experience: a wider workspace, a cleaner business dashboard, a dedicated profile area, stronger project structure through teams, sprints, and computed health, and a clearer path for notifications, reporting, and audit visibility.

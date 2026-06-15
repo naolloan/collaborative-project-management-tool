@@ -18,7 +18,7 @@
       <article class="executive-stat">
         <span>Units</span>
         <strong>{{ unitCount }}</strong>
-        <p class="muted">COOP structures participating in current delivery ownership.</p>
+        <p class="muted">COOP structures available for delivery alignment and reporting.</p>
       </article>
 
       <article class="executive-stat">
@@ -30,7 +30,7 @@
       <article class="executive-stat">
         <span>Needs Attention</span>
         <strong>{{ attentionProjectCount }}</strong>
-        <p class="muted">Projects needing ownership, timeline, or follow-up action.</p>
+        <p class="muted">Projects needing team alignment, timeline, or follow-up action.</p>
       </article>
     </div>
   </article>
@@ -47,7 +47,7 @@
     <div class="empty-state" *ngIf="!selectedProject()">
       <strong>{{ authenticated ? 'Choose a project to load delivery context' : 'Sign in to load portfolio data' }}</strong>
       <p class="muted">
-        {{ authenticated ? 'Selecting a project will surface its owner, timeline, completion, and collaboration context here.' : 'Portfolio and project insight will appear here after authentication.' }}
+        {{ authenticated ? 'Selecting a project will surface its teams, timeline, completion, and collaboration context here.' : 'Portfolio and project insight will appear here after authentication.' }}
       </p>
     </div>
 
@@ -63,7 +63,7 @@
         </article>
 
         <article>
-          <span>Owning unit</span>
+          <span>Assigned teams</span>
           <strong>{{ selectedProjectOwnerLabel() }}</strong>
         </article>
 
@@ -126,20 +126,20 @@
     </div>
 
     <p class="muted portfolio-copy">
-      Track unit ownership, timeline pressure, and emerging delivery risk across the active COOP portfolio.
+      Track multi-team collaboration, timeline pressure, and emerging delivery risk across the active COOP portfolio.
     </p>
 
     <div class="summary-grid portfolio-summary-grid">
       <article class="summary-card">
-        <span>Unit aligned</span>
+        <span>Team aligned</span>
         <strong>{{ alignedProjectCount }}</strong>
-        <p class="muted">Projects mapped to an owning COOP unit.</p>
+        <p class="muted">Projects already assigned to collaborating delivery teams.</p>
       </article>
 
       <article class="summary-card danger-card">
-        <span>Without owner</span>
+        <span>Without teams</span>
         <strong>{{ unassignedProjectCount }}</strong>
-        <p class="muted">Projects still missing a responsible unit.</p>
+        <p class="muted">Projects still missing collaborating delivery teams.</p>
       </article>
 
       <article class="summary-card warning">
@@ -151,7 +151,7 @@
       <article class="summary-card">
         <span>Needs attention</span>
         <strong>{{ attentionProjectCount }}</strong>
-        <p class="muted">Projects needing owner or schedule follow-up.</p>
+        <p class="muted">Projects needing team alignment or schedule follow-up.</p>
       </article>
     </div>
   </article>
@@ -159,15 +159,15 @@
   <article class="panel unit-coverage-panel">
     <div class="panel-heading">
       <div>
-        <p class="eyebrow">Ownership Distribution</p>
-        <h2>Unit Coverage</h2>
+        <p class="eyebrow">Team Distribution</p>
+        <h2>Team Coverage</h2>
       </div>
       <span class="status-pill">{{ unitCoverage.length }} units active</span>
     </div>
 
     <div class="empty-state" *ngIf="unitCoverage.length === 0">
-      <strong>No owned projects yet</strong>
-      <p class="muted">Assign projects to organizational units to unlock unit-level portfolio visibility.</p>
+      <strong>No team-linked projects yet</strong>
+      <p class="muted">Assign delivery teams to projects to unlock cross-team portfolio visibility.</p>
     </div>
 
     <div class="unit-coverage-list" *ngIf="unitCoverage.length > 0">
@@ -184,7 +184,7 @@
           <span [style.width.%]="coverage.coveragePercent"></span>
         </div>
 
-        <p class="muted">{{ coverage.coveragePercent }}% of active projects currently sit with this unit.</p>
+        <p class="muted">{{ coverage.coveragePercent }}% of active projects currently involve this team.</p>
       </article>
     </div>
   </article>
@@ -224,16 +224,16 @@
 
         <dl class="portfolio-detail-list">
           <div>
-            <dt>Owner</dt>
-            <dd>{{ item.ownerLabel }}</dd>
+            <dt>Teams</dt>
+            <dd>{{ item.teamLabel }}</dd>
           </div>
           <div>
             <dt>Timeline</dt>
             <dd>{{ item.timeline }}</dd>
           </div>
           <div>
-            <dt>Unit Type</dt>
-            <dd>{{ formatUnitType(item.project.organizationalUnitType) }}</dd>
+            <dt>Primary Team Type</dt>
+            <dd>{{ formatUnitType(projectPrimaryTeamType(item.project)) }}</dd>
           </div>
         </dl>
       </article>

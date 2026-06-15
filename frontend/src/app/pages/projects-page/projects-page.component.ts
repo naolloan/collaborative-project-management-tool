@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { OrganizationalUnit } from '../../core/dto/organizational-unit';
-import { CreateProjectRequest, Project, ProjectHealth, ProjectLifecycleStatus } from '../../core/dto/project';
+import { CreateProjectRequest, Project, ProjectLifecycleStatus } from '../../core/dto/project';
 
 type HealthTone = 'good' | 'warning' | 'danger' | 'neutral';
 
@@ -21,14 +21,12 @@ export class ProjectsPageComponent {
   @Input({ required: true }) editProject!: {
     name: string;
     description: string;
-    organizationalUnitId: number | null;
+    teamIds: number[];
     startDate: string;
     dueDate: string;
     status: ProjectLifecycleStatus;
-    health: ProjectHealth;
   };
   @Input({ required: true }) projectLifecycleStatuses: ProjectLifecycleStatus[] = [];
-  @Input({ required: true }) projectHealthOptions: ProjectHealth[] = [];
   @Input({ required: true }) creatingProject = false;
   @Input({ required: true }) updatingProject = false;
   @Input({ required: true }) archivingProject = false;
@@ -114,7 +112,7 @@ export class ProjectsPageComponent {
 
   selectedProjectSummary(): string {
     if (!this.selectedProject) {
-      return 'Select a project to review ownership, timeline, and governance details.';
+      return 'Select a project to review team alignment, timeline, and governance details.';
     }
 
     return this.selectedProject.description || 'No project summary has been added yet.';
@@ -137,7 +135,7 @@ export class ProjectsPageComponent {
   }
 
   ownedProjectCount(): number {
-    return this.projects.filter((project) => Boolean(project.organizationalUnitName)).length;
+    return this.projects.filter((project) => (project.teams?.length ?? 0) > 0).length;
   }
 
   selectedProjectCountLabel(): string {
@@ -146,6 +144,22 @@ export class ProjectsPageComponent {
 
   activeDeliveryCount(): number {
     return this.projects.filter((project) => project.status === 'ACTIVE').length;
+  }
+
+  teamUnits(): OrganizationalUnit[] {
+    return this.organizationalUnits.filter((unit) => unit.type === 'TEAM');
+  }
+
+  projectTeamSummary(project: Project | undefined): string {
+    if (!project || !project.teams || project.teams.length === 0) {
+      return 'No teams assigned';
+    }
+
+    return project.teams.map((team) => team.name).join(', ');
+  }
+
+  selectedProjectTeamCount(): number {
+    return this.selectedProject?.teams?.length ?? 0;
   }
 
   private formatLabel(value: string): string {

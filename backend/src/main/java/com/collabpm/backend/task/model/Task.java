@@ -2,6 +2,7 @@ package com.collabpm.backend.task.model;
 
 import com.collabpm.backend.common.model.BaseEntity;
 import com.collabpm.backend.project.model.Project;
+import com.collabpm.backend.sprint.model.Sprint;
 import com.collabpm.backend.user.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -42,6 +43,10 @@ public class Task extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sprint_id")
+    private Sprint sprint;
 
     private LocalDate dueDate;
 
@@ -103,6 +108,14 @@ public class Task extends BaseEntity {
 
     public User getCreatedBy() {
         return createdBy;
+    }
+
+    public Sprint getSprint() {
+        return sprint;
+    }
+
+    public void setSprint(Sprint sprint) {
+        this.sprint = sprint;
     }
 
     public LocalDate getDueDate() {

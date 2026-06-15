@@ -12,6 +12,8 @@ public record TaskResponse(
     Long assigneeId,
     String assigneeName,
     String createdByName,
-    LocalDate dueDate
+    LocalDate dueDate,
+    Long sprintId,
+    String sprintName
 ) {
 }

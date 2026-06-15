@@ -8,7 +8,7 @@ type HealthTone = 'good' | 'warning' | 'danger' | 'neutral';
 
 interface PortfolioWatchItem {
   project: Project;
-  ownerLabel: string;
+  teamLabel: string;
   timeline: string;
   healthLabel: string;
   healthTone: HealthTone;
@@ -78,7 +78,7 @@ export class DashboardPageComponent implements OnChanges {
 
   selectedProjectOwnerLabel(): string {
     const project = this.selectedProject();
-    return project ? this.projectOwnerLabel(project) : 'No owning unit assigned';
+    return project ? this.projectOwnerLabel(project) : 'No teams assigned';
   }
 
   selectedProjectTimeline(): string {
@@ -104,7 +104,7 @@ export class DashboardPageComponent implements OnChanges {
 
     this.unitCoverage = this.organizationalUnits
       .map((unit) => {
-        const projectCount = this.projects.filter((project) => project.organizationalUnitId === unit.id).length;
+        const projectCount = this.projects.filter((project) => project.teams?.some((team) => team.id === unit.id)).length;
         return {
           unit,
           projectCount,
@@ -137,7 +137,7 @@ export class DashboardPageComponent implements OnChanges {
 
     this.portfolioWatchlist = (urgentProjects.length > 0 ? urgentProjects : fallbackProjects).map(({ project }) => ({
       project,
-      ownerLabel: this.projectOwnerLabel(project),
+      teamLabel: this.projectOwnerLabel(project),
       timeline: this.projectTimeline(project),
       healthLabel: this.projectHealthLabel(project),
       healthTone: this.projectHealthTone(project)
@@ -145,22 +145,15 @@ export class DashboardPageComponent implements OnChanges {
   }
 
   private hasOwningUnit(project: Project): boolean {
-    return Boolean(project.organizationalUnitId || project.organizationalUnitName);
+    return Boolean(project.teams && project.teams.length > 0);
   }
 
   private projectOwnerLabel(project: Project): string {
-    if (project.organizationalUnitName) {
-      return project.organizationalUnitName;
+    if (project.teams && project.teams.length > 0) {
+      return project.teams.map((team) => team.name).join(', ');
     }
 
-    if (project.organizationalUnitId) {
-      const unit = this.organizationalUnits.find((candidate) => candidate.id === project.organizationalUnitId);
-      if (unit) {
-        return unit.name;
-      }
-    }
-
-    return 'No owning unit assigned';
+    return 'No teams assigned';
   }
 
   private projectTimeline(project: Project): string {
@@ -189,7 +182,7 @@ export class DashboardPageComponent implements OnChanges {
     }
 
     if (!this.hasOwningUnit(project)) {
-      return 'Needs owner alignment';
+      return 'Needs team alignment';
     }
 
     if (!project.dueDate) {
@@ -255,13 +248,17 @@ export class DashboardPageComponent implements OnChanges {
 
   private needsAttention(project: Project): boolean {
     const normalizedHealth = (project.health || '').trim().toUpperCase();
-    return !this.isClosedProject(project)
+      return !this.isClosedProject(project)
       && (!this.hasOwningUnit(project)
         || this.isOverdue(project)
         || this.isDueSoon(project)
         || normalizedHealth === 'AT_RISK'
         || normalizedHealth === 'OFF_TRACK'
         || normalizedHealth === 'BLOCKED');
+  }
+
+  projectPrimaryTeamType(project: Project): string | null {
+    return project.teams && project.teams.length > 0 ? project.teams[0].type : null;
   }
 
   private isDueSoon(project: Project): boolean {

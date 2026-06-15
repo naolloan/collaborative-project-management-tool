@@ -12,6 +12,8 @@ export interface Task {
   assigneeName?: string | null;
   createdByName?: string | null;
   dueDate?: string | null;
+  sprintId?: number | null;
+  sprintName?: string | null;
 }
 
 export interface CreateTaskRequest {
@@ -19,6 +21,7 @@ export interface CreateTaskRequest {
   description?: string | null;
   priority: TaskPriority;
   assigneeId?: number | null;
+  sprintId?: number | null;
   dueDate?: string | null;
 }
 

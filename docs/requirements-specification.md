@@ -19,7 +19,7 @@ COOP WorkFlow should feel like a serious internal enterprise platform rather tha
 The product vision combines five ideas:
 
 - portfolio visibility for leaders
-- project and task execution for delivery teams
+- project, sprint, and task execution for delivery teams
 - COOP organizational ownership through units such as departments, branches, divisions, and teams
 - personal work management for each authenticated user
 - auditable collaboration for accountability and traceability
@@ -30,8 +30,8 @@ The main dashboard should present delivery information, project health, deadline
 The main objectives of the system are:
 
 - provide a centralized internal platform for managing project work across COOP
-- allow teams to break work into manageable tasks and milestones
-- map projects to responsible organizational units
+- allow teams to break work into manageable sprints, tasks, and milestones
+- map projects to collaborating delivery teams within COOP organizational structure
 - give managers visibility into delivery health, workload, and timeline pressure
 - support personal work tracking for each user
 - improve accountability through activity history and audit records
@@ -46,7 +46,8 @@ The target scope for the next product phase includes:
 - a dedicated user profile page
 - organizational unit management
 - project lifecycle management
-- project health and milestone tracking
+- automatic project health and milestone tracking
+- sprint planning and sprint tracking
 - project member management
 - task board, task details, comments, and activity history
 - basic in-app notifications and reminders
@@ -66,12 +67,13 @@ The following capabilities are important but remain outside the near-term implem
 ### 1.5 Definitions
 
 - Portfolio dashboard: a summary view that shows project health, ownership, workload, and delivery alerts across multiple projects
-- Project: a workspace that groups related tasks, members, milestones, and progress information
+- Project: a workspace that groups related teams, sprints, tasks, members, milestones, and progress information
+- Sprint: a time-boxed delivery cycle inside a project that groups related tasks toward a short-term goal
 - Milestone: a planned checkpoint or deliverable within a project timeline
 - Task: the smallest managed work item within a project
 - Workflow: the ordered set of statuses that a task passes through from creation to completion
 - Organizational unit: a COOP structure such as a head office group, department, branch, division, or team
-- Project health: a business-facing indicator such as On Track, At Risk, or Off Track
+- Project health: a business-facing indicator such as On Track, At Risk, or Off Track, computed from delivery conditions rather than manually selected
 - Profile page: a user-focused area that shows identity, unit association, preferences, and personal context
 - Notification center: an in-app area for assignment alerts, reminders, and relevant updates
 - Audit log: an append-only record of important actions for accountability and traceability
@@ -101,14 +103,14 @@ The system will initially support the following user roles and usage patterns.
 
 ### 3.2 Portfolio Manager or PMO User
 - view portfolio-wide project summaries
-- review project health, ownership gaps, and upcoming deadlines
+- review project health, team alignment gaps, and upcoming deadlines
 - access unit and portfolio reporting views
 
 ### 3.3 Project Manager
 - create and manage projects
-- assign owning units and project status
-- manage project milestones and membership
-- create, assign, update, and monitor tasks
+- assign collaborating teams and project status
+- manage project milestones, sprints, and membership
+- create, assign, update, and monitor sprint-scoped tasks
 
 ### 3.4 Team Member
 - view authorized projects and tasks
@@ -117,9 +119,9 @@ The system will initially support the following user roles and usage patterns.
 - review personally assigned work and reminders
 
 ### 3.5 Unit Manager
-- view projects owned by their organizational unit
-- monitor progress, deadlines, and health indicators for that unit
-- review summary and audit information relevant to unit-owned work
+- view projects involving their organizational unit or team
+- monitor progress, deadlines, sprint delivery, and health indicators for that unit
+- review summary and audit information relevant to team-aligned work
 
 ### 3.6 Auditor or Read-Only Reviewer
 - view audit and activity information within allowed scope
@@ -237,7 +239,7 @@ The system shall provide portfolio-level and unit-level summary views or section
 ### 5.4 Project Management
 
 #### FR-24 Create Project
-The system shall allow authorized users to create a project with a name, description, optional start and due dates, an owning organizational unit, and a project status.
+The system shall allow authorized users to create a project with a name, description, optional start and due dates, one or more collaborating teams, and a project status.
 
 #### FR-25 View and Update Project
 The system shall allow authorized users to view and update project details.
@@ -251,74 +253,83 @@ The system shall support project lifecycle statuses such as Planned, Active, On 
 #### FR-28 Project Health Indicator
 The system shall support a business-facing project health label such as On Track, At Risk, or Off Track.
 
-#### FR-29 Project Ownership
-The system shall associate each project with one owning organizational unit in the initial release.
+#### FR-29 Project Team Alignment
+The system shall associate each project with one or more collaborating teams of type Team.
 
-#### FR-30 Project Member Management
+#### FR-30 Automatic Project Health
+The system shall compute project health automatically from project dates, sprint state, overdue work, and open high-priority tasks rather than allowing manual editing.
+
+#### FR-31 Project Member Management
 The system shall allow a project manager or administrator to add and remove project members and assign their project role.
 
-#### FR-31 Project Milestones
+#### FR-32 Project Milestones
 The system shall allow authorized users to create, update, and track milestones within a project.
 
-#### FR-32 Project Timeline Summary
+#### FR-33 Sprint Management
+The system shall allow authorized users to create, update, and review sprints within a project, including sprint goal, dates, and sprint status.
+
+#### FR-34 Sprint-Aware Task Planning
+The system shall allow tasks to be assigned to a sprint or kept in backlog when they are not yet planned into an active sprint.
+
+#### FR-35 Project Timeline Summary
 The system shall present start date, due date, and milestone-related timeline information in project views.
 
-#### FR-33 Project Search and Filtering
-The system shall allow users to search and filter projects by name, status, health, and organizational unit.
+#### FR-36 Project Search and Filtering
+The system shall allow users to search and filter projects by name, status, health, and collaborating team.
 
-#### FR-34 Project Summary Metrics
-The system shall provide a project summary showing task counts, completion progress, milestone status, and key timeline information.
+#### FR-37 Project Summary Metrics
+The system shall provide a project summary showing sprint progress, task counts, completion progress, milestone status, and key timeline information.
 
 ### 5.5 Task Management and Collaboration
 
-#### FR-35 Create Task
+#### FR-38 Create Task
 The system shall allow authorized users to create tasks within a project.
 
-#### FR-36 Edit and Delete Task
+#### FR-39 Edit and Delete Task
 The system shall allow authorized users to update or delete task details when permitted.
 
-#### FR-37 Assign Task
+#### FR-40 Assign Task
 The system shall allow a task to be assigned to one user in the initial release.
 
-#### FR-38 Task Priority and Due Date
+#### FR-41 Task Priority and Due Date
 The system shall support task priority levels and optional due dates.
 
-#### FR-39 Task Workflow
+#### FR-42 Task Workflow
 The system shall provide a fixed workflow with statuses such as To Do, In Progress, Review, and Done.
 
-#### FR-40 Board View
-The system shall display project tasks in a board view grouped by workflow status.
+#### FR-43 Board View
+The system shall display project tasks in a board view grouped by workflow status and support sprint-specific filtering.
 
-#### FR-41 Task Search and Filters
-The system shall allow users to search or filter tasks by text, assignee, priority, and status.
+#### FR-44 Task Search and Filters
+The system shall allow users to search or filter tasks by text, assignee, priority, status, and sprint.
 
-#### FR-42 Task Comments
+#### FR-45 Task Comments
 The system shall allow project members to add comments to a task.
 
-#### FR-43 Task Activity History
+#### FR-46 Task Activity History
 The system shall maintain and display activity history for tasks, including creation, assignment, status changes, and comments.
 
-#### FR-44 Personal Task View
+#### FR-47 Personal Task View
 The system shall allow a user to view work assigned specifically to them.
 
 ### 5.6 Notifications, Audit, and Reporting
 
-#### FR-45 In-App Notification Center
+#### FR-48 In-App Notification Center
 The system shall provide an in-app notification center for relevant user alerts.
 
-#### FR-46 Reminder Notifications
+#### FR-49 Reminder Notifications
 The system shall provide basic reminders for assignment changes, due soon items, and overdue work.
 
-#### FR-47 Audit Event Recording
+#### FR-50 Audit Event Recording
 The system shall record important project-management actions for accountability, including project updates, membership changes, milestone changes, task updates, and organizational unit changes.
 
-#### FR-48 Audit Event Details
+#### FR-51 Audit Event Details
 Audit records shall include actor, action type, target resource, timestamp, and enough context to understand what changed.
 
-#### FR-49 Audit Visibility
+#### FR-52 Audit Visibility
 Authorized users shall be able to review audit information within their permitted scope.
 
-#### FR-50 Summary Export Direction
+#### FR-53 Summary Export Direction
 The system should support future export of summary data for managerial reporting. This is desirable but may be deferred if time is limited.
 
 ## 6. Non-Functional Requirements
@@ -434,10 +445,12 @@ Possible important fields include:
 - User: id, keycloakUserId, fullName, email, organizationalUnitId, active
 - UserPreference: userId, defaultLandingPage, displayDensity, notifyAssignments, notifyDueSoon, notifyOverdue
 - OrganizationalUnit: id, name, type, description, active, createdAt, updatedAt
-- Project: id, name, description, createdBy, organizationalUnitId, startDate, dueDate, status, health, createdAt, updatedAt
+- Project: id, name, description, createdBy, startDate, dueDate, status, health, createdAt, updatedAt
+- ProjectTeam: projectId, teamId
+- Sprint: id, projectId, name, goal, startDate, endDate, status, createdAt, updatedAt
 - ProjectMilestone: id, projectId, title, description, dueDate, status, ownerId
 - ProjectMember: id, projectId, userId, projectRole, joinedAt
-- Task: id, title, description, status, priority, assigneeId, dueDate, projectId, createdBy
+- Task: id, title, description, status, priority, assigneeId, dueDate, sprintId, projectId, createdBy
 - Comment: id, taskId, authorId, content, createdAt, updatedAt
 - Notification: id, userId, type, title, message, read, createdAt
 - ActivityLog: id, actionType, actorId, targetType, targetId, oldValue, newValue, createdAt
@@ -451,9 +464,10 @@ The target initial release for the next phase should include:
 - business-focused dashboard
 - dedicated profile page
 - organizational unit management
-- project creation, editing, archiving, and ownership by unit
+- project creation, editing, archiving, and team assignment
 - project member management
-- project status and health tracking
+- automatic project health tracking
+- sprint planning and sprint-aware task management
 - project milestones
 - task board with search and filters
 - task comments and activity history
@@ -487,7 +501,7 @@ A user opens the profile page to view identity, unit association, preferences, a
 An administrator creates, updates, or deactivates organizational units.
 
 ### UC-5 Project Manager Creates and Updates a Project
-A project manager creates a project, assigns its owning unit, and maintains project details.
+A project manager creates a project, assigns collaborating teams, plans sprints, and maintains project details.
 
 ### UC-6 Project Manager Tracks Milestones
 A project manager creates milestones and reviews their timeline status.
@@ -522,7 +536,8 @@ The next release shall be considered acceptable when:
 - a dedicated profile page is available for user identity and personal context
 - administrators can manage organizational units
 - authorized users can create, update, and archive projects
-- projects can be assigned to organizational units and tracked by status and health
+- projects can be assigned to collaborating teams and tracked by status and computed health
+- project managers can create and maintain sprints under projects
 - project milestones can be created and reviewed
 - project managers can manage project membership
 - authorized users can create, assign, filter, and track tasks
@@ -540,7 +555,9 @@ The following decisions currently shape the implementation direction:
 
 - Keycloak will remain the identity source rather than building custom authentication.
 - Tasks will support one assignee in the initial release.
-- Projects will use one owning organizational unit in the initial release.
+- Projects will support one or more collaborating teams in the current release.
+- Project health will be computed automatically rather than edited manually.
+- Sprints will sit between projects and tasks as the primary short-cycle planning layer.
 - The task workflow will remain fixed initially: To Do, In Progress, Review, and Done.
 - The business dashboard should remain free of low-level technical status details.
 - Identity, role, preference, and support-oriented information should move to a profile or support-facing area.

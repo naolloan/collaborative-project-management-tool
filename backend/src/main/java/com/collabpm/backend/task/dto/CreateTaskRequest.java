@@ -10,6 +10,7 @@ public record CreateTaskRequest(
     String description,
     TaskPriority priority,
     Long assigneeId,
+    Long sprintId,
     LocalDate dueDate
 ) {
 }

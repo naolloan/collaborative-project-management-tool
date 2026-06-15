@@ -101,7 +101,7 @@
         <div *ngSwitchCase="'projects'">
           <p class="eyebrow">Planning</p>
           <h2>Projects</h2>
-          <p class="muted">Create projects, assign owning units, and maintain project details.</p>
+          <p class="muted">Create projects, assign collaborating teams, plan sprints, and maintain delivery details.</p>
         </div>
         <div *ngSwitchCase="'units'">
           <p class="eyebrow">Bank Structure</p>
@@ -116,7 +116,7 @@
         <div *ngSwitchCase="'tasks'">
           <p class="eyebrow">Delivery</p>
           <h2>Task Board</h2>
-          <p class="muted">Create, move, discuss, and audit work items for the selected project.</p>
+          <p class="muted">Create sprint-scoped work, move tasks through workflow, and audit delivery progress for the selected project.</p>
         </div>
         <div *ngSwitchCase="'profile'">
           <p class="eyebrow">Account</p>
@@ -161,7 +161,6 @@
     [newProject]="newProject"
     [editProject]="editProject"
     [projectLifecycleStatuses]="projectLifecycleStatuses"
-    [projectHealthOptions]="projectHealthOptions"
     [creatingProject]="creatingProject()"
     [updatingProject]="updatingProject()"
     [archivingProject]="archivingProject()"
@@ -287,9 +286,14 @@
           <p class="eyebrow">Task Operations</p>
           <h2>{{ selectedProject()?.name || 'Select a project to begin' }}</h2>
         </div>
-        <button type="button" class="ghost compact" (click)="loadSelectedProjectTasks()" [disabled]="!selectedProjectId()">
-          Refresh Board
-        </button>
+        <div class="form-actions">
+          <button type="button" class="ghost compact" (click)="loadSelectedProjectTasks()" [disabled]="!selectedProjectId()">
+            Refresh Board
+          </button>
+          <button type="button" class="ghost compact" (click)="selectedProjectId() && loadSprints(selectedProjectId()!)" [disabled]="!selectedProjectId()">
+            Refresh Sprints
+          </button>
+        </div>
       </div>
 
       <p class="muted task-context-copy">
@@ -300,6 +304,10 @@
         <article>
           <span>Loaded tasks</span>
           <strong>{{ tasks().length }}</strong>
+        </article>
+        <article>
+          <span>Loaded sprints</span>
+          <strong>{{ sprints().length }}</strong>
         </article>
         <article>
           <span>High priority</span>
@@ -317,6 +325,190 @@
     </article>
   </section>
 
+  <section class="sprint-workspace" *ngIf="authenticated() && activeWorkspace() === 'tasks'">
+    <article class="panel sprint-directory-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Sprint Planning</p>
+          <h2>Project Sprints</h2>
+        </div>
+        <span class="status-pill">{{ sprintStatus() }}</span>
+      </div>
+
+      <div class="board-empty" *ngIf="!selectedProjectId()">
+        <strong>No project selected</strong>
+        <p class="muted">Choose an active project to plan sprints and connect work items to delivery cycles.</p>
+      </div>
+
+      <ng-container *ngIf="selectedProjectId()">
+        <div class="sprint-list" *ngIf="sprints().length > 0; else noSprints">
+          <article
+            class="sprint-card selectable"
+            *ngFor="let sprint of sprints()"
+            [class.selected]="sprint.id === editSprint.id"
+            (click)="editSelectedSprint(sprint)">
+            <div class="sprint-card-top">
+              <div>
+                <span class="status-pill">{{ formatStatus(sprint.status) }}</span>
+                <h3>{{ sprint.name }}</h3>
+              </div>
+              <strong>{{ sprintProgress(sprint) }}%</strong>
+            </div>
+
+            <p class="muted">{{ sprint.goal || 'No sprint goal has been written yet.' }}</p>
+
+            <div class="progress-track sprint-progress-track" aria-hidden="true">
+              <span [style.width.%]="sprintProgress(sprint)"></span>
+            </div>
+
+            <dl class="sprint-card-metrics">
+              <div>
+                <dt>Timeline</dt>
+                <dd>{{ sprintTimelineLabel(sprint) }}</dd>
+              </div>
+              <div>
+                <dt>Tasks</dt>
+                <dd>{{ sprint.completedTaskCount }} / {{ sprint.totalTaskCount }} done</dd>
+              </div>
+            </dl>
+          </article>
+        </div>
+
+        <ng-template #noSprints>
+          <div class="empty-state">
+            <strong>No sprints created yet</strong>
+            <p class="muted">Start with a planned sprint, then connect tasks to it from the task intake and board views.</p>
+          </div>
+        </ng-template>
+      </ng-container>
+    </article>
+
+    <article class="panel sprint-editor-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Sprint Setup</p>
+          <h2>Create Sprint</h2>
+        </div>
+        <span class="status-pill" *ngIf="selectedProject()">{{ selectedProject()?.name }}</span>
+      </div>
+
+      <form class="project-form" (ngSubmit)="createSprint()">
+        <label>
+          Sprint name
+          <input
+            type="text"
+            name="newSprintName"
+            [(ngModel)]="newSprint.name"
+            placeholder="Sprint 1"
+            required>
+        </label>
+
+        <label>
+          Sprint goal
+          <textarea
+            name="newSprintGoal"
+            [(ngModel)]="newSprint.goal"
+            rows="3"
+            placeholder="Capture the outcome this sprint should achieve."></textarea>
+        </label>
+
+        <div class="project-form-grid project-governance-grid">
+          <label>
+            Status
+            <select name="newSprintStatus" [(ngModel)]="newSprint.status">
+              <option *ngFor="let status of sprintStatuses" [ngValue]="status">{{ formatStatus(status) }}</option>
+            </select>
+          </label>
+
+          <label>
+            Backlog items
+            <input type="text" [value]="taskCountForSprint(null) + ' tasks not yet assigned to a sprint'" readonly>
+          </label>
+        </div>
+
+        <div class="date-row">
+          <label>
+            Start date
+            <input type="date" name="newSprintStartDate" [(ngModel)]="newSprint.startDate">
+          </label>
+
+          <label>
+            End date
+            <input type="date" name="newSprintEndDate" [(ngModel)]="newSprint.endDate">
+          </label>
+        </div>
+
+        <button type="submit" class="primary" [disabled]="creatingSprint() || !selectedProjectId()">
+          {{ creatingSprint() ? 'Creating...' : 'Create Sprint' }}
+        </button>
+      </form>
+
+      <div class="sprint-divider"></div>
+
+      <div class="panel-heading sprint-edit-heading">
+        <div>
+          <p class="eyebrow">Selected Sprint</p>
+          <h2>{{ selectedSprint()?.name || 'Sprint details' }}</h2>
+        </div>
+        <span class="status-pill">{{ selectedSprint() ? formatStatus(selectedSprint()?.status || '') : 'No sprint selected' }}</span>
+      </div>
+
+      <div class="board-empty" *ngIf="!selectedSprint()">
+        <strong>No sprint selected</strong>
+        <p class="muted">Select a sprint from the planning list to update its dates, goal, and delivery state.</p>
+      </div>
+
+      <form class="project-form" *ngIf="selectedSprint()" (ngSubmit)="updateSelectedSprint()">
+        <label>
+          Sprint name
+          <input
+            type="text"
+            name="editSprintName"
+            [(ngModel)]="editSprint.name"
+            required>
+        </label>
+
+        <label>
+          Sprint goal
+          <textarea
+            name="editSprintGoal"
+            [(ngModel)]="editSprint.goal"
+            rows="3"></textarea>
+        </label>
+
+        <div class="project-form-grid project-governance-grid">
+          <label>
+            Status
+            <select name="editSprintStatus" [(ngModel)]="editSprint.status">
+              <option *ngFor="let status of sprintStatuses" [ngValue]="status">{{ formatStatus(status) }}</option>
+            </select>
+          </label>
+
+          <label>
+            Delivery progress
+            <input type="text" [value]="sprintProgress(selectedSprint()) + '% complete'" readonly>
+          </label>
+        </div>
+
+        <div class="date-row">
+          <label>
+            Start date
+            <input type="date" name="editSprintStartDate" [(ngModel)]="editSprint.startDate">
+          </label>
+
+          <label>
+            End date
+            <input type="date" name="editSprintEndDate" [(ngModel)]="editSprint.endDate">
+          </label>
+        </div>
+
+        <button type="submit" class="primary" [disabled]="updatingSprint()">
+          {{ updatingSprint() ? 'Saving...' : 'Save Sprint' }}
+        </button>
+      </form>
+    </article>
+  </section>
+
   <section class="task-workspace" *ngIf="authenticated() && activeWorkspace() === 'tasks'">
     <article class="panel create-task-panel task-intake-panel">
       <div class="panel-heading">
@@ -326,6 +518,9 @@
         </div>
         <span class="status-pill" *ngIf="selectedProjectId()">{{ taskStatus() }}</span>
       </div>
+      <p class="muted" *ngIf="selectedProjectId() && sprints().length > 0">
+        {{ sprintStatus() }}. Active sprint: {{ activeSprint()?.name || 'None selected' }}
+      </p>
       <p class="muted" *ngIf="selectedProject(); else noProjectForTask">
         Adding task to <strong>{{ selectedProject()?.name }}</strong>
       </p>
@@ -356,6 +551,16 @@
 
         <div class="date-row task-intake-grid">
           <label>
+            Sprint
+            <select name="taskSprint" [(ngModel)]="newTask.sprintId">
+              <option [ngValue]="null">Backlog / No sprint</option>
+              <option *ngFor="let sprint of sprints()" [ngValue]="sprint.id">
+                {{ sprint.name }} - {{ sprint.status }}
+              </option>
+            </select>
+          </label>
+
+          <label>
             Priority
             <select name="taskPriority" [(ngModel)]="newTask.priority">
               <option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</option>
@@ -365,7 +570,7 @@
           <label>
             Assignee
             <select name="taskAssignee" [(ngModel)]="newTask.assigneeId">
-              <option [ngValue]="null">Assign to me</option>
+              <option [ngValue]="null">Assign to creator</option>
               <option *ngFor="let member of projectMembers()" [ngValue]="member.userId">
                 {{ member.fullName }}
               </option>
@@ -390,7 +595,7 @@
           <p class="eyebrow">Workflow</p>
           <h2>Execution Board</h2>
         </div>
-        <span class="status-pill">{{ filteredTasks().length }} visible</span>
+        <span class="status-pill">{{ taskBoardScopeLabel() }} / {{ filteredTasks().length }} visible</span>
       </div>
 
       <div class="board-empty" *ngIf="!selectedProjectId()">
@@ -423,6 +628,17 @@
               <option [ngValue]="null">All assignees</option>
               <option *ngFor="let member of projectMembers()" [ngValue]="member.userId">
                 {{ member.fullName }}
+              </option>
+            </select>
+          </label>
+
+          <label>
+            Sprint
+            <select name="taskSprintFilter" [(ngModel)]="taskFilters.sprintId">
+              <option [ngValue]="'ALL'">All sprints</option>
+              <option [ngValue]="'BACKLOG'">Backlog only</option>
+              <option *ngFor="let sprint of sprints()" [ngValue]="sprint.id">
+                {{ sprint.name }}
               </option>
             </select>
           </label>
@@ -465,6 +681,7 @@
             <p class="muted" *ngIf="task.description">{{ task.description }}</p>
             <p class="muted" *ngIf="!task.description">No task summary has been added.</p>
             <p class="assignee">Assigned to {{ task.assigneeName || 'Unassigned' }}</p>
+            <p class="task-sprint">{{ task.sprintName || 'Backlog' }}</p>
 
             <div class="task-card-footer">
               <span class="task-owner">{{ task.createdByName || 'Created by current workspace' }}</span>
@@ -526,6 +743,16 @@
             </label>
 
             <label>
+              Sprint
+              <select name="editTaskSprint" [(ngModel)]="editTask.sprintId">
+                <option [ngValue]="null">Backlog / No sprint</option>
+                <option *ngFor="let sprint of sprints()" [ngValue]="sprint.id">
+                  {{ sprint.name }} - {{ sprint.status }}
+                </option>
+              </select>
+            </label>
+
+            <label>
               Assignee
               <select name="editTaskAssignee" [(ngModel)]="editTask.assigneeId">
                 <option [ngValue]="null">Unassigned</option>
@@ -559,6 +786,10 @@
           <div>
             <dt>Assignee</dt>
             <dd>{{ selectedTask()?.assigneeName || 'Unassigned' }}</dd>
+          </div>
+          <div>
+            <dt>Sprint</dt>
+            <dd>{{ selectedTask()?.sprintName || 'Backlog' }}</dd>
           </div>
           <div>
             <dt>Due date</dt>

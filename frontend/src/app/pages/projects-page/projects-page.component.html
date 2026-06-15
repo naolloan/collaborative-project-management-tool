@@ -5,7 +5,7 @@
         <p class="eyebrow">Project Intake</p>
         <h2>Create Project</h2>
       </div>
-      <span class="status-pill">{{ organizationalUnits.length }} units available</span>
+      <span class="status-pill">{{ teamUnits().length }} teams available</span>
     </div>
 
     <form class="project-form" (ngSubmit)="createProject.emit()">
@@ -30,10 +30,9 @@
 
       <div class="project-form-grid">
         <label>
-          Owning unit
-          <select name="projectOrganizationalUnit" [(ngModel)]="newProject.organizationalUnitId">
-            <option [ngValue]="null">No unit selected</option>
-            <option *ngFor="let unit of organizationalUnits" [ngValue]="unit.id">
+          Collaborating teams
+          <select name="projectTeams" multiple [(ngModel)]="newProject.teamIds">
+            <option *ngFor="let unit of teamUnits()" [ngValue]="unit.id">
               {{ unit.name }} - {{ formatUnitType(unit.type) }}
             </option>
           </select>
@@ -49,10 +48,8 @@
 
       <div class="project-form-grid project-governance-grid">
         <label>
-          Delivery health
-          <select name="projectHealth" [(ngModel)]="newProject.health">
-            <option *ngFor="let health of projectHealthOptions" [ngValue]="health">{{ formatProjectHealth(health) }}</option>
-          </select>
+          Team collaboration mode
+          <input type="text" value="Multi-team delivery" readonly>
         </label>
 
         <label>
@@ -94,7 +91,7 @@
         <strong>{{ projects.length }}</strong>
       </article>
       <article>
-        <span>Owned by units</span>
+        <span>With teams</span>
         <strong>{{ ownedProjectCount() }}</strong>
       </article>
       <article>
@@ -127,8 +124,7 @@
 
         <div class="project-card-meta project-card-meta-stack">
           <p class="unit-line">
-            {{ project.organizationalUnitName || 'No owning unit' }}
-            <span *ngIf="project.organizationalUnitType">/ {{ formatUnitType(project.organizationalUnitType) }}</span>
+            {{ projectTeamSummary(project) }}
           </p>
           <div class="project-card-pills">
             <span
@@ -171,12 +167,12 @@
 
     <div class="project-briefing-grid">
       <article>
-        <span>Owning unit</span>
-        <strong>{{ selectedProject?.organizationalUnitName || 'Unassigned' }}</strong>
+        <span>Assigned teams</span>
+        <strong>{{ projectTeamSummary(selectedProject) }}</strong>
       </article>
       <article>
-        <span>Unit type</span>
-        <strong>{{ formatUnitType(selectedProject?.organizationalUnitType) }}</strong>
+        <span>Team count</span>
+        <strong>{{ selectedProjectTeamCount() }}</strong>
       </article>
       <article>
         <span>Timeline</span>
@@ -225,10 +221,9 @@
       </label>
 
       <label>
-        Owning unit
-        <select name="editProjectOrganizationalUnit" [(ngModel)]="editProject.organizationalUnitId">
-          <option [ngValue]="null">No unit selected</option>
-          <option *ngFor="let unit of organizationalUnits" [ngValue]="unit.id">
+        Collaborating teams
+        <select name="editProjectTeams" multiple [(ngModel)]="editProject.teamIds">
+          <option *ngFor="let unit of teamUnits()" [ngValue]="unit.id">
             {{ unit.name }} - {{ formatUnitType(unit.type) }}
           </option>
         </select>
@@ -244,9 +239,7 @@
 
         <label>
           Delivery health
-          <select name="editProjectHealth" [(ngModel)]="editProject.health">
-            <option *ngFor="let health of projectHealthOptions" [ngValue]="health">{{ formatProjectHealth(health) }}</option>
-          </select>
+          <input type="text" [value]="formatProjectHealth(selectedProject?.health)" readonly>
         </label>
       </div>
 

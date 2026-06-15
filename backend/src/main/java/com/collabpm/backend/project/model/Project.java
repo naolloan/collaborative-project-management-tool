@@ -10,13 +10,18 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "projects")
@@ -35,6 +40,14 @@ public class Project extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organizational_unit_id")
     private OrganizationalUnit organizationalUnit;
+
+    @ManyToMany
+    @JoinTable(
+        name = "project_teams",
+        joinColumns = @JoinColumn(name = "project_id"),
+        inverseJoinColumns = @JoinColumn(name = "team_id")
+    )
+    private Set<OrganizationalUnit> teams = new LinkedHashSet<>();
 
     private LocalDate startDate;
 
@@ -99,6 +112,17 @@ public class Project extends BaseEntity {
 
     public void setOrganizationalUnit(OrganizationalUnit organizationalUnit) {
         this.organizationalUnit = organizationalUnit;
+    }
+
+    public Set<OrganizationalUnit> getTeams() {
+        return teams;
+    }
+
+    public void setTeams(Collection<OrganizationalUnit> teams) {
+        this.teams.clear();
+        if (teams != null) {
+            this.teams.addAll(teams);
+        }
     }
 
     public LocalDate getStartDate() {

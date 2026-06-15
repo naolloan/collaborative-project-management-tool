@@ -52,7 +52,9 @@ class TaskControllerTest {
             20L,
             "Admin Admin",
             "Admin Admin",
-            LocalDate.of(2026, 6, 12))));
+            LocalDate.of(2026, 6, 12),
+            4L,
+            "Sprint 1")));
 
         mockMvc.perform(get("/api/projects/1/tasks").with(jwt()))
             .andExpect(status().isOk())
@@ -68,6 +70,7 @@ class TaskControllerTest {
             "Create the first workflow board",
             TaskPriority.MEDIUM,
             20L,
+            4L,
             null);
         given(taskService.createTask(eq(1L), eq(request), any(Authentication.class))).willReturn(new TaskResponse(
             11L,
@@ -79,7 +82,9 @@ class TaskControllerTest {
             20L,
             "Admin Admin",
             "Admin Admin",
-            null));
+            null,
+            4L,
+            "Sprint 1"));
 
         mockMvc.perform(post("/api/projects/1/tasks")
                 .with(jwt())
@@ -90,12 +95,14 @@ class TaskControllerTest {
                       "description": "Create the first workflow board",
                       "priority": "MEDIUM",
                       "assigneeId": 20,
+                      "sprintId": 4,
                       "dueDate": null
                     }
                     """))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.id").value(11))
             .andExpect(jsonPath("$.title").value("Build task board"))
+            .andExpect(jsonPath("$.sprintId").value(4))
             .andExpect(jsonPath("$.status").value("TO_DO"));
     }
 
@@ -112,7 +119,9 @@ class TaskControllerTest {
             20L,
             "Admin Admin",
             "Admin Admin",
-            null));
+            null,
+            4L,
+            "Sprint 1"));
 
         mockMvc.perform(patch("/api/tasks/11/status")
                 .with(jwt())
@@ -134,6 +143,7 @@ class TaskControllerTest {
             "Refine the workflow board",
             TaskPriority.HIGH,
             21L,
+            5L,
             LocalDate.of(2026, 6, 20));
         given(taskService.updateTask(eq(11L), eq(request), any(Authentication.class))).willReturn(new TaskResponse(
             11L,
@@ -145,7 +155,9 @@ class TaskControllerTest {
             21L,
             "Team Member",
             "Admin Admin",
-            request.dueDate()));
+            request.dueDate(),
+            5L,
+            "Sprint 2"));
 
         mockMvc.perform(patch("/api/tasks/11")
                 .with(jwt())
@@ -156,6 +168,7 @@ class TaskControllerTest {
                       "description": "Refine the workflow board",
                       "priority": "HIGH",
                       "assigneeId": 21,
+                      "sprintId": 5,
                       "dueDate": "2026-06-20"
                     }
                     """))
@@ -163,6 +176,7 @@ class TaskControllerTest {
             .andExpect(jsonPath("$.id").value(11))
             .andExpect(jsonPath("$.title").value("Build polished task board"))
             .andExpect(jsonPath("$.priority").value("HIGH"))
+            .andExpect(jsonPath("$.sprintId").value(5))
             .andExpect(jsonPath("$.assigneeId").value(21));
     }
 

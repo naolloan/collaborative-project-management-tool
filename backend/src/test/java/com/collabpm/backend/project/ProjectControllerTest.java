@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.collabpm.backend.config.SecurityConfig;
 import com.collabpm.backend.project.dto.CreateProjectRequest;
 import com.collabpm.backend.project.dto.ProjectResponse;
+import com.collabpm.backend.project.dto.ProjectTeamSummaryResponse;
 import com.collabpm.backend.project.dto.UpdateProjectRequest;
 import java.time.LocalDate;
 import java.util.List;
@@ -42,9 +43,7 @@ class ProjectControllerTest {
             1L,
             "Internship Board",
             "Planning the project management tool",
-            null,
-            null,
-            null,
+            List.of(new ProjectTeamSummaryResponse(7L, "Delivery Team Alpha", "TEAM")),
             LocalDate.of(2026, 6, 9),
             null,
             "ACTIVE",
@@ -63,22 +62,22 @@ class ProjectControllerTest {
         CreateProjectRequest request = new CreateProjectRequest(
             "Internship Board",
             "Planning the project management tool",
-            null,
+            List.of(7L, 8L),
             LocalDate.of(2026, 6, 9),
             null,
-            "PLANNED",
-            "ON_TRACK");
+            "PLANNED");
         given(projectService.createProject(eq(request), any(Authentication.class))).willReturn(new ProjectResponse(
             1L,
             request.name(),
             request.description(),
-            request.organizationalUnitId(),
-            null,
-            null,
+            List.of(
+                new ProjectTeamSummaryResponse(7L, "Delivery Team Alpha", "TEAM"),
+                new ProjectTeamSummaryResponse(8L, "Integration Team", "TEAM")
+            ),
             request.startDate(),
             request.dueDate(),
             request.status(),
-            request.health()));
+            "ON_TRACK"));
 
         mockMvc.perform(post("/api/projects")
                 .with(jwt())
@@ -87,16 +86,17 @@ class ProjectControllerTest {
                     {
                       "name": "Internship Board",
                       "description": "Planning the project management tool",
+                      "teamIds": [7, 8],
                       "startDate": "2026-06-09",
                       "dueDate": null,
-                      "status": "PLANNED",
-                      "health": "ON_TRACK"
+                      "status": "PLANNED"
                     }
                     """))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.id").value(1))
             .andExpect(jsonPath("$.name").value("Internship Board"))
             .andExpect(jsonPath("$.status").value("PLANNED"))
+            .andExpect(jsonPath("$.teams", hasSize(2)))
             .andExpect(jsonPath("$.health").value("ON_TRACK"));
     }
 
@@ -105,22 +105,19 @@ class ProjectControllerTest {
         UpdateProjectRequest request = new UpdateProjectRequest(
             "Updated Internship Board",
             "Updated planning notes",
-            null,
+            List.of(8L),
             LocalDate.of(2026, 6, 10),
             LocalDate.of(2026, 7, 10),
-            "ACTIVE",
-            "AT_RISK");
+            "ACTIVE");
         given(projectService.updateProject(eq(1L), eq(request), any(Authentication.class))).willReturn(new ProjectResponse(
             1L,
             request.name(),
             request.description(),
-            request.organizationalUnitId(),
-            null,
-            null,
+            List.of(new ProjectTeamSummaryResponse(8L, "Integration Team", "TEAM")),
             request.startDate(),
             request.dueDate(),
             request.status(),
-            request.health()));
+            "AT_RISK"));
 
         mockMvc.perform(patch("/api/projects/1")
                 .with(jwt())
@@ -129,15 +126,16 @@ class ProjectControllerTest {
                     {
                       "name": "Updated Internship Board",
                       "description": "Updated planning notes",
+                      "teamIds": [8],
                       "startDate": "2026-06-10",
                       "dueDate": "2026-07-10",
-                      "status": "ACTIVE",
-                      "health": "AT_RISK"
+                      "status": "ACTIVE"
                     }
                     """))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(1))
             .andExpect(jsonPath("$.name").value("Updated Internship Board"))
+            .andExpect(jsonPath("$.teams", hasSize(1)))
             .andExpect(jsonPath("$.health").value("AT_RISK"));
     }
 
@@ -147,9 +145,7 @@ class ProjectControllerTest {
             1L,
             "Internship Board",
             "Planning the project management tool",
-            null,
-            null,
-            null,
+            List.of(),
             LocalDate.of(2026, 6, 9),
             null,
             "ARCHIVED",

@@ -7,6 +7,7 @@ import { CurrentUser } from './dto/current-user';
 import { OrganizationalUnit, OrganizationalUnitRequest } from './dto/organizational-unit';
 import { AddProjectMemberRequest, ProjectMember } from './dto/project-member';
 import { CreateProjectRequest, Project, UpdateProjectRequest } from './dto/project';
+import { CreateSprintRequest, Sprint, UpdateSprintRequest } from './dto/sprint';
 import { CreateTaskRequest, Task, TaskStatus, UpdateTaskRequest } from './dto/task';
 
 @Injectable({ providedIn: 'root' })
@@ -62,6 +63,18 @@ export class ApiService {
 
   listProjectTasks(projectId: number): Observable<Task[]> {
     return this.http.get<Task[]>(`${this.apiBaseUrl}/projects/${projectId}/tasks`);
+  }
+
+  listProjectSprints(projectId: number): Observable<Sprint[]> {
+    return this.http.get<Sprint[]>(`${this.apiBaseUrl}/projects/${projectId}/sprints`);
+  }
+
+  createSprint(projectId: number, request: CreateSprintRequest): Observable<Sprint> {
+    return this.http.post<Sprint>(`${this.apiBaseUrl}/projects/${projectId}/sprints`, request);
+  }
+
+  updateSprint(sprintId: number, request: UpdateSprintRequest): Observable<Sprint> {
+    return this.http.patch<Sprint>(`${this.apiBaseUrl}/sprints/${sprintId}`, request);
   }
 
   createTask(projectId: number, request: CreateTaskRequest): Observable<Task> {

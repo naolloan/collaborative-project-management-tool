@@ -1,13 +1,17 @@
 export type ProjectLifecycleStatus = 'PLANNED' | 'ACTIVE' | 'ON_HOLD' | 'COMPLETED' | 'ARCHIVED';
 export type ProjectHealth = 'ON_TRACK' | 'AT_RISK' | 'OFF_TRACK' | 'BLOCKED';
 
+export interface ProjectTeamSummary {
+  id: number;
+  name: string;
+  type: string;
+}
+
 export interface Project {
   id: number;
   name: string;
   description?: string | null;
-  organizationalUnitId?: number | null;
-  organizationalUnitName?: string | null;
-  organizationalUnitType?: string | null;
+  teams: ProjectTeamSummary[];
   startDate?: string | null;
   dueDate?: string | null;
   status: ProjectLifecycleStatus;
@@ -17,11 +21,10 @@ export interface Project {
 export interface CreateProjectRequest {
   name: string;
   description?: string | null;
-  organizationalUnitId?: number | null;
+  teamIds?: number[] | null;
   startDate?: string | null;
   dueDate?: string | null;
   status: ProjectLifecycleStatus;
-  health: ProjectHealth;
 }
 
 export interface UpdateProjectRequest extends CreateProjectRequest {

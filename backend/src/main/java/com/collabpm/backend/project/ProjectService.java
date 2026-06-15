@@ -1,9 +1,11 @@
 package com.collabpm.backend.project;
 
 import com.collabpm.backend.organization.model.OrganizationalUnit;
+import com.collabpm.backend.organization.model.OrganizationalUnitType;
 import com.collabpm.backend.organization.repository.OrganizationalUnitRepository;
 import com.collabpm.backend.project.dto.CreateProjectRequest;
 import com.collabpm.backend.project.dto.ProjectResponse;
+import com.collabpm.backend.project.dto.ProjectTeamSummaryResponse;
 import com.collabpm.backend.project.dto.UpdateProjectRequest;
 import com.collabpm.backend.project.model.Project;
 import com.collabpm.backend.project.model.ProjectRole;
@@ -12,6 +14,8 @@ import com.collabpm.backend.project.repository.ProjectRepository;
 import com.collabpm.backend.user.CurrentUserService;
 import com.collabpm.backend.user.SystemRole;
 import com.collabpm.backend.user.User;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import org.springframework.http.HttpStatus;
@@ -27,17 +31,20 @@ public class ProjectService {
     private final OrganizationalUnitRepository organizationalUnitRepository;
     private final CurrentUserService currentUserService;
     private final ProjectAccessService projectAccessService;
+    private final ProjectHealthService projectHealthService;
 
     public ProjectService(
         ProjectRepository projectRepository,
         OrganizationalUnitRepository organizationalUnitRepository,
         CurrentUserService currentUserService,
-        ProjectAccessService projectAccessService
+        ProjectAccessService projectAccessService,
+        ProjectHealthService projectHealthService
     ) {
         this.projectRepository = projectRepository;
         this.organizationalUnitRepository = organizationalUnitRepository;
         this.currentUserService = currentUserService;
         this.projectAccessService = projectAccessService;
+        this.projectHealthService = projectHealthService;
     }
 
     @Transactional(readOnly = true)
@@ -57,19 +64,22 @@ public class ProjectService {
         validateDates(request);
 
         User creator = currentUserService.getOrCreateCurrentUser(authentication);
-        OrganizationalUnit organizationalUnit = resolveOrganizationalUnit(request.organizationalUnitId());
+        List<OrganizationalUnit> teams = resolveTeams(request.teamIds());
         Project project = new Project(
             request.name().trim(),
             normalizeDescription(request.description()),
             creator,
-            organizationalUnit,
+            primaryTeamReference(teams),
             request.startDate(),
             request.dueDate(),
             resolveProjectStatus(request.status()),
-            normalizeProjectHealth(request.health()));
+            "ON_TRACK");
+        project.setTeams(teams);
         project.addMember(creator, ProjectRole.MANAGER);
 
-        return toResponse(projectRepository.save(project));
+        Project savedProject = projectRepository.save(project);
+        savedProject.setHealth(projectHealthService.computeHealth(savedProject));
+        return toResponse(savedProject);
     }
 
     @Transactional
@@ -78,15 +88,16 @@ public class ProjectService {
         projectAccessService.ensureCanManageProject(projectId, authentication);
         Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
-        OrganizationalUnit organizationalUnit = resolveOrganizationalUnit(request.organizationalUnitId());
+        List<OrganizationalUnit> teams = resolveTeams(request.teamIds());
 
         project.setName(request.name().trim());
         project.setDescription(normalizeDescription(request.description()));
-        project.setOrganizationalUnit(organizationalUnit);
+        project.setOrganizationalUnit(primaryTeamReference(teams));
+        project.setTeams(teams);
         project.setStartDate(request.startDate());
         project.setDueDate(request.dueDate());
         project.setStatus(resolveProjectStatus(request.status()));
-        project.setHealth(normalizeProjectHealth(request.health()));
+        project.setHealth(projectHealthService.computeHealth(project));
 
         return toResponse(project);
     }
@@ -97,6 +108,7 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
         project.setStatus(ProjectStatus.ARCHIVED);
+        project.setHealth("ON_TRACK");
 
         return toResponse(project);
     }
@@ -117,19 +129,6 @@ public class ProjectService {
         }
     }
 
-    private String normalizeProjectHealth(String health) {
-        if (health == null || health.isBlank()) {
-            return "ON_TRACK";
-        }
-
-        String normalized = health.trim().toUpperCase(Locale.ROOT);
-        if (!List.of("ON_TRACK", "AT_RISK", "OFF_TRACK", "BLOCKED").contains(normalized)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project health is invalid");
-        }
-
-        return normalized;
-    }
-
     private void validateDates(java.time.LocalDate startDate, java.time.LocalDate dueDate) {
         if (startDate != null && dueDate != null && dueDate.isBefore(startDate)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project due date cannot be before the start date");
@@ -144,33 +143,55 @@ public class ProjectService {
         return description.trim();
     }
 
-    private OrganizationalUnit resolveOrganizationalUnit(Long organizationalUnitId) {
-        if (organizationalUnitId == null) {
+    private List<OrganizationalUnit> resolveTeams(List<Long> teamIds) {
+        if (teamIds == null || teamIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<OrganizationalUnit> teams = new ArrayList<>();
+        for (Long teamId : new LinkedHashSet<>(teamIds)) {
+            OrganizationalUnit team = organizationalUnitRepository.findById(teamId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project team not found"));
+            if (!team.isActive()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project team is inactive");
+            }
+            if (team.getType() != OrganizationalUnitType.TEAM) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only organizational units of type TEAM can be assigned to projects");
+            }
+            teams.add(team);
+        }
+
+        return teams;
+    }
+
+    private OrganizationalUnit primaryTeamReference(List<OrganizationalUnit> teams) {
+        if (teams == null || teams.isEmpty()) {
             return null;
         }
 
-        OrganizationalUnit unit = organizationalUnitRepository.findById(organizationalUnitId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Organizational unit not found"));
-
-        if (!unit.isActive()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Organizational unit is inactive");
-        }
-
-        return unit;
+        return teams.get(0);
     }
 
     private ProjectResponse toResponse(Project project) {
         OrganizationalUnit unit = project.getOrganizationalUnit();
+        String computedHealth = projectHealthService.computeHealth(project);
+        project.setHealth(computedHealth);
+        List<ProjectTeamSummaryResponse> teamSummaries = project.getTeams().stream()
+            .map((team) -> new ProjectTeamSummaryResponse(team.getId(), team.getName(), team.getType().name()))
+            .toList();
+
+        if (teamSummaries.isEmpty() && unit != null && unit.getType() == OrganizationalUnitType.TEAM) {
+            teamSummaries = List.of(new ProjectTeamSummaryResponse(unit.getId(), unit.getName(), unit.getType().name()));
+        }
+
         return new ProjectResponse(
             project.getId(),
             project.getName(),
             project.getDescription(),
-            unit == null ? null : unit.getId(),
-            unit == null ? null : unit.getName(),
-            unit == null ? null : unit.getType().name(),
+            teamSummaries,
             project.getStartDate(),
             project.getDueDate(),
             project.getStatus().name(),
-            project.getHealth());
+            computedHealth);
     }
 }

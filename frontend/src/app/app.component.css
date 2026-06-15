@@ -1022,6 +1022,78 @@ select:focus {
   margin-top: 1rem;
 }
 
+.sprint-workspace {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(360px, 1.1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.sprint-directory-panel,
+.sprint-editor-panel {
+  min-height: 100%;
+}
+
+.sprint-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.sprint-card {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, #ffffff, var(--surface-soft)),
+    radial-gradient(circle at right top, rgba(0, 174, 233, 0.09), transparent 8rem);
+}
+
+.sprint-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.sprint-card-top h3 {
+  margin: 0.55rem 0 0;
+  color: var(--primary-dark);
+  font-size: 1rem;
+}
+
+.sprint-card-top strong {
+  color: var(--primary-dark);
+  font-size: 1.15rem;
+}
+
+.sprint-progress-track {
+  margin: 0.85rem 0;
+}
+
+.sprint-card-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.sprint-card-metrics > div {
+  margin-top: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.sprint-divider {
+  height: 1px;
+  margin: 1.25rem 0;
+  background: var(--border);
+}
+
+.sprint-edit-heading {
+  margin-top: 0;
+}
+
 .member-workspace {
   margin-top: 1rem;
 }
@@ -1480,7 +1552,7 @@ select:focus {
 
 .task-filters {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(150px, 0.35fr) minmax(170px, 0.45fr) auto;
+  grid-template-columns: minmax(220px, 1fr) minmax(150px, 0.35fr) minmax(170px, 0.45fr) minmax(170px, 0.45fr) auto;
   gap: 0.75rem;
   align-items: end;
   margin-bottom: 0.75rem;
@@ -1648,6 +1720,12 @@ select:focus {
 .assignee {
   color: var(--text);
   font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.task-sprint {
+  color: var(--muted);
+  font-size: 0.78rem;
   font-weight: 700;
 }
 
@@ -1875,6 +1953,7 @@ dd {
   .profile-detail-grid,
   .profile-summary-list,
   .project-command-strip,
+  .sprint-workspace,
   .unit-management-grid,
   .unit-admin-panel,
   .summary-grid,

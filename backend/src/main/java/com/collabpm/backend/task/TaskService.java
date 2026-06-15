@@ -7,6 +7,8 @@ import com.collabpm.backend.project.model.Project;
 import com.collabpm.backend.project.ProjectAccessService;
 import com.collabpm.backend.project.repository.ProjectMemberRepository;
 import com.collabpm.backend.project.repository.ProjectRepository;
+import com.collabpm.backend.sprint.model.Sprint;
+import com.collabpm.backend.sprint.repository.SprintRepository;
 import com.collabpm.backend.task.dto.CreateTaskRequest;
 import com.collabpm.backend.task.dto.TaskResponse;
 import com.collabpm.backend.task.dto.UpdateTaskRequest;
@@ -38,6 +40,7 @@ public class TaskService {
     private final CommentRepository commentRepository;
     private final ActivityLogRepository activityLogRepository;
     private final ProjectAccessService projectAccessService;
+    private final SprintRepository sprintRepository;
 
     public TaskService(
         TaskRepository taskRepository,
@@ -48,7 +51,8 @@ public class TaskService {
         ActivityService activityService,
         CommentRepository commentRepository,
         ActivityLogRepository activityLogRepository,
-        ProjectAccessService projectAccessService
+        ProjectAccessService projectAccessService,
+        SprintRepository sprintRepository
     ) {
         this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
@@ -59,6 +63,7 @@ public class TaskService {
         this.commentRepository = commentRepository;
         this.activityLogRepository = activityLogRepository;
         this.projectAccessService = projectAccessService;
+        this.sprintRepository = sprintRepository;
     }
 
     @Transactional(readOnly = true)
@@ -84,6 +89,7 @@ public class TaskService {
             creator,
             request.dueDate());
         task.setPriority(request.priority() == null ? TaskPriority.MEDIUM : request.priority());
+        task.setSprint(resolveSprint(projectId, request.sprintId()));
         Task savedTask = taskRepository.save(task);
         activityService.recordTaskCreated(savedTask, creator);
 
@@ -103,6 +109,7 @@ public class TaskService {
         task.setDescription(normalizeDescription(request.description()));
         task.setPriority(request.priority() == null ? TaskPriority.MEDIUM : request.priority());
         task.setAssignee(newAssignee);
+        task.setSprint(resolveSprint(task.getProject().getId(), request.sprintId()));
         task.setDueDate(request.dueDate());
 
         if (!sameUser(oldAssignee, newAssignee)) {
@@ -182,6 +189,20 @@ public class TaskService {
         return description.trim();
     }
 
+    private Sprint resolveSprint(Long projectId, Long sprintId) {
+        if (sprintId == null) {
+            return null;
+        }
+
+        Sprint sprint = sprintRepository.findById(sprintId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sprint not found"));
+        if (!sprint.getProject().getId().equals(projectId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sprint must belong to the selected project");
+        }
+
+        return sprint;
+    }
+
     private boolean sameUser(User first, User second) {
         Long firstId = first == null ? null : first.getId();
         Long secondId = second == null ? null : second.getId();
@@ -202,6 +223,8 @@ public class TaskService {
             assignee == null ? null : assignee.getId(),
             assignee == null ? null : assignee.getFullName(),
             createdBy == null ? null : createdBy.getFullName(),
-            task.getDueDate());
+            task.getDueDate(),
+            task.getSprint() == null ? null : task.getSprint().getId(),
+            task.getSprint() == null ? null : task.getSprint().getName());
     }
 }

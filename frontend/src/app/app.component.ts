@@ -9,7 +9,8 @@ import { Comment } from './core/dto/comment';
 import { CurrentUser } from './core/dto/current-user';
 import { OrganizationalUnit, OrganizationalUnitType } from './core/dto/organizational-unit';
 import { ProjectMember, ProjectRole } from './core/dto/project-member';
-import { CreateProjectRequest, Project, ProjectHealth, ProjectLifecycleStatus } from './core/dto/project';
+import { CreateProjectRequest, Project, ProjectLifecycleStatus } from './core/dto/project';
+import { CreateSprintRequest, Sprint, SprintStatus, UpdateSprintRequest } from './core/dto/sprint';
 import { CreateTaskRequest, Task, TaskPriority, TaskStatus } from './core/dto/task';
 import { DashboardPageComponent } from './pages/dashboard-page/dashboard-page.component';
 import { ProjectsPageComponent } from './pages/projects-page/projects-page.component';
@@ -17,6 +18,7 @@ import { UnitsPageComponent } from './pages/units-page/units-page.component';
 import { ProfilePageComponent } from './pages/profile-page/profile-page.component';
 
 type WorkspaceView = 'dashboard' | 'projects' | 'units' | 'members' | 'tasks' | 'profile';
+type SprintScope = 'ALL' | 'BACKLOG' | number;
 
 @Component({
   selector: 'app-root',
@@ -38,6 +40,7 @@ export class AppComponent implements OnInit {
   selectedProjectId = signal<number | undefined>(undefined);
   selectedTaskId = signal<number | undefined>(undefined);
   tasks = signal<Task[]>([]);
+  sprints = signal<Sprint[]>([]);
   comments = signal<Comment[]>([]);
   activities = signal<Activity[]>([]);
   activeWorkspace = signal<WorkspaceView>('dashboard');
@@ -46,6 +49,7 @@ export class AppComponent implements OnInit {
   unitStatus = signal('Not loaded');
   memberStatus = signal('No project selected');
   taskStatus = signal('No project selected');
+  sprintStatus = signal('No project selected');
   commentStatus = signal('No task selected');
   activityStatus = signal('No task selected');
   creatingProject = signal(false);
@@ -55,6 +59,8 @@ export class AppComponent implements OnInit {
   updatingUnit = signal(false);
   deactivatingUnit = signal(false);
   addingMember = signal(false);
+  creatingSprint = signal(false);
+  updatingSprint = signal(false);
   creatingTask = signal(false);
   updatingTask = signal(false);
   deletingTask = signal(false);
@@ -69,8 +75,8 @@ export class AppComponent implements OnInit {
   readonly priorities: TaskPriority[] = ['LOW', 'MEDIUM', 'HIGH'];
   readonly projectRoles: ProjectRole[] = ['MEMBER', 'MANAGER'];
   readonly projectLifecycleStatuses: ProjectLifecycleStatus[] = ['PLANNED', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'ARCHIVED'];
-  readonly projectHealthOptions: ProjectHealth[] = ['ON_TRACK', 'AT_RISK', 'OFF_TRACK', 'BLOCKED'];
   readonly organizationalUnitTypes: OrganizationalUnitType[] = ['HEAD_OFFICE', 'DEPARTMENT', 'BRANCH', 'DIVISION', 'TEAM'];
+  readonly sprintStatuses: SprintStatus[] = ['PLANNED', 'ACTIVE', 'COMPLETED'];
   readonly workspaceNavItems: { view: WorkspaceView; label: string; helper: string }[] = [
     { view: 'dashboard', label: 'Dashboard', helper: 'Overview' },
     { view: 'projects', label: 'Projects', helper: 'Planning' },
@@ -82,20 +88,33 @@ export class AppComponent implements OnInit {
   newProject: CreateProjectRequest = {
     name: '',
     description: '',
-    organizationalUnitId: null,
+    teamIds: [],
     startDate: '',
     dueDate: '',
-    status: 'PLANNED',
-    health: 'ON_TRACK'
+    status: 'PLANNED'
   };
   editProject = {
     name: '',
     description: '',
-    organizationalUnitId: null as number | null,
+    teamIds: [] as number[],
     startDate: '',
     dueDate: '',
-    status: 'PLANNED' as ProjectLifecycleStatus,
-    health: 'ON_TRACK' as ProjectHealth
+    status: 'PLANNED' as ProjectLifecycleStatus
+  };
+  newSprint: CreateSprintRequest = {
+    name: '',
+    goal: '',
+    startDate: '',
+    endDate: '',
+    status: 'PLANNED'
+  };
+  editSprint: UpdateSprintRequest & { id: number | null } = {
+    id: null,
+    name: '',
+    goal: '',
+    startDate: '',
+    endDate: '',
+    status: 'PLANNED'
   };
   newUnit = {
     name: '',
@@ -113,6 +132,7 @@ export class AppComponent implements OnInit {
     description: '',
     priority: 'MEDIUM',
     assigneeId: null,
+    sprintId: null,
     dueDate: ''
   };
   newMember = {
@@ -122,13 +142,15 @@ export class AppComponent implements OnInit {
   taskFilters = {
     search: '',
     priority: '' as TaskPriority | '',
-    assigneeId: null as number | null
+    assigneeId: null as number | null,
+    sprintId: 'ALL' as SprintScope
   };
   editTask = {
     title: '',
     description: '',
     priority: 'MEDIUM' as TaskPriority,
     assigneeId: null as number | null,
+    sprintId: null as number | null,
     dueDate: ''
   };
   newComment = '';
@@ -220,8 +242,9 @@ export class AppComponent implements OnInit {
       next: (units) => {
         this.organizationalUnits.set(units);
         this.unitStatus.set(`${units.length} active unit${units.length === 1 ? '' : 's'}`);
-        if (!this.newProject.organizationalUnitId && units.length > 0) {
-          this.newProject.organizationalUnitId = units[0].id;
+        if (this.newProject.teamIds && this.newProject.teamIds.length === 0) {
+          const firstTeam = units.find((unit) => unit.type === 'TEAM');
+          this.newProject.teamIds = firstTeam ? [firstTeam.id] : [];
         }
       },
       error: () => {
@@ -366,21 +389,20 @@ export class AppComponent implements OnInit {
     this.apiService.createProject({
       name,
       description: this.cleanOptional(this.newProject.description),
-      organizationalUnitId: this.newProject.organizationalUnitId || null,
+      teamIds: this.newProject.teamIds ?? [],
       startDate: this.cleanOptional(this.newProject.startDate),
       dueDate: this.cleanOptional(this.newProject.dueDate),
-      status: this.newProject.status,
-      health: this.newProject.health
+      status: this.newProject.status
     }).subscribe({
       next: () => {
+        const firstTeam = this.organizationalUnits().find((unit) => unit.type === 'TEAM');
         this.newProject = {
           name: '',
           description: '',
-          organizationalUnitId: this.organizationalUnits()[0]?.id ?? null,
+          teamIds: firstTeam ? [firstTeam.id] : [],
           startDate: '',
           dueDate: '',
-          status: 'PLANNED',
-          health: 'ON_TRACK'
+          status: 'PLANNED'
         };
         this.creatingProject.set(false);
         this.loadProjects();
@@ -397,13 +419,17 @@ export class AppComponent implements OnInit {
     this.prepareProjectEdit(project);
     this.selectedTaskId.set(undefined);
     this.projectMembers.set([]);
+    this.sprints.set([]);
     this.comments.set([]);
     this.activities.set([]);
     this.newTask.assigneeId = null;
+    this.newTask.sprintId = null;
     this.memberStatus.set('Loading members...');
+    this.sprintStatus.set('Loading sprints...');
     this.commentStatus.set('No task selected');
     this.activityStatus.set('No task selected');
     this.loadProjectMembers(project.id);
+    this.loadSprints(project.id);
     this.loadTasks(project.id);
   }
 
@@ -427,11 +453,10 @@ export class AppComponent implements OnInit {
     this.apiService.updateProject(projectId, {
       name,
       description: this.cleanOptional(this.editProject.description),
-      organizationalUnitId: this.editProject.organizationalUnitId || null,
+      teamIds: this.editProject.teamIds,
       startDate: this.cleanOptional(this.editProject.startDate),
       dueDate: this.cleanOptional(this.editProject.dueDate),
-      status: this.editProject.status,
-      health: this.editProject.health
+      status: this.editProject.status
     }).subscribe({
       next: (project) => {
         this.updatingProject.set(false);
@@ -462,10 +487,12 @@ export class AppComponent implements OnInit {
         this.selectedProjectId.set(undefined);
         this.selectedTaskId.set(undefined);
         this.projectMembers.set([]);
+        this.sprints.set([]);
         this.tasks.set([]);
         this.comments.set([]);
         this.activities.set([]);
         this.memberStatus.set('No project selected');
+        this.sprintStatus.set('No project selected');
         this.taskStatus.set('No project selected');
         this.commentStatus.set('No task selected');
         this.activityStatus.set('No task selected');
@@ -545,6 +572,123 @@ export class AppComponent implements OnInit {
     this.loadTasks(projectId);
   }
 
+  loadSprints(projectId: number): void {
+    this.apiService.listProjectSprints(projectId).subscribe({
+      next: (sprints) => {
+        this.sprints.set(sprints);
+        this.sprintStatus.set(`${sprints.length} sprint${sprints.length === 1 ? '' : 's'}`);
+        if (this.newTask.sprintId === null) {
+          const activeSprint = sprints.find((sprint) => sprint.status === 'ACTIVE') ?? sprints[0];
+          this.newTask.sprintId = activeSprint?.id ?? null;
+        }
+      },
+      error: () => {
+        this.sprints.set([]);
+        this.sprintStatus.set('Sprint load failed');
+        this.error.set('Could not load sprints for the selected project.');
+      }
+    });
+  }
+
+  createSprint(): void {
+    const projectId = this.selectedProjectId();
+    const name = this.newSprint.name.trim();
+
+    if (!projectId) {
+      this.error.set('Select a project before creating a sprint.');
+      return;
+    }
+
+    if (!name) {
+      this.error.set('Sprint name is required.');
+      return;
+    }
+
+    this.creatingSprint.set(true);
+    this.error.set(undefined);
+
+    this.apiService.createSprint(projectId, {
+      name,
+      goal: this.cleanOptional(this.newSprint.goal),
+      startDate: this.cleanOptional(this.newSprint.startDate),
+      endDate: this.cleanOptional(this.newSprint.endDate),
+      status: this.newSprint.status
+    }).subscribe({
+      next: (sprint) => {
+        this.creatingSprint.set(false);
+        this.newSprint = {
+          name: '',
+          goal: '',
+          startDate: '',
+          endDate: '',
+          status: 'PLANNED'
+        };
+        this.editSelectedSprint(sprint);
+        this.loadSprints(projectId);
+        this.refreshProjectSnapshot(projectId);
+      },
+      error: () => {
+        this.creatingSprint.set(false);
+        this.error.set('Could not create the sprint. Check the dates and try again.');
+      }
+    });
+  }
+
+  editSelectedSprint(sprint: Sprint): void {
+    this.editSprint = {
+      id: sprint.id,
+      name: sprint.name,
+      goal: sprint.goal ?? '',
+      startDate: sprint.startDate ?? '',
+      endDate: sprint.endDate ?? '',
+      status: sprint.status
+    };
+  }
+
+  updateSelectedSprint(): void {
+    const sprintId = this.editSprint.id;
+    const projectId = this.selectedProjectId();
+    const name = this.editSprint.name.trim();
+
+    if (!projectId) {
+      this.error.set('Select a project before updating a sprint.');
+      return;
+    }
+
+    if (!sprintId) {
+      this.error.set('Select a sprint before saving sprint changes.');
+      return;
+    }
+
+    if (!name) {
+      this.error.set('Sprint name is required.');
+      return;
+    }
+
+    this.updatingSprint.set(true);
+    this.error.set(undefined);
+
+    this.apiService.updateSprint(sprintId, {
+      name,
+      goal: this.cleanOptional(this.editSprint.goal),
+      startDate: this.cleanOptional(this.editSprint.startDate),
+      endDate: this.cleanOptional(this.editSprint.endDate),
+      status: this.editSprint.status
+    }).subscribe({
+      next: (sprint) => {
+        this.updatingSprint.set(false);
+        this.editSelectedSprint(sprint);
+        this.loadSprints(projectId);
+        this.loadTasks(projectId);
+        this.refreshProjectSnapshot(projectId);
+      },
+      error: () => {
+        this.updatingSprint.set(false);
+        this.error.set('Could not update the sprint. Check the dates and active sprint status.');
+      }
+    });
+  }
+
   loadTasks(projectId: number): void {
     this.taskStatus.set('Loading tasks...');
     this.error.set(undefined);
@@ -591,14 +735,17 @@ export class AppComponent implements OnInit {
       description: this.cleanOptional(this.newTask.description),
       priority: this.newTask.priority,
       assigneeId: this.newTask.assigneeId || null,
+      sprintId: this.newTask.sprintId || null,
       dueDate: this.cleanOptional(this.newTask.dueDate)
     }).subscribe({
       next: (createdTask) => {
+        const activeSprint = this.sprints().find((sprint) => sprint.status === 'ACTIVE') ?? this.sprints()[0];
         this.newTask = {
           title: '',
           description: '',
           priority: 'MEDIUM',
           assigneeId: this.projectMembers()[0]?.userId ?? null,
+          sprintId: activeSprint?.id ?? null,
           dueDate: ''
         };
         this.creatingTask.set(false);
@@ -607,6 +754,8 @@ export class AppComponent implements OnInit {
         this.comments.set([]);
         this.commentStatus.set('No comments yet');
         this.loadTasks(projectId);
+        this.loadSprints(projectId);
+        this.refreshProjectSnapshot(projectId);
         this.loadActivities(createdTask.id);
       },
       error: () => {
@@ -646,12 +795,15 @@ export class AppComponent implements OnInit {
       description: this.cleanOptional(this.editTask.description),
       priority: this.editTask.priority,
       assigneeId: this.editTask.assigneeId,
+      sprintId: this.editTask.sprintId,
       dueDate: this.cleanOptional(this.editTask.dueDate)
     }).subscribe({
       next: (updatedTask) => {
         this.updatingTask.set(false);
         this.prepareTaskEdit(updatedTask);
         this.loadTasks(projectId);
+        this.loadSprints(projectId);
+        this.refreshProjectSnapshot(projectId);
         this.loadActivities(taskId);
       },
       error: () => {
@@ -682,6 +834,8 @@ export class AppComponent implements OnInit {
         this.commentStatus.set('No task selected');
         this.activityStatus.set('No task selected');
         this.loadTasks(projectId);
+        this.loadSprints(projectId);
+        this.refreshProjectSnapshot(projectId);
       },
       error: () => {
         this.deletingTask.set(false);
@@ -763,6 +917,7 @@ export class AppComponent implements OnInit {
     const search = this.taskFilters.search.trim().toLowerCase();
     const priority = this.taskFilters.priority;
     const assigneeId = this.taskFilters.assigneeId;
+    const sprintId = this.taskFilters.sprintId;
 
     return this.tasks().filter((task) => {
       const matchesSearch = !search
@@ -770,20 +925,28 @@ export class AppComponent implements OnInit {
         || (task.description ?? '').toLowerCase().includes(search);
       const matchesPriority = !priority || task.priority === priority;
       const matchesAssignee = assigneeId === null || task.assigneeId === assigneeId;
+      const matchesSprint = sprintId === 'ALL'
+        || (sprintId === 'BACKLOG' && !task.sprintId)
+        || (typeof sprintId === 'number' && task.sprintId === sprintId);
 
-      return matchesSearch && matchesPriority && matchesAssignee;
+      return matchesSearch && matchesPriority && matchesAssignee && matchesSprint;
     });
   }
 
   hasTaskFilters(): boolean {
-    return Boolean(this.taskFilters.search.trim() || this.taskFilters.priority || this.taskFilters.assigneeId !== null);
+    return Boolean(
+      this.taskFilters.search.trim()
+      || this.taskFilters.priority
+      || this.taskFilters.assigneeId !== null
+      || this.taskFilters.sprintId !== 'ALL');
   }
 
   clearTaskFilters(): void {
     this.taskFilters = {
       search: '',
       priority: '',
-      assigneeId: null
+      assigneeId: null,
+      sprintId: 'ALL'
     };
   }
 
@@ -846,6 +1009,11 @@ export class AppComponent implements OnInit {
     this.apiService.updateTaskStatus(task.id, nextStatus).subscribe({
       next: () => {
         this.loadSelectedProjectTasks();
+        const projectId = this.selectedProjectId();
+        if (projectId) {
+          this.loadSprints(projectId);
+          this.refreshProjectSnapshot(projectId);
+        }
         if (task.id === this.selectedTaskId()) {
           this.selectedTaskId.set(task.id);
           this.loadActivities(task.id);
@@ -974,7 +1142,62 @@ export class AppComponent implements OnInit {
   }
 
   selectedProjectUnitLabel(): string {
-    return this.selectedProject()?.organizationalUnitName || 'No owning unit assigned';
+    const teams = this.selectedProject()?.teams ?? [];
+    return teams.length > 0 ? teams.map((team) => team.name).join(', ') : 'No teams assigned';
+  }
+
+  activeSprint(): Sprint | undefined {
+    return this.sprints().find((sprint) => sprint.status === 'ACTIVE') ?? this.sprints()[0];
+  }
+
+  selectedSprint(): Sprint | undefined {
+    return this.sprints().find((sprint) => sprint.id === this.editSprint.id);
+  }
+
+  sprintProgress(sprint: Sprint | undefined): number {
+    if (!sprint || sprint.totalTaskCount === 0) {
+      return 0;
+    }
+
+    return Math.round((sprint.completedTaskCount / sprint.totalTaskCount) * 100);
+  }
+
+  sprintTimelineLabel(sprint: Sprint | undefined): string {
+    if (!sprint) {
+      return 'Select a sprint to review its timeline.';
+    }
+
+    if (sprint.startDate && sprint.endDate) {
+      return `${this.formatDate(sprint.startDate)} - ${this.formatDate(sprint.endDate)}`;
+    }
+
+    if (sprint.endDate) {
+      return `Ends ${this.formatDate(sprint.endDate)}`;
+    }
+
+    if (sprint.startDate) {
+      return `Starts ${this.formatDate(sprint.startDate)}`;
+    }
+
+    return 'Timeline not yet defined';
+  }
+
+  taskCountForSprint(sprintId: number | null): number {
+    return this.tasks().filter((task) => (task.sprintId ?? null) === sprintId).length;
+  }
+
+  taskBoardScopeLabel(): string {
+    const sprintId = this.taskFilters.sprintId;
+    if (sprintId === 'ALL') {
+      return 'All work items';
+    }
+
+    if (sprintId === 'BACKLOG') {
+      return 'Backlog work items';
+    }
+
+    const sprint = this.sprints().find((item) => item.id === sprintId);
+    return sprint ? `${sprint.name} work items` : 'Sprint-scoped work items';
   }
 
   selectedProjectTimelineLabel(): string {
@@ -1020,6 +1243,7 @@ export class AppComponent implements OnInit {
       description: task.description ?? '',
       priority: task.priority,
       assigneeId: task.assigneeId ?? null,
+      sprintId: task.sprintId ?? null,
       dueDate: task.dueDate ?? ''
     };
   }
@@ -1028,12 +1252,27 @@ export class AppComponent implements OnInit {
     this.editProject = {
       name: project.name,
       description: project.description ?? '',
-      organizationalUnitId: project.organizationalUnitId ?? null,
+      teamIds: project.teams?.map((team) => team.id) ?? [],
       startDate: project.startDate ?? '',
       dueDate: project.dueDate ?? '',
-      status: project.status ?? 'PLANNED',
-      health: project.health ?? 'ON_TRACK'
+      status: project.status ?? 'PLANNED'
     };
+  }
+
+  private refreshProjectSnapshot(projectId: number): void {
+    this.apiService.listProjects().subscribe({
+      next: (projects) => {
+        this.projects.set(projects);
+        this.projectStatus.set(`${projects.length} active project${projects.length === 1 ? '' : 's'}`);
+        const refreshedProject = projects.find((project) => project.id === projectId);
+        if (refreshedProject) {
+          this.prepareProjectEdit(refreshedProject);
+        }
+      },
+      error: () => {
+        this.projectStatus.set('Project refresh failed');
+      }
+    });
   }
 
   private daysUntil(dateValue: string | null | undefined): number | null {

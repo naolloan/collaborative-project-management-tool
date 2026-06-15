@@ -10,6 +10,7 @@ public record UpdateTaskRequest(
     String description,
     TaskPriority priority,
     Long assigneeId,
+    Long sprintId,
     LocalDate dueDate
 ) {
 }
