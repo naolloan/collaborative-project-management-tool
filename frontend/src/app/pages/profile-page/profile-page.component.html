@@ -22,12 +22,12 @@
           <dd>{{ userId || 'Pending backend sync' }}</dd>
         </div>
         <div>
-          <dt>Organizational Unit</dt>
-          <dd>Awaiting backend user-unit sync</dd>
+          <dt>Workspace Role</dt>
+          <dd>{{ formatRoleLabel(systemRole) }}</dd>
         </div>
         <div>
           <dt>Portfolio Reach</dt>
-          <dd>{{ projectCount }} projects / {{ unitCount }} units</dd>
+          <dd>{{ portfolioCoverageLabel }}</dd>
         </div>
       </dl>
     </article>
@@ -42,6 +42,10 @@
       </div>
 
       <div class="profile-stat-list">
+        <div class="profile-stat-row">
+          <span>To Do</span>
+          <strong>{{ assignedToDoTasks }}</strong>
+        </div>
         <div class="profile-stat-row">
           <span>In Progress</span>
           <strong>{{ assignedInProgressTasks }}</strong>
@@ -91,6 +95,10 @@
           <dt>Loaded collaborators</dt>
           <dd>{{ projectMemberCount }}</dd>
         </div>
+        <div>
+          <dt>Delivery pressure</dt>
+          <dd>{{ deliveryPressureLabel }}</dd>
+        </div>
       </dl>
     </article>
 
@@ -119,14 +127,46 @@
           <dt>Assigned tasks in focus</dt>
           <dd>{{ assignedTaskCount }}</dd>
         </div>
+        <div>
+          <dt>Suggested landing view</dt>
+          <dd>{{ nextLandingSuggestion }}</dd>
+        </div>
       </dl>
     </article>
 
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <p class="eyebrow">Session Support</p>
-          <h2>Support Context</h2>
+          <p class="eyebrow">Preferences</p>
+          <h2>Workspace Posture</h2>
+        </div>
+      </div>
+
+      <dl class="profile-section-list">
+        <div>
+          <dt>Preferred mode</dt>
+          <dd>{{ preferenceSummary() }}</dd>
+        </div>
+        <div>
+          <dt>Recommended landing</dt>
+          <dd>{{ nextLandingSuggestion }}</dd>
+        </div>
+        <div>
+          <dt>Experience mode</dt>
+          <dd>Wide workspace / business-first dashboard</dd>
+        </div>
+      </dl>
+
+      <div class="profile-action-row">
+        <button type="button" class="ghost" (click)="refreshProfile.emit()">Refresh Profile</button>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Support</p>
+          <h2>Session Context</h2>
         </div>
       </div>
 
@@ -140,18 +180,14 @@
           <dd>{{ backendStatus || 'Backend status unavailable' }}</dd>
         </div>
         <div>
-          <dt>Experience mode</dt>
-          <dd>Wide workspace / business-first dashboard</dd>
+          <dt>Technical placement</dt>
+          <dd>Support details stay here, not on the business dashboard.</dd>
         </div>
       </dl>
 
       <div class="profile-action-row">
-        <button type="button" class="ghost" (click)="refreshProfile.emit()">Refresh Profile</button>
+        <button type="button" class="ghost" (click)="refreshProfile.emit()">Refresh Session Context</button>
       </div>
-
-      <p class="muted support-note">
-        Technical and support-oriented session details are intentionally kept here instead of the main dashboard.
-      </p>
     </article>
   </section>
 </section>

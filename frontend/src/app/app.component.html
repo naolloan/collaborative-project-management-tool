@@ -121,7 +121,7 @@
         <div *ngSwitchCase="'profile'">
           <p class="eyebrow">Account</p>
           <h2>Profile</h2>
-          <p class="muted">Review identity, access context, personal work indicators, and support-oriented session details.</p>
+          <p class="muted">Review identity, role context, workload, and workspace preferences without crowding the main delivery dashboard.</p>
         </div>
       </section>
 
@@ -197,9 +197,11 @@
     [username]="profile()?.username || currentUser()?.username"
     [email]="profile()?.email || currentUser()?.email"
     [userId]="currentUser()?.id"
+    [systemRole]="currentUser()?.systemRole"
     [roles]="roles()"
     [primaryRoleLabel]="primaryRoleLabel()"
     [assignedTaskCount]="myAssignedTasks().length"
+    [assignedToDoTasks]="myAssignedTaskCountByStatus('TO_DO')"
     [assignedInProgressTasks]="myAssignedTaskCountByStatus('IN_PROGRESS')"
     [assignedReviewTasks]="myAssignedTaskCountByStatus('REVIEW')"
     [assignedDoneTasks]="myAssignedTaskCountByStatus('DONE')"
@@ -212,6 +214,9 @@
     [selectedProjectDescription]="selectedProject()?.description"
     [selectedProjectUnitName]="selectedProjectUnitLabel()"
     [selectedProjectTimeline]="selectedProjectTimelineLabel()"
+    [deliveryPressureLabel]="deliveryPressureLabel()"
+    [portfolioCoverageLabel]="portfolioCoverageLabel()"
+    [nextLandingSuggestion]="nextLandingSuggestion()"
     [backendStatus]="apiStatus()"
     [sessionStatus]="sessionStatusLabel()"
     (refreshProfile)="loadCurrentUser()">

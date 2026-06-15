@@ -13,9 +13,11 @@ export class ProfilePageComponent {
   @Input() username: string | null | undefined;
   @Input() email: string | null | undefined;
   @Input() userId: number | null | undefined;
+  @Input() systemRole: string | null | undefined;
   @Input() roles: string[] = [];
   @Input() primaryRoleLabel = '';
   @Input() assignedTaskCount = 0;
+  @Input() assignedToDoTasks = 0;
   @Input() assignedInProgressTasks = 0;
   @Input() assignedReviewTasks = 0;
   @Input() assignedDoneTasks = 0;
@@ -28,6 +30,9 @@ export class ProfilePageComponent {
   @Input() selectedProjectDescription: string | null | undefined;
   @Input() selectedProjectUnitName = 'No active project context';
   @Input() selectedProjectTimeline = 'Timeline not yet defined';
+  @Input() deliveryPressureLabel = 'Personal workload is stable';
+  @Input() portfolioCoverageLabel = 'No portfolio coverage loaded';
+  @Input() nextLandingSuggestion = 'Dashboard';
   @Input() backendStatus = '';
   @Input() sessionStatus = '';
 
@@ -44,5 +49,19 @@ export class ProfilePageComponent {
     }
 
     return parts.map((part) => part.charAt(0).toUpperCase()).join('');
+  }
+
+  formatRoleLabel(value: string | null | undefined): string {
+    if (!value) {
+      return 'Access pending';
+    }
+
+    return value.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
+  }
+
+  preferenceSummary(): string {
+    return this.assignedTaskCount > 0
+      ? 'Task-focused landing / Compact delivery rhythm'
+      : 'Dashboard landing / Standard delivery rhythm';
   }
 }

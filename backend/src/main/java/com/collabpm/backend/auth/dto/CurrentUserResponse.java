@@ -3,7 +3,8 @@ package com.collabpm.backend.auth.dto;
 import java.util.List;
 
 public record CurrentUserResponse(
-    String id,
+    Long id,
+    String systemRole,
     String username,
     String email,
     String fullName,

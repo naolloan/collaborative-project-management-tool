@@ -1,8 +1,9 @@
 .page-shell {
   position: relative;
   min-height: 100vh;
-  padding: clamp(1rem, 1.6vw, 2rem) clamp(1rem, 2.6vw, 2.5rem) 3rem;
-  max-width: 1680px;
+  width: min(100%, 1960px);
+  padding: clamp(1rem, 1.4vw, 1.85rem) clamp(1rem, 2.2vw, 2.2rem) 3rem;
+  max-width: none;
   margin: 0 auto;
 }
 
@@ -19,10 +20,10 @@
 
 .topbar {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(340px, 0.9fr);
+  align-items: start;
+  gap: 1.25rem;
   overflow: hidden;
   margin-bottom: 1rem;
   padding: clamp(1rem, 2.5vw, 1.65rem);
@@ -313,13 +314,15 @@ button:disabled {
 
 .workspace-shell.authenticated-shell {
   display: grid;
-  grid-template-columns: minmax(236px, 0.19fr) minmax(0, 1fr);
-  gap: 1.25rem;
+  grid-template-columns: minmax(240px, 276px) minmax(0, 1fr);
+  gap: 1.4rem;
   align-items: start;
 }
 
 .workspace-main {
   min-width: 0;
+  display: grid;
+  gap: 1rem;
 }
 
 .workspace-nav {
@@ -373,7 +376,6 @@ button:disabled {
 }
 
 .page-heading {
-  margin-bottom: 1rem;
   padding: 1.1rem 1.25rem;
   border: 1px solid rgba(153, 223, 243, 0.75);
   border-radius: 24px;
@@ -413,12 +415,11 @@ button:disabled {
 
 .executive-overview {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.85fr);
+  grid-template-columns: minmax(0, 1.3fr) minmax(300px, 0.72fr) minmax(300px, 0.72fr);
   gap: 1rem;
 }
 
 .executive-panel {
-  grid-row: span 2;
   background:
     linear-gradient(135deg, rgba(8, 74, 96, 0.98), rgba(0, 119, 168, 0.92)),
     radial-gradient(circle at right top, rgba(255, 255, 255, 0.2), transparent 14rem);
@@ -479,6 +480,10 @@ button:disabled {
 .profile-hero,
 .profile-workload-panel {
   min-height: 100%;
+}
+
+.focus-panel {
+  grid-column: span 2;
 }
 
 .focus-copy {
@@ -1199,13 +1204,13 @@ select:focus {
 
 .profile-overview {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
   gap: 1rem;
 }
 
 .profile-detail-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
 }
 
@@ -1250,6 +1255,11 @@ select:focus {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.9rem;
   margin-top: 1.25rem;
+}
+
+.profile-summary-list dd,
+.profile-section-list dd {
+  line-height: 1.45;
 }
 
 .profile-summary-list > div,
@@ -1820,11 +1830,13 @@ dd {
 @media (max-width: 760px) {
   .page-shell {
     padding: 1rem;
+    width: 100%;
   }
 
   .topbar {
     align-items: stretch;
     flex-direction: column;
+    display: flex;
     border-radius: 22px;
   }
 
@@ -1916,5 +1928,9 @@ dd {
   .board-columns {
     grid-template-columns: minmax(240px, 1fr);
     overflow: visible;
+  }
+
+  .focus-panel {
+    grid-column: auto;
   }
 }

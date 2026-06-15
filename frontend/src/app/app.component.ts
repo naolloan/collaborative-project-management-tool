@@ -903,6 +903,11 @@ export class AppComponent implements OnInit {
   }
 
   primaryRoleLabel(): string {
+    const systemRole = this.currentUser()?.systemRole;
+    if (systemRole) {
+      return this.formatStatus(systemRole);
+    }
+
     const roles = this.roles();
     if (roles.length === 0) {
       return 'Access Pending';
@@ -928,6 +933,44 @@ export class AppComponent implements OnInit {
 
   myHighPriorityAssignedTaskCount(): number {
     return this.myAssignedTasks().filter((task) => task.priority === 'HIGH').length;
+  }
+
+  deliveryPressureLabel(): string {
+    const overdue = this.myOverdueAssignedTaskCount();
+    const highPriority = this.myHighPriorityAssignedTaskCount();
+
+    if (overdue > 0) {
+      return `${overdue} overdue task${overdue === 1 ? '' : 's'} need attention`;
+    }
+
+    if (highPriority > 0) {
+      return `${highPriority} high-priority task${highPriority === 1 ? '' : 's'} in focus`;
+    }
+
+    const inProgress = this.myAssignedTaskCountByStatus('IN_PROGRESS');
+    if (inProgress > 0) {
+      return `${inProgress} task${inProgress === 1 ? '' : 's'} actively moving`;
+    }
+
+    return 'Personal workload is stable';
+  }
+
+  portfolioCoverageLabel(): string {
+    const projectCount = this.projects().length;
+    const unitCount = this.organizationalUnits().length;
+    return `${projectCount} active project${projectCount === 1 ? '' : 's'} across ${unitCount} unit${unitCount === 1 ? '' : 's'}`;
+  }
+
+  nextLandingSuggestion(): string {
+    if (this.myAssignedTasks().length > 0) {
+      return 'Task Board';
+    }
+
+    if (this.selectedProject()) {
+      return 'Projects';
+    }
+
+    return 'Dashboard';
   }
 
   selectedProjectUnitLabel(): string {
