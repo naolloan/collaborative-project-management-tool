@@ -5,6 +5,7 @@ alter table if exists activity_logs add column if not exists project_id bigint;
 alter table if exists activity_logs add column if not exists sprint_id bigint;
 alter table if exists activity_logs add column if not exists subject_type varchar(255);
 alter table if exists activity_logs add column if not exists subject_name varchar(255);
+alter table if exists activity_logs alter column task_id drop not null;
 
 create table if not exists project_teams (
     project_id bigint not null,
