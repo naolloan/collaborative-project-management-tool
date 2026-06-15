@@ -6,6 +6,7 @@ import { Comment, CreateCommentRequest } from './dto/comment';
 import { CurrentUser } from './dto/current-user';
 import { OrganizationalUnit, OrganizationalUnitRequest } from './dto/organizational-unit';
 import { AddProjectMemberRequest, ProjectMember } from './dto/project-member';
+import { ProjectTeam, ProjectTeamRequest } from './dto/project-team';
 import { CreateProjectRequest, Project, UpdateProjectRequest } from './dto/project';
 import { CreateSprintRequest, Sprint, UpdateSprintRequest } from './dto/sprint';
 import { CreateTaskRequest, Task, TaskStatus, UpdateTaskRequest } from './dto/task';
@@ -59,6 +60,18 @@ export class ApiService {
 
   addProjectMember(projectId: number, request: AddProjectMemberRequest): Observable<ProjectMember> {
     return this.http.post<ProjectMember>(`${this.apiBaseUrl}/projects/${projectId}/members`, request);
+  }
+
+  listProjectTeams(projectId: number): Observable<ProjectTeam[]> {
+    return this.http.get<ProjectTeam[]>(`${this.apiBaseUrl}/projects/${projectId}/teams`);
+  }
+
+  createProjectTeam(projectId: number, request: ProjectTeamRequest): Observable<ProjectTeam> {
+    return this.http.post<ProjectTeam>(`${this.apiBaseUrl}/projects/${projectId}/teams`, request);
+  }
+
+  updateProjectTeam(projectId: number, teamId: number, request: ProjectTeamRequest): Observable<ProjectTeam> {
+    return this.http.patch<ProjectTeam>(`${this.apiBaseUrl}/projects/${projectId}/teams/${teamId}`, request);
   }
 
   listProjectTasks(projectId: number): Observable<Task[]> {

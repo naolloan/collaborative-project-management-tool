@@ -13,7 +13,7 @@
       <div class="topbar-meta" *ngIf="authenticated(); else signedOutTopbar">
         <div class="meta-card">
           <span class="meta-label">Portfolio Footprint</span>
-          <strong>{{ projects().length }} Projects / {{ organizationalUnits().length }} Units</strong>
+          <strong>{{ projects().length }} Projects / {{ teamDirectory().length }} Teams</strong>
         </div>
         <div class="meta-card">
           <span class="meta-label">Current Operator</span>
@@ -47,7 +47,7 @@
   <section class="status-strip" *ngIf="authenticated() && activeWorkspace() !== 'profile'">
     <div>
       <span class="label">Portfolio</span>
-      <strong>{{ projects().length }} projects / {{ organizationalUnits().length }} units</strong>
+      <strong>{{ projects().length }} projects / {{ teamDirectory().length }} teams</strong>
     </div>
     <div>
       <span class="label">Current Focus</span>
@@ -73,7 +73,7 @@
     </div>
     <div class="focus-metrics">
       <span>{{ projects().length }} Projects</span>
-      <span>{{ organizationalUnits().length }} Units</span>
+      <span>{{ teamDirectory().length }} Teams</span>
       <span>{{ projectMembers().length }} Members</span>
       <span>{{ tasks().length }} Tasks</span>
     </div>
@@ -103,10 +103,10 @@
           <h2>Projects</h2>
           <p class="muted">Create projects, assign collaborating teams, plan sprints, and maintain delivery details.</p>
         </div>
-        <div *ngSwitchCase="'units'">
-          <p class="eyebrow">Bank Structure</p>
-          <h2>Organizational Units</h2>
-          <p class="muted">Manage COOP departments, branches, divisions, and delivery teams.</p>
+        <div *ngSwitchCase="'teams'">
+          <p class="eyebrow">Collaboration</p>
+          <h2>Project Teams</h2>
+          <p class="muted">Create project delivery teams, assign members, and keep manager permissions visible in one place.</p>
         </div>
         <div *ngSwitchCase="'members'">
           <p class="eyebrow">Access</p>
@@ -145,7 +145,7 @@
     [assignedReviewTasks]="myAssignedTaskCountByStatus('REVIEW')"
     [assignedDoneTasks]="myAssignedTaskCountByStatus('DONE')"
     [projectCount]="projects().length"
-    [unitCount]="organizationalUnits().length"
+    [unitCount]="teamDirectory().length"
     [memberCount]="projectMembers().length"
     [projects]="projects()"
     [organizationalUnits]="organizationalUnits()"
@@ -173,23 +173,23 @@
     (archiveProject)="archiveSelectedProject()">
   </app-projects-page>
 
-  <app-units-page
-    *ngIf="authenticated() && activeWorkspace() === 'units'"
-    [organizationalUnits]="organizationalUnits()"
-    [organizationalUnitTypes]="organizationalUnitTypes"
-    [unitStatus]="unitStatus()"
-    [canManage]="canManageOrganizationalUnits()"
-    [creatingUnit]="creatingUnit()"
-    [updatingUnit]="updatingUnit()"
-    [deactivatingUnit]="deactivatingUnit()"
-    [newUnit]="newUnit"
-    [editUnit]="editUnit"
-    (refreshUnits)="loadOrganizationalUnits()"
-    (createUnit)="createOrganizationalUnit()"
-    (selectUnit)="editSelectedUnit($event)"
-    (updateUnit)="updateSelectedUnit()"
-    (deactivateUnit)="deactivateSelectedUnit()">
-  </app-units-page>
+  <app-teams-page
+    *ngIf="authenticated() && activeWorkspace() === 'teams'"
+    [selectedProject]="selectedProject()"
+    [selectedProjectId]="selectedProjectId()"
+    [projectTeams]="projectTeams()"
+    [projectMembers]="projectMembers()"
+    [teamStatus]="teamStatus()"
+    [canManage]="canManageSelectedProject()"
+    [creatingTeam]="creatingTeam()"
+    [updatingTeam]="updatingTeam()"
+    [newTeam]="newTeam"
+    [editTeam]="editTeam"
+    (refreshTeams)="selectedProjectId() && loadProjectTeams(selectedProjectId()!)"
+    (createTeam)="createProjectTeam()"
+    (selectTeam)="editSelectedTeam($event)"
+    (updateTeam)="updateSelectedTeam()">
+  </app-teams-page>
 
   <app-profile-page
     *ngIf="authenticated() && activeWorkspace() === 'profile'"
@@ -209,11 +209,11 @@
     [overdueAssignedTasks]="myOverdueAssignedTaskCount()"
     [highPriorityAssignedTasks]="myHighPriorityAssignedTaskCount()"
     [projectCount]="projects().length"
-    [unitCount]="organizationalUnits().length"
+    [unitCount]="teamDirectory().length"
     [projectMemberCount]="projectMembers().length"
     [selectedProjectName]="selectedProject()?.name"
     [selectedProjectDescription]="selectedProject()?.description"
-    [selectedProjectUnitName]="selectedProjectUnitLabel()"
+    [selectedProjectTeamName]="selectedProjectTeamLabel()"
     [selectedProjectTimeline]="selectedProjectTimelineLabel()"
     [deliveryPressureLabel]="deliveryPressureLabel()"
     [portfolioCoverageLabel]="portfolioCoverageLabel()"

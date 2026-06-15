@@ -28,7 +28,7 @@ export class ProfilePageComponent {
   @Input() projectMemberCount = 0;
   @Input() selectedProjectName: string | null | undefined;
   @Input() selectedProjectDescription: string | null | undefined;
-  @Input() selectedProjectUnitName = 'No active project context';
+  @Input() selectedProjectTeamName = 'No active project context';
   @Input() selectedProjectTimeline = 'Timeline not yet defined';
   @Input() deliveryPressureLabel = 'Personal workload is stable';
   @Input() portfolioCoverageLabel = 'No portfolio coverage loaded';

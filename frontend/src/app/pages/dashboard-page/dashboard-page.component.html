@@ -16,9 +16,9 @@
       </article>
 
       <article class="executive-stat">
-        <span>Units</span>
+        <span>Teams</span>
         <strong>{{ unitCount }}</strong>
-        <p class="muted">COOP structures available for delivery alignment and reporting.</p>
+        <p class="muted">Delivery teams currently available for project alignment and reporting.</p>
       </article>
 
       <article class="executive-stat">
@@ -162,7 +162,7 @@
         <p class="eyebrow">Team Distribution</p>
         <h2>Team Coverage</h2>
       </div>
-      <span class="status-pill">{{ unitCoverage.length }} units active</span>
+      <span class="status-pill">{{ unitCoverage.length }} teams active</span>
     </div>
 
     <div class="empty-state" *ngIf="unitCoverage.length === 0">

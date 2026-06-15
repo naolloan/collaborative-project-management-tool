@@ -1,45 +1,78 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { OrganizationalUnit, OrganizationalUnitType } from '../../core/dto/organizational-unit';
+import { ProjectMember } from '../../core/dto/project-member';
+import { ProjectTeam } from '../../core/dto/project-team';
+import { Project } from '../../core/dto/project';
 
 @Component({
-  selector: 'app-units-page',
+  selector: 'app-teams-page',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './units-page.component.html'
 })
-export class UnitsPageComponent {
-  @Input({ required: true }) organizationalUnits: OrganizationalUnit[] = [];
-  @Input({ required: true }) organizationalUnitTypes: OrganizationalUnitType[] = [];
-  @Input({ required: true }) unitStatus = 'Not loaded';
+export class TeamsPageComponent {
+  @Input({ required: true }) selectedProject: Project | undefined;
+  @Input({ required: true }) selectedProjectId: number | undefined;
+  @Input({ required: true }) projectTeams: ProjectTeam[] = [];
+  @Input({ required: true }) projectMembers: ProjectMember[] = [];
+  @Input({ required: true }) teamStatus = 'No project selected';
   @Input({ required: true }) canManage = false;
-  @Input({ required: true }) creatingUnit = false;
-  @Input({ required: true }) updatingUnit = false;
-  @Input({ required: true }) deactivatingUnit = false;
-  @Input({ required: true }) newUnit!: {
+  @Input({ required: true }) creatingTeam = false;
+  @Input({ required: true }) updatingTeam = false;
+  @Input({ required: true }) newTeam!: {
     name: string;
-    type: OrganizationalUnitType;
     description: string;
+    memberUserIds: number[];
   };
-  @Input({ required: true }) editUnit!: {
+  @Input({ required: true }) editTeam!: {
     id: number | null;
     name: string;
-    type: OrganizationalUnitType;
     description: string;
+    memberUserIds: number[];
   };
 
-  @Output() refreshUnits = new EventEmitter<void>();
-  @Output() createUnit = new EventEmitter<void>();
-  @Output() selectUnit = new EventEmitter<OrganizationalUnit>();
-  @Output() updateUnit = new EventEmitter<void>();
-  @Output() deactivateUnit = new EventEmitter<void>();
+  @Output() refreshTeams = new EventEmitter<void>();
+  @Output() createTeam = new EventEmitter<void>();
+  @Output() selectTeam = new EventEmitter<ProjectTeam>();
+  @Output() updateTeam = new EventEmitter<void>();
 
-  formatUnitType(type: string | null | undefined): string {
-    if (!type) {
-      return 'Unassigned';
+  formatRole(role: string | null | undefined): string {
+    return role ? role.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase()) : 'Member';
+  }
+
+  selectedTeamRecord(): ProjectTeam | undefined {
+    return this.projectTeams.find((team) => team.id === this.editTeam.id);
+  }
+
+  projectManagerCount(): number {
+    return this.projectMembers.filter((member) => member.projectRole === 'MANAGER').length;
+  }
+
+  isMemberSelected(memberUserIds: number[], userId: number): boolean {
+    return memberUserIds.includes(userId);
+  }
+
+  toggleMember(target: { memberUserIds: number[] }, userId: number, checked: boolean): void {
+    if (checked) {
+      if (!target.memberUserIds.includes(userId)) {
+        target.memberUserIds = [...target.memberUserIds, userId];
+      }
+      return;
     }
 
-    return type.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
+    target.memberUserIds = target.memberUserIds.filter((memberId) => memberId !== userId);
+  }
+
+  teamSummary(team: ProjectTeam | undefined): string {
+    if (!team) {
+      return 'Select a team to inspect its delivery makeup and permissions.';
+    }
+
+    if (team.members.length === 0) {
+      return 'No members have been assigned to this team yet.';
+    }
+
+    return `${team.memberCount} member${team.memberCount === 1 ? '' : 's'} with ${team.managerCount} manager${team.managerCount === 1 ? '' : 's'} in the team.`;
   }
 }

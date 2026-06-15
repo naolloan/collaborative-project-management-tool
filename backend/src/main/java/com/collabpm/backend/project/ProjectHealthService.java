@@ -57,7 +57,7 @@ public class ProjectHealthService {
                 .filter((task) -> task.getSprint() != null && sprint.getId().equals(task.getSprint().getId()))
                 .toList();
 
-            double sprintCompletion = completionPercentage(sprintTasks);
+            double sprintCompletion = weightedCompletionPercentage(sprintTasks);
             long sprintHighPriorityOpen = sprintTasks.stream()
                 .filter((task) -> isOpenTask(task) && task.getPriority() == TaskPriority.HIGH)
                 .count();
@@ -70,7 +70,7 @@ public class ProjectHealthService {
             }
         }
 
-        double projectCompletion = completionPercentage(tasks);
+        double projectCompletion = weightedCompletionPercentage(tasks);
         long openHighPriorityTasks = tasks.stream()
             .filter((task) -> isOpenTask(task) && task.getPriority() == TaskPriority.HIGH)
             .count();
@@ -112,14 +112,34 @@ public class ProjectHealthService {
         return ChronoUnit.DAYS.between(today, date);
     }
 
-    private double completionPercentage(List<Task> tasks) {
+    private double weightedCompletionPercentage(List<Task> tasks) {
         if (tasks.isEmpty()) {
             return 100.0;
         }
 
-        long completedTasks = tasks.stream()
+        int totalWeight = tasks.stream()
+            .mapToInt((task) -> taskPriorityWeight(task.getPriority()))
+            .sum();
+        if (totalWeight <= 0) {
+            return 100.0;
+        }
+
+        int completedWeight = tasks.stream()
             .filter((task) -> task.getStatus() == TaskStatus.DONE)
-            .count();
-        return (completedTasks * 100.0) / tasks.size();
+            .mapToInt((task) -> taskPriorityWeight(task.getPriority()))
+            .sum();
+        return (completedWeight * 100.0) / totalWeight;
+    }
+
+    private int taskPriorityWeight(TaskPriority priority) {
+        if (priority == null) {
+            return 2;
+        }
+
+        return switch (priority) {
+            case LOW -> 1;
+            case MEDIUM -> 2;
+            case HIGH -> 3;
+        };
     }
 }

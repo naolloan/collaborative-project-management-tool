@@ -9,21 +9,22 @@ import { Comment } from './core/dto/comment';
 import { CurrentUser } from './core/dto/current-user';
 import { OrganizationalUnit, OrganizationalUnitType } from './core/dto/organizational-unit';
 import { ProjectMember, ProjectRole } from './core/dto/project-member';
+import { ProjectTeam } from './core/dto/project-team';
 import { CreateProjectRequest, Project, ProjectLifecycleStatus } from './core/dto/project';
 import { CreateSprintRequest, Sprint, SprintPriority, SprintStatus, UpdateSprintRequest } from './core/dto/sprint';
 import { CreateTaskRequest, Task, TaskPriority, TaskStatus } from './core/dto/task';
 import { DashboardPageComponent } from './pages/dashboard-page/dashboard-page.component';
 import { ProjectsPageComponent } from './pages/projects-page/projects-page.component';
-import { UnitsPageComponent } from './pages/units-page/units-page.component';
+import { TeamsPageComponent } from './pages/units-page/units-page.component';
 import { ProfilePageComponent } from './pages/profile-page/profile-page.component';
 
-type WorkspaceView = 'dashboard' | 'projects' | 'units' | 'members' | 'tasks' | 'profile';
+type WorkspaceView = 'dashboard' | 'projects' | 'teams' | 'members' | 'tasks' | 'profile';
 type SprintScope = 'ALL' | 'BACKLOG' | number;
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule, DashboardPageComponent, ProjectsPageComponent, UnitsPageComponent, ProfilePageComponent],
+  imports: [CommonModule, FormsModule, DashboardPageComponent, ProjectsPageComponent, TeamsPageComponent, ProfilePageComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
   encapsulation: ViewEncapsulation.None
@@ -36,6 +37,7 @@ export class AppComponent implements OnInit {
   currentUser = signal<CurrentUser | undefined>(undefined);
   projects = signal<Project[]>([]);
   organizationalUnits = signal<OrganizationalUnit[]>([]);
+  projectTeams = signal<ProjectTeam[]>([]);
   projectMembers = signal<ProjectMember[]>([]);
   selectedProjectId = signal<number | undefined>(undefined);
   selectedTaskId = signal<number | undefined>(undefined);
@@ -47,7 +49,7 @@ export class AppComponent implements OnInit {
   activeWorkspace = signal<WorkspaceView>('dashboard');
   apiStatus = signal('Not checked');
   projectStatus = signal('Not loaded');
-  unitStatus = signal('Not loaded');
+  teamStatus = signal('No project selected');
   memberStatus = signal('No project selected');
   taskStatus = signal('No project selected');
   sprintStatus = signal('No project selected');
@@ -57,9 +59,8 @@ export class AppComponent implements OnInit {
   creatingProject = signal(false);
   updatingProject = signal(false);
   archivingProject = signal(false);
-  creatingUnit = signal(false);
-  updatingUnit = signal(false);
-  deactivatingUnit = signal(false);
+  creatingTeam = signal(false);
+  updatingTeam = signal(false);
   addingMember = signal(false);
   creatingSprint = signal(false);
   updatingSprint = signal(false);
@@ -83,7 +84,7 @@ export class AppComponent implements OnInit {
   readonly workspaceNavItems: { view: WorkspaceView; label: string; helper: string }[] = [
     { view: 'dashboard', label: 'Dashboard', helper: 'Overview' },
     { view: 'projects', label: 'Projects', helper: 'Planning' },
-    { view: 'units', label: 'Units', helper: 'Bank structure' },
+    { view: 'teams', label: 'Teams', helper: 'Delivery squads' },
     { view: 'members', label: 'Members', helper: 'Access' },
     { view: 'tasks', label: 'Task Board', helper: 'Delivery' },
     { view: 'profile', label: 'Profile', helper: 'Account' }
@@ -121,16 +122,16 @@ export class AppComponent implements OnInit {
     status: 'PLANNED',
     priority: 'MEDIUM'
   };
-  newUnit = {
+  newTeam = {
     name: '',
-    type: 'DEPARTMENT' as OrganizationalUnitType,
-    description: ''
+    description: '',
+    memberUserIds: [] as number[]
   };
-  editUnit = {
+  editTeam = {
     id: null as number | null,
     name: '',
-    type: 'DEPARTMENT' as OrganizationalUnitType,
-    description: ''
+    description: '',
+    memberUserIds: [] as number[]
   };
   newTask: CreateTaskRequest = {
     title: '',
@@ -242,11 +243,9 @@ export class AppComponent implements OnInit {
       return;
     }
 
-    this.unitStatus.set('Loading units...');
     this.apiService.listOrganizationalUnits().subscribe({
       next: (units) => {
         this.organizationalUnits.set(units);
-        this.unitStatus.set(`${units.length} active unit${units.length === 1 ? '' : 's'}`);
         if (this.newProject.teamIds && this.newProject.teamIds.length === 0) {
           const firstTeam = units.find((unit) => unit.type === 'TEAM');
           this.newProject.teamIds = firstTeam ? [firstTeam.id] : [];
@@ -254,129 +253,7 @@ export class AppComponent implements OnInit {
       },
       error: () => {
         this.organizationalUnits.set([]);
-        this.unitStatus.set('Unit load failed');
         this.error.set('Could not load organizational units.');
-      }
-    });
-  }
-
-  createOrganizationalUnit(): void {
-    const name = this.newUnit.name.trim();
-    if (!this.canManageOrganizationalUnits()) {
-      this.error.set('Only administrators can manage organizational units.');
-      return;
-    }
-
-    if (!name) {
-      this.error.set('Organizational unit name is required.');
-      return;
-    }
-
-    this.creatingUnit.set(true);
-    this.error.set(undefined);
-
-    this.apiService.createOrganizationalUnit({
-      name,
-      type: this.newUnit.type,
-      description: this.cleanOptional(this.newUnit.description)
-    }).subscribe({
-      next: (unit) => {
-        this.newUnit = {
-          name: '',
-          type: 'DEPARTMENT',
-          description: ''
-        };
-        this.creatingUnit.set(false);
-        this.editSelectedUnit(unit);
-        this.loadOrganizationalUnits();
-      },
-      error: () => {
-        this.creatingUnit.set(false);
-        this.error.set('Could not create the organizational unit. Check for duplicate names.');
-      }
-    });
-  }
-
-  editSelectedUnit(unit: OrganizationalUnit): void {
-    this.editUnit = {
-      id: unit.id,
-      name: unit.name,
-      type: unit.type,
-      description: unit.description ?? ''
-    };
-  }
-
-  updateSelectedUnit(): void {
-    const unitId = this.editUnit.id;
-    const name = this.editUnit.name.trim();
-
-    if (!this.canManageOrganizationalUnits()) {
-      this.error.set('Only administrators can manage organizational units.');
-      return;
-    }
-
-    if (!unitId) {
-      this.error.set('Select an organizational unit before saving changes.');
-      return;
-    }
-
-    if (!name) {
-      this.error.set('Organizational unit name is required.');
-      return;
-    }
-
-    this.updatingUnit.set(true);
-    this.error.set(undefined);
-
-    this.apiService.updateOrganizationalUnit(unitId, {
-      name,
-      type: this.editUnit.type,
-      description: this.cleanOptional(this.editUnit.description)
-    }).subscribe({
-      next: (unit) => {
-        this.updatingUnit.set(false);
-        this.editSelectedUnit(unit);
-        this.loadOrganizationalUnits();
-        this.loadProjects();
-      },
-      error: () => {
-        this.updatingUnit.set(false);
-        this.error.set('Could not update the organizational unit.');
-      }
-    });
-  }
-
-  deactivateSelectedUnit(): void {
-    const unitId = this.editUnit.id;
-
-    if (!this.canManageOrganizationalUnits()) {
-      this.error.set('Only administrators can manage organizational units.');
-      return;
-    }
-
-    if (!unitId) {
-      this.error.set('Select an organizational unit before deactivating it.');
-      return;
-    }
-
-    this.deactivatingUnit.set(true);
-    this.error.set(undefined);
-
-    this.apiService.deactivateOrganizationalUnit(unitId).subscribe({
-      next: () => {
-        this.deactivatingUnit.set(false);
-        this.editUnit = {
-          id: null,
-          name: '',
-          type: 'DEPARTMENT',
-          description: ''
-        };
-        this.loadOrganizationalUnits();
-        this.loadProjects();
-      },
-      error: () => {
-        this.deactivatingUnit.set(false);
-        this.error.set('Could not deactivate the organizational unit.');
       }
     });
   }
@@ -423,18 +300,27 @@ export class AppComponent implements OnInit {
     this.selectedProjectId.set(project.id);
     this.prepareProjectEdit(project);
     this.selectedTaskId.set(undefined);
+    this.projectTeams.set([]);
     this.projectMembers.set([]);
     this.sprints.set([]);
     this.comments.set([]);
     this.activities.set([]);
     this.projectActivities.set([]);
+    this.editTeam = {
+      id: null,
+      name: '',
+      description: '',
+      memberUserIds: []
+    };
     this.newTask.assigneeId = null;
     this.newTask.sprintId = null;
+    this.teamStatus.set('Loading project teams...');
     this.memberStatus.set('Loading members...');
     this.sprintStatus.set('Loading sprints...');
     this.commentStatus.set('No task selected');
     this.activityStatus.set('No task selected');
     this.projectActivityStatus.set('Loading activity...');
+    this.loadProjectTeams(project.id);
     this.loadProjectMembers(project.id);
     this.loadSprints(project.id);
     this.loadTasks(project.id);
@@ -495,12 +381,14 @@ export class AppComponent implements OnInit {
         this.archivingProject.set(false);
         this.selectedProjectId.set(undefined);
         this.selectedTaskId.set(undefined);
+        this.projectTeams.set([]);
         this.projectMembers.set([]);
         this.sprints.set([]);
         this.tasks.set([]);
         this.comments.set([]);
         this.activities.set([]);
         this.projectActivities.set([]);
+        this.teamStatus.set('No project selected');
         this.memberStatus.set('No project selected');
         this.sprintStatus.set('No project selected');
         this.taskStatus.set('No project selected');
@@ -516,11 +404,30 @@ export class AppComponent implements OnInit {
     });
   }
 
+  loadProjectTeams(projectId: number): void {
+    this.apiService.listProjectTeams(projectId).subscribe({
+      next: (teams) => {
+        this.projectTeams.set(teams);
+        this.teamStatus.set(`${teams.length} team${teams.length === 1 ? '' : 's'} in this project`);
+        if (teams.length > 0 && !this.editTeam.id) {
+          this.editSelectedTeam(teams[0]);
+        }
+      },
+      error: () => {
+        this.projectTeams.set([]);
+        this.teamStatus.set('Project teams failed to load');
+        this.error.set('Could not load teams for the selected project.');
+      }
+    });
+  }
+
   loadProjectMembers(projectId: number): void {
     this.apiService.listProjectMembers(projectId).subscribe({
       next: (members) => {
         this.projectMembers.set(members);
         this.memberStatus.set(`${members.length} member${members.length === 1 ? '' : 's'}`);
+        this.newTeam.memberUserIds = this.newTeam.memberUserIds.filter((userId) => members.some((member) => member.userId === userId));
+        this.editTeam.memberUserIds = this.editTeam.memberUserIds.filter((userId) => members.some((member) => member.userId === userId));
         if (!this.newTask.assigneeId && members.length > 0) {
           this.newTask.assigneeId = members[0].userId;
         }
@@ -571,6 +478,105 @@ export class AppComponent implements OnInit {
       error: () => {
         this.addingMember.set(false);
         this.error.set('Could not add member. The user must log in once before they can be added by email.');
+      }
+    });
+  }
+
+  createProjectTeam(): void {
+    const projectId = this.selectedProjectId();
+    const name = this.newTeam.name.trim();
+
+    if (!projectId) {
+      this.error.set('Select a project before creating a team.');
+      return;
+    }
+
+    if (!this.canManageSelectedProject()) {
+      this.error.set('Only project managers or administrators can create teams.');
+      return;
+    }
+
+    if (!name) {
+      this.error.set('Team name is required.');
+      return;
+    }
+
+    this.creatingTeam.set(true);
+    this.error.set(undefined);
+
+    this.apiService.createProjectTeam(projectId, {
+      name,
+      description: this.cleanOptional(this.newTeam.description),
+      memberUserIds: this.newTeam.memberUserIds
+    }).subscribe({
+      next: (team) => {
+        this.newTeam = {
+          name: '',
+          description: '',
+          memberUserIds: []
+        };
+        this.creatingTeam.set(false);
+        this.editSelectedTeam(team);
+        this.loadOrganizationalUnits();
+        this.loadProjectTeams(projectId);
+        this.refreshProjectSnapshot(projectId);
+        this.loadProjectActivities(projectId);
+      },
+      error: () => {
+        this.creatingTeam.set(false);
+        this.error.set('Could not create the team. Check the name and member assignments, then try again.');
+      }
+    });
+  }
+
+  editSelectedTeam(team: ProjectTeam): void {
+    this.editTeam = {
+      id: team.id,
+      name: team.name,
+      description: team.description ?? '',
+      memberUserIds: team.members.map((member) => member.userId)
+    };
+  }
+
+  updateSelectedTeam(): void {
+    const projectId = this.selectedProjectId();
+    const teamId = this.editTeam.id;
+    const name = this.editTeam.name.trim();
+
+    if (!projectId || !teamId) {
+      this.error.set('Select a team before saving changes.');
+      return;
+    }
+
+    if (!this.canManageSelectedProject()) {
+      this.error.set('Only project managers or administrators can update teams.');
+      return;
+    }
+
+    if (!name) {
+      this.error.set('Team name is required.');
+      return;
+    }
+
+    this.updatingTeam.set(true);
+    this.error.set(undefined);
+
+    this.apiService.updateProjectTeam(projectId, teamId, {
+      name,
+      description: this.cleanOptional(this.editTeam.description),
+      memberUserIds: this.editTeam.memberUserIds
+    }).subscribe({
+      next: (team) => {
+        this.updatingTeam.set(false);
+        this.editSelectedTeam(team);
+        this.loadOrganizationalUnits();
+        this.loadProjectTeams(projectId);
+        this.refreshProjectSnapshot(projectId);
+        this.loadProjectActivities(projectId);
+      },
+      error: () => {
+        this.updatingTeam.set(false);
+        this.error.set('Could not update the team. Check the name and members, then try again.');
       }
     });
   }
@@ -999,12 +1005,7 @@ export class AppComponent implements OnInit {
   }
 
   completionPercentage(): number {
-    const totalTasks = this.tasks().length;
-    if (totalTasks === 0) {
-      return 0;
-    }
-
-    return Math.round((this.completedTaskCount() / totalTasks) * 100);
+    return this.weightedTaskCompletion(this.tasks());
   }
 
   highPriorityTaskCount(): number {
@@ -1073,6 +1074,10 @@ export class AppComponent implements OnInit {
   }
 
   canManageProjectMembers(): boolean {
+    return this.canManageSelectedProject();
+  }
+
+  canManageSelectedProject(): boolean {
     if (this.roles().includes('ADMINISTRATOR')) {
       return true;
     }
@@ -1084,10 +1089,6 @@ export class AppComponent implements OnInit {
 
     return this.projectMembers().some((member) =>
       member.email.toLowerCase() === currentUserEmail && member.projectRole === 'MANAGER');
-  }
-
-  canManageOrganizationalUnits(): boolean {
-    return this.roles().includes('ADMINISTRATOR');
   }
 
   formatStatus(status: TaskStatus | string): string {
@@ -1166,8 +1167,8 @@ export class AppComponent implements OnInit {
 
   portfolioCoverageLabel(): string {
     const projectCount = this.projects().length;
-    const unitCount = this.organizationalUnits().length;
-    return `${projectCount} active project${projectCount === 1 ? '' : 's'} across ${unitCount} unit${unitCount === 1 ? '' : 's'}`;
+    const teamCount = this.teamDirectory().length;
+    return `${projectCount} active project${projectCount === 1 ? '' : 's'} across ${teamCount} team${teamCount === 1 ? '' : 's'}`;
   }
 
   nextLandingSuggestion(): string {
@@ -1182,7 +1183,7 @@ export class AppComponent implements OnInit {
     return 'Dashboard';
   }
 
-  selectedProjectUnitLabel(): string {
+  selectedProjectTeamLabel(): string {
     const teams = this.selectedProject()?.teams ?? [];
     return teams.length > 0 ? teams.map((team) => team.name).join(', ') : 'No teams assigned';
   }
@@ -1196,11 +1197,11 @@ export class AppComponent implements OnInit {
   }
 
   sprintProgress(sprint: Sprint | undefined): number {
-    if (!sprint || sprint.totalTaskCount === 0) {
+    if (!sprint) {
       return 0;
     }
 
-    return Math.round((sprint.completedTaskCount / sprint.totalTaskCount) * 100);
+    return this.weightedTaskCompletion(this.tasksForSprint(sprint.id));
   }
 
   sprintTimelineLabel(sprint: Sprint | undefined): string {
@@ -1251,13 +1252,26 @@ export class AppComponent implements OnInit {
       return this.completionPercentage();
     }
 
-    const totalSprintTasks = sprints.reduce((sum, sprint) => sum + sprint.totalTaskCount, 0);
-    if (totalSprintTasks === 0) {
-      return 0;
+    let weightedCompleted = 0;
+    let weightedTotal = 0;
+
+    sprints.forEach((sprint) => {
+      const sprintTasks = this.tasksForSprint(sprint.id);
+      const sprintTaskWeight = this.totalTaskWeight(sprintTasks);
+      if (sprintTaskWeight === 0) {
+        return;
+      }
+
+      const sprintPriorityWeight = this.sprintPriorityWeight(sprint.priority);
+      weightedCompleted += this.completedTaskWeight(sprintTasks) * sprintPriorityWeight;
+      weightedTotal += sprintTaskWeight * sprintPriorityWeight;
+    });
+
+    if (weightedTotal === 0) {
+      return this.completionPercentage();
     }
 
-    const completedSprintTasks = sprints.reduce((sum, sprint) => sum + sprint.completedTaskCount, 0);
-    return Math.round((completedSprintTasks / totalSprintTasks) * 100);
+    return Math.round((weightedCompleted / weightedTotal) * 100);
   }
 
   projectProgressTrend(): { label: string; value: number }[] {
@@ -1278,6 +1292,18 @@ export class AppComponent implements OnInit {
 
   taskCountForSprint(sprintId: number | null): number {
     return this.tasks().filter((task) => (task.sprintId ?? null) === sprintId).length;
+  }
+
+  tasksForSprint(sprintId: number | null | undefined): Task[] {
+    if (!sprintId) {
+      return [];
+    }
+
+    return this.tasks().filter((task) => task.sprintId === sprintId);
+  }
+
+  teamDirectory(): OrganizationalUnit[] {
+    return this.organizationalUnits().filter((unit) => unit.type === 'TEAM');
   }
 
   taskBoardScopeLabel(): string {
@@ -1321,6 +1347,51 @@ export class AppComponent implements OnInit {
     }
 
     return this.authenticated() ? 'Authenticated via Keycloak' : 'Awaiting sign-in';
+  }
+
+  private weightedTaskCompletion(tasks: Task[]): number {
+    const totalWeight = this.totalTaskWeight(tasks);
+    if (totalWeight === 0) {
+      return 0;
+    }
+
+    return Math.round((this.completedTaskWeight(tasks) / totalWeight) * 100);
+  }
+
+  private completedTaskWeight(tasks: Task[]): number {
+    return tasks
+      .filter((task) => task.status === 'DONE')
+      .reduce((sum, task) => sum + this.taskPriorityWeight(task.priority), 0);
+  }
+
+  private totalTaskWeight(tasks: Task[]): number {
+    return tasks.reduce((sum, task) => sum + this.taskPriorityWeight(task.priority), 0);
+  }
+
+  private taskPriorityWeight(priority: TaskPriority | null | undefined): number {
+    switch (priority) {
+      case 'LOW':
+        return 1;
+      case 'HIGH':
+        return 3;
+      case 'MEDIUM':
+      default:
+        return 2;
+    }
+  }
+
+  private sprintPriorityWeight(priority: SprintPriority | null | undefined): number {
+    switch (priority) {
+      case 'LOW':
+        return 1;
+      case 'HIGH':
+        return 3;
+      case 'CRITICAL':
+        return 4;
+      case 'MEDIUM':
+      default:
+        return 2;
+    }
   }
 
   private cleanOptional(value: string | null | undefined): string | null {

@@ -1,120 +1,188 @@
-<section class="unit-workspace">
-  <article class="panel units-panel">
+<section class="team-workspace">
+  <article class="panel team-panel">
     <div class="panel-heading">
       <div>
-        <p class="eyebrow">Bank Structure</p>
-        <h2>Organizational Units</h2>
+        <p class="eyebrow">Project Teams</p>
+        <h2>{{ selectedProject?.name || 'Select a project to manage teams' }}</h2>
       </div>
-      <button type="button" class="ghost compact" (click)="refreshUnits.emit()">
+      <button type="button" class="ghost compact" (click)="refreshTeams.emit()" [disabled]="!selectedProjectId">
         Refresh
       </button>
     </div>
 
-    <p class="muted unit-status">{{ unitStatus }}</p>
+    <p class="muted team-status">{{ teamStatus }}</p>
 
-    <div class="unit-management-grid">
-      <div>
-        <div class="empty-state" *ngIf="organizationalUnits.length === 0">
-          <strong>No active units yet</strong>
-          <p class="muted">Administrators can create departments, branches, divisions, or teams here.</p>
-        </div>
+    <div class="empty-state" *ngIf="!selectedProjectId">
+      <strong>No project selected</strong>
+      <p class="muted">Choose a project first, then create teams and assign members for that delivery scope.</p>
+    </div>
 
-        <div class="unit-list" *ngIf="organizationalUnits.length > 0">
-          <article
-            class="unit-card selectable"
-            *ngFor="let unit of organizationalUnits"
-            [class.selected]="unit.id === editUnit.id"
-            (click)="selectUnit.emit(unit)">
-            <div>
-              <strong>{{ unit.name }}</strong>
-              <span class="status-pill">{{ formatUnitType(unit.type) }}</span>
-            </div>
-            <p class="muted" *ngIf="unit.description">{{ unit.description }}</p>
+    <div class="team-grid" *ngIf="selectedProjectId">
+      <section class="team-list-panel">
+        <div class="team-summary-strip">
+          <article>
+            <span>Teams</span>
+            <strong>{{ projectTeams.length }}</strong>
+          </article>
+          <article>
+            <span>Members</span>
+            <strong>{{ projectMembers.length }}</strong>
+          </article>
+          <article>
+            <span>Managers</span>
+            <strong>{{ projectManagerCount() }}</strong>
           </article>
         </div>
-      </div>
 
-      <div class="unit-admin-panel" *ngIf="canManage; else unitManagementLocked">
-        <form class="unit-form" (ngSubmit)="createUnit.emit()">
-          <h3>Create Unit</h3>
-          <label>
-            Unit name
-            <input
-              type="text"
-              name="unitName"
-              [(ngModel)]="newUnit.name"
-              placeholder="Digital Banking Department">
-          </label>
+        <div class="empty-state" *ngIf="projectTeams.length === 0">
+          <strong>No project teams yet</strong>
+          <p class="muted">Create the first team to start assigning people to delivery streams.</p>
+        </div>
 
-          <label>
-            Unit type
-            <select name="unitType" [(ngModel)]="newUnit.type">
-              <option *ngFor="let type of organizationalUnitTypes" [value]="type">{{ formatUnitType(type) }}</option>
-            </select>
-          </label>
+        <div class="team-list" *ngIf="projectTeams.length > 0">
+          <article
+            class="team-card selectable"
+            *ngFor="let team of projectTeams"
+            [class.selected]="team.id === editTeam.id"
+            (click)="selectTeam.emit(team)">
+            <div class="team-card-head">
+              <strong>{{ team.name }}</strong>
+              <span class="status-pill">{{ team.memberCount }} members</span>
+            </div>
+            <p class="muted" *ngIf="team.description">{{ team.description }}</p>
+            <p class="muted" *ngIf="!team.description">No team description has been added yet.</p>
+            <p class="team-meta">{{ team.managerCount }} managers / {{ team.memberCount - team.managerCount }} members</p>
+          </article>
+        </div>
+      </section>
 
-          <label>
-            Description
-            <textarea
-              name="unitDescription"
-              [(ngModel)]="newUnit.description"
-              rows="3"
-              placeholder="What kind of work does this unit own?"></textarea>
-          </label>
-
-          <button type="submit" class="primary" [disabled]="creatingUnit">
-            {{ creatingUnit ? 'Creating...' : 'Create Unit' }}
-          </button>
-        </form>
-
-        <form class="unit-form" (ngSubmit)="updateUnit.emit()">
-          <h3>Edit Selected Unit</h3>
-          <p class="muted" *ngIf="!editUnit.id">Select a unit from the list to edit it.</p>
-
-          <label>
-            Unit name
-            <input
-              type="text"
-              name="editUnitName"
-              [(ngModel)]="editUnit.name"
-              [disabled]="!editUnit.id">
-          </label>
-
-          <label>
-            Unit type
-            <select name="editUnitType" [(ngModel)]="editUnit.type" [disabled]="!editUnit.id">
-              <option *ngFor="let type of organizationalUnitTypes" [value]="type">{{ formatUnitType(type) }}</option>
-            </select>
-          </label>
-
-          <label>
-            Description
-            <textarea
-              name="editUnitDescription"
-              [(ngModel)]="editUnit.description"
-              rows="3"
-              [disabled]="!editUnit.id"></textarea>
-          </label>
-
-          <div class="form-actions">
-            <button type="submit" class="primary" [disabled]="updatingUnit || !editUnit.id">
-              {{ updatingUnit ? 'Saving...' : 'Save Unit' }}
-            </button>
-            <button
-              type="button"
-              class="danger"
-              (click)="deactivateUnit.emit()"
-              [disabled]="deactivatingUnit || !editUnit.id">
-              {{ deactivatingUnit ? 'Deactivating...' : 'Deactivate' }}
-            </button>
+      <section class="team-detail-panel" *ngIf="canManage; else readOnlyTeamView">
+        <article class="team-detail-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Create Team</p>
+              <h2>New Team</h2>
+            </div>
+            <span class="status-pill">{{ projectMembers.length }} project members</span>
           </div>
-        </form>
-      </div>
 
-      <ng-template #unitManagementLocked>
-        <p class="muted locked-note">
-          Only administrators can create, update, or deactivate bank organizational units.
-        </p>
+          <form class="team-form" (ngSubmit)="createTeam.emit()">
+            <label>
+              Team name
+              <input type="text" name="teamName" [(ngModel)]="newTeam.name" placeholder="Payments Delivery">
+            </label>
+
+            <label>
+              Description
+              <textarea name="teamDescription" [(ngModel)]="newTeam.description" rows="3" placeholder="What does this team own?"></textarea>
+            </label>
+
+            <fieldset class="member-picker">
+              <legend>Initial team members</legend>
+              <label *ngFor="let member of projectMembers" class="member-toggle">
+                <input
+                  type="checkbox"
+                  [checked]="isMemberSelected(newTeam.memberUserIds, member.userId)"
+                  (change)="toggleMember(newTeam, member.userId, $any($event.target).checked)">
+                <span>
+                  <strong>{{ member.fullName }}</strong>
+                  <small>{{ formatRole(member.projectRole) }}</small>
+                </span>
+              </label>
+            </fieldset>
+
+            <button type="submit" class="primary" [disabled]="creatingTeam">
+              {{ creatingTeam ? 'Creating...' : 'Create Team' }}
+            </button>
+          </form>
+        </article>
+
+        <article class="team-detail-card" *ngIf="editTeam.id; else noTeamSelected">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Selected Team</p>
+              <h2>{{ selectedTeamRecord()?.name }}</h2>
+            </div>
+            <span class="status-pill">{{ selectedTeamRecord()?.memberCount || 0 }} members</span>
+          </div>
+
+          <p class="muted">{{ teamSummary(selectedTeamRecord()) }}</p>
+
+          <form class="team-form" (ngSubmit)="updateTeam.emit()">
+            <label>
+              Team name
+              <input type="text" name="editTeamName" [(ngModel)]="editTeam.name">
+            </label>
+
+            <label>
+              Description
+              <textarea name="editTeamDescription" [(ngModel)]="editTeam.description" rows="3"></textarea>
+            </label>
+
+            <fieldset class="member-picker">
+              <legend>Team members</legend>
+              <label *ngFor="let member of projectMembers" class="member-toggle">
+                <input
+                  type="checkbox"
+                  [checked]="isMemberSelected(editTeam.memberUserIds, member.userId)"
+                  (change)="toggleMember(editTeam, member.userId, $any($event.target).checked)">
+                <span>
+                  <strong>{{ member.fullName }}</strong>
+                  <small>{{ formatRole(member.projectRole) }}</small>
+                </span>
+              </label>
+            </fieldset>
+
+            <button type="submit" class="primary" [disabled]="updatingTeam">
+              {{ updatingTeam ? 'Saving...' : 'Save Team' }}
+            </button>
+          </form>
+        </article>
+
+        <ng-template #noTeamSelected>
+          <article class="team-detail-card">
+            <div class="empty-state">
+              <strong>Select a team to edit it</strong>
+              <p class="muted">You can rename the team, update members, and keep managers visible here.</p>
+            </div>
+          </article>
+        </ng-template>
+      </section>
+
+      <ng-template #readOnlyTeamView>
+        <section class="team-detail-panel">
+          <article class="team-detail-card" *ngIf="selectedTeamRecord(); else teamReadOnlyEmpty">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Selected Team</p>
+                <h2>{{ selectedTeamRecord()?.name }}</h2>
+              </div>
+              <span class="status-pill">{{ selectedTeamRecord()?.memberCount || 0 }} members</span>
+            </div>
+
+            <p class="muted">{{ selectedTeamRecord()?.description || 'No team description has been added yet.' }}</p>
+
+            <div class="member-picker">
+              <legend>Team members</legend>
+              <label *ngFor="let member of selectedTeamRecord()?.members || []" class="member-toggle">
+                <input type="checkbox" checked disabled>
+                <span>
+                  <strong>{{ member.fullName }}</strong>
+                  <small>{{ formatRole(member.projectRole) }}</small>
+                </span>
+              </label>
+            </div>
+          </article>
+
+          <ng-template #teamReadOnlyEmpty>
+            <article class="team-detail-card">
+              <div class="empty-state">
+                <strong>Select a team to view it</strong>
+                <p class="muted">Only project managers and administrators can change team setup.</p>
+              </div>
+            </article>
+          </ng-template>
+        </section>
       </ng-template>
     </div>
   </article>

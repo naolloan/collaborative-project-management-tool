@@ -37,6 +37,16 @@ create table if not exists project_teams (
     primary key (project_id, team_id)
 );
 
+create table if not exists project_team_members (
+    id bigserial primary key,
+    created_at timestamp(6) with time zone not null,
+    updated_at timestamp(6) with time zone not null,
+    project_id bigint not null,
+    team_id bigint not null,
+    user_id bigint not null,
+    unique (project_id, team_id, user_id)
+);
+
 insert into project_teams (project_id, team_id)
 select projects.id, projects.organizational_unit_id
 from projects
