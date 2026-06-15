@@ -47,6 +47,7 @@ class SprintControllerTest {
                 LocalDate.of(2026, 6, 15),
                 LocalDate.of(2026, 6, 29),
                 "ACTIVE",
+                "HIGH",
                 8,
                 3
             )));
@@ -55,7 +56,8 @@ class SprintControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$", hasSize(1)))
             .andExpect(jsonPath("$[0].name").value("Sprint 1"))
-            .andExpect(jsonPath("$[0].status").value("ACTIVE"));
+            .andExpect(jsonPath("$[0].status").value("ACTIVE"))
+            .andExpect(jsonPath("$[0].priority").value("HIGH"));
     }
 
     @Test
@@ -65,7 +67,8 @@ class SprintControllerTest {
             "Move project execution into sprint planning",
             LocalDate.of(2026, 6, 30),
             LocalDate.of(2026, 7, 14),
-            "PLANNED"
+            "PLANNED",
+            "MEDIUM"
         );
         given(sprintService.createSprint(eq(1L), eq(request), any(Authentication.class))).willReturn(
             new SprintResponse(
@@ -76,6 +79,7 @@ class SprintControllerTest {
                 request.startDate(),
                 request.endDate(),
                 request.status(),
+                request.priority(),
                 0,
                 0
             ));
@@ -89,13 +93,15 @@ class SprintControllerTest {
                       "goal": "Move project execution into sprint planning",
                       "startDate": "2026-06-30",
                       "endDate": "2026-07-14",
-                      "status": "PLANNED"
+                      "status": "PLANNED",
+                      "priority": "MEDIUM"
                     }
                     """))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.id").value(5))
             .andExpect(jsonPath("$.name").value("Sprint 2"))
-            .andExpect(jsonPath("$.status").value("PLANNED"));
+            .andExpect(jsonPath("$.status").value("PLANNED"))
+            .andExpect(jsonPath("$.priority").value("MEDIUM"));
     }
 
     @Test
@@ -105,7 +111,8 @@ class SprintControllerTest {
             "Close the sprint planning loop",
             LocalDate.of(2026, 6, 30),
             LocalDate.of(2026, 7, 16),
-            "ACTIVE"
+            "ACTIVE",
+            "CRITICAL"
         );
         given(sprintService.updateSprint(eq(5L), eq(request), any(Authentication.class))).willReturn(
             new SprintResponse(
@@ -116,6 +123,7 @@ class SprintControllerTest {
                 request.startDate(),
                 request.endDate(),
                 request.status(),
+                request.priority(),
                 6,
                 1
             ));
@@ -129,12 +137,14 @@ class SprintControllerTest {
                       "goal": "Close the sprint planning loop",
                       "startDate": "2026-06-30",
                       "endDate": "2026-07-16",
-                      "status": "ACTIVE"
+                      "status": "ACTIVE",
+                      "priority": "CRITICAL"
                     }
                     """))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(5))
             .andExpect(jsonPath("$.status").value("ACTIVE"))
+            .andExpect(jsonPath("$.priority").value("CRITICAL"))
             .andExpect(jsonPath("$.totalTaskCount").value(6));
     }
 }

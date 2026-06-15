@@ -149,6 +149,8 @@
     [memberCount]="projectMembers().length"
     [projects]="projects()"
     [organizationalUnits]="organizationalUnits()"
+    [sprints]="sprints()"
+    [projectProgressPercentage]="projectProgressFromSprints()"
     (selectTask)="selectTask($event)">
   </app-dashboard-page>
 
@@ -367,6 +369,19 @@
                 <dd>{{ sprintTimelineLabel(sprint) }}</dd>
               </div>
               <div>
+                <dt>Priority</dt>
+                <dd>
+                  <span
+                    class="status-pill"
+                    [class.good-tone]="sprintPriorityTone(sprint.priority) === 'good'"
+                    [class.warning-tone]="sprintPriorityTone(sprint.priority) === 'warning'"
+                    [class.danger-tone]="sprintPriorityTone(sprint.priority) === 'danger'"
+                    [class.neutral-tone]="sprintPriorityTone(sprint.priority) === 'neutral'">
+                    {{ sprintPriorityLabel(sprint.priority) }}
+                  </span>
+                </dd>
+              </div>
+              <div>
                 <dt>Tasks</dt>
                 <dd>{{ sprint.completedTaskCount }} / {{ sprint.totalTaskCount }} done</dd>
               </div>
@@ -421,10 +436,17 @@
           </label>
 
           <label>
-            Backlog items
-            <input type="text" [value]="taskCountForSprint(null) + ' tasks not yet assigned to a sprint'" readonly>
+            Priority
+            <select name="newSprintPriority" [(ngModel)]="newSprint.priority">
+              <option *ngFor="let priority of sprintPriorities" [ngValue]="priority">{{ sprintPriorityLabel(priority) }}</option>
+            </select>
           </label>
         </div>
+
+        <label>
+          Backlog items
+          <input type="text" [value]="taskCountForSprint(null) + ' tasks not yet assigned to a sprint'" readonly>
+        </label>
 
         <div class="date-row">
           <label>
@@ -485,10 +507,17 @@
           </label>
 
           <label>
-            Delivery progress
-            <input type="text" [value]="sprintProgress(selectedSprint()) + '% complete'" readonly>
+            Priority
+            <select name="editSprintPriority" [(ngModel)]="editSprint.priority">
+              <option *ngFor="let priority of sprintPriorities" [ngValue]="priority">{{ sprintPriorityLabel(priority) }}</option>
+            </select>
           </label>
         </div>
+
+        <label>
+          Delivery progress
+          <input type="text" [value]="sprintProgress(selectedSprint()) + '% complete'" readonly>
+        </label>
 
         <div class="date-row">
           <label>
@@ -704,6 +733,41 @@
   </section>
 
   <section class="detail-workspace" *ngIf="authenticated() && activeWorkspace() === 'tasks'">
+    <article class="panel project-activity-panel">
+      <div class="panel-heading">
+        <h2>Project Activity</h2>
+        <span class="muted">{{ projectActivityStatus() }}</span>
+      </div>
+
+      <div class="board-empty" *ngIf="!selectedProjectId()">
+        <strong>No project selected</strong>
+        <p class="muted">Select a project to load its end-to-end delivery activity.</p>
+      </div>
+
+      <ng-container *ngIf="selectedProjectId()">
+        <p class="muted project-activity-copy">
+          Project, sprint, task, comment, and membership changes roll up here so project managers and administrators can review the full delivery trail.
+        </p>
+
+        <div class="activity-list" *ngIf="projectActivities().length > 0; else noProjectActivities">
+          <article class="activity-card project-activity-card" *ngFor="let activity of projectActivities()">
+            <span class="activity-dot"></span>
+            <div>
+              <div class="activity-card-heading">
+                <strong>{{ activity.message }}</strong>
+                <span class="status-pill neutral-tone">{{ activity.subjectType | titlecase }}</span>
+              </div>
+              <p class="muted">{{ activity.subjectName }} · {{ activity.createdAt | date:'medium' }}</p>
+            </div>
+          </article>
+        </div>
+
+        <ng-template #noProjectActivities>
+          <p class="muted">No project-wide activity has been recorded yet.</p>
+        </ng-template>
+      </ng-container>
+    </article>
+
     <article class="panel detail-panel">
       <div class="panel-heading">
         <h2>Task Details</h2>

@@ -3,6 +3,7 @@ package com.collabpm.backend.project;
 import com.collabpm.backend.organization.model.OrganizationalUnit;
 import com.collabpm.backend.organization.model.OrganizationalUnitType;
 import com.collabpm.backend.organization.repository.OrganizationalUnitRepository;
+import com.collabpm.backend.activity.ActivityService;
 import com.collabpm.backend.project.dto.CreateProjectRequest;
 import com.collabpm.backend.project.dto.ProjectResponse;
 import com.collabpm.backend.project.dto.ProjectTeamSummaryResponse;
@@ -32,19 +33,22 @@ public class ProjectService {
     private final CurrentUserService currentUserService;
     private final ProjectAccessService projectAccessService;
     private final ProjectHealthService projectHealthService;
+    private final ActivityService activityService;
 
     public ProjectService(
         ProjectRepository projectRepository,
         OrganizationalUnitRepository organizationalUnitRepository,
         CurrentUserService currentUserService,
         ProjectAccessService projectAccessService,
-        ProjectHealthService projectHealthService
+        ProjectHealthService projectHealthService,
+        ActivityService activityService
     ) {
         this.projectRepository = projectRepository;
         this.organizationalUnitRepository = organizationalUnitRepository;
         this.currentUserService = currentUserService;
         this.projectAccessService = projectAccessService;
         this.projectHealthService = projectHealthService;
+        this.activityService = activityService;
     }
 
     @Transactional(readOnly = true)
@@ -79,6 +83,7 @@ public class ProjectService {
 
         Project savedProject = projectRepository.save(project);
         savedProject.setHealth(projectHealthService.computeHealth(savedProject));
+        activityService.recordProjectCreated(savedProject, creator);
         return toResponse(savedProject);
     }
 
@@ -98,6 +103,8 @@ public class ProjectService {
         project.setDueDate(request.dueDate());
         project.setStatus(resolveProjectStatus(request.status()));
         project.setHealth(projectHealthService.computeHealth(project));
+        User actor = projectAccessService.currentUser(authentication);
+        activityService.recordProjectUpdated(project, actor);
 
         return toResponse(project);
     }
@@ -109,6 +116,8 @@ public class ProjectService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
         project.setStatus(ProjectStatus.ARCHIVED);
         project.setHealth("ON_TRACK");
+        User actor = projectAccessService.currentUser(authentication);
+        activityService.recordProjectArchived(project, actor);
 
         return toResponse(project);
     }

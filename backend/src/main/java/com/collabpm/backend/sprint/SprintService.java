@@ -1,11 +1,13 @@
 package com.collabpm.backend.sprint;
 
+import com.collabpm.backend.activity.ActivityService;
 import com.collabpm.backend.project.ProjectAccessService;
 import com.collabpm.backend.project.model.Project;
 import com.collabpm.backend.project.repository.ProjectRepository;
 import com.collabpm.backend.sprint.dto.CreateSprintRequest;
 import com.collabpm.backend.sprint.dto.SprintResponse;
 import com.collabpm.backend.sprint.dto.UpdateSprintRequest;
+import com.collabpm.backend.sprint.model.SprintPriority;
 import com.collabpm.backend.sprint.model.Sprint;
 import com.collabpm.backend.sprint.model.SprintStatus;
 import com.collabpm.backend.sprint.repository.SprintRepository;
@@ -27,17 +29,20 @@ public class SprintService {
     private final ProjectRepository projectRepository;
     private final TaskRepository taskRepository;
     private final ProjectAccessService projectAccessService;
+    private final ActivityService activityService;
 
     public SprintService(
         SprintRepository sprintRepository,
         ProjectRepository projectRepository,
         TaskRepository taskRepository,
-        ProjectAccessService projectAccessService
+        ProjectAccessService projectAccessService,
+        ActivityService activityService
     ) {
         this.sprintRepository = sprintRepository;
         this.projectRepository = projectRepository;
         this.taskRepository = taskRepository;
         this.projectAccessService = projectAccessService;
+        this.activityService = activityService;
     }
 
     @Transactional(readOnly = true)
@@ -56,6 +61,7 @@ public class SprintService {
         validateDates(request.startDate(), request.endDate());
 
         SprintStatus status = resolveStatus(request.status());
+        SprintPriority priority = resolvePriority(request.priority());
         ensureActiveSprintUniqueness(projectId, status, null);
 
         Sprint sprint = new Sprint(
@@ -64,9 +70,12 @@ public class SprintService {
             normalizeGoal(request.goal()),
             request.startDate(),
             request.endDate(),
-            status
+            status,
+            priority
         );
-        return toResponse(sprintRepository.save(sprint));
+        Sprint savedSprint = sprintRepository.save(sprint);
+        activityService.recordSprintCreated(savedSprint, projectAccessService.currentUser(authentication));
+        return toResponse(savedSprint);
     }
 
     @Transactional
@@ -74,9 +83,12 @@ public class SprintService {
         Sprint sprint = sprintRepository.findById(sprintId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sprint not found"));
         projectAccessService.ensureCanManageProject(sprint.getProject().getId(), authentication);
+        var actor = projectAccessService.currentUser(authentication);
         validateDates(request.startDate(), request.endDate());
 
+        String previousStatus = sprint.getStatus().name();
         SprintStatus status = resolveStatus(request.status());
+        SprintPriority priority = resolvePriority(request.priority());
         ensureActiveSprintUniqueness(sprint.getProject().getId(), status, sprintId);
 
         sprint.setName(request.name().trim());
@@ -84,6 +96,9 @@ public class SprintService {
         sprint.setStartDate(request.startDate());
         sprint.setEndDate(request.endDate());
         sprint.setStatus(status);
+        sprint.setPriority(priority);
+        activityService.recordSprintUpdated(sprint, actor);
+        activityService.recordSprintStatusChanged(sprint, actor, previousStatus, status.name());
 
         return toResponse(sprint);
     }
@@ -108,6 +123,18 @@ public class SprintService {
             return SprintStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sprint status is invalid");
+        }
+    }
+
+    private SprintPriority resolvePriority(String priority) {
+        if (priority == null || priority.isBlank()) {
+            return SprintPriority.MEDIUM;
+        }
+
+        try {
+            return SprintPriority.valueOf(priority.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sprint priority is invalid");
         }
     }
 
@@ -144,6 +171,7 @@ public class SprintService {
             sprint.getStartDate(),
             sprint.getEndDate(),
             sprint.getStatus().name(),
+            sprint.getPriority().name(),
             totalTaskCount,
             completedTaskCount
         );

@@ -1,4 +1,5 @@
 export type SprintStatus = 'PLANNED' | 'ACTIVE' | 'COMPLETED';
+export type SprintPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
 export interface Sprint {
   id: number;
@@ -8,6 +9,7 @@ export interface Sprint {
   startDate?: string | null;
   endDate?: string | null;
   status: SprintStatus;
+  priority: SprintPriority;
   totalTaskCount: number;
   completedTaskCount: number;
 }
@@ -18,6 +20,7 @@ export interface CreateSprintRequest {
   startDate?: string | null;
   endDate?: string | null;
   status: SprintStatus;
+  priority: SprintPriority;
 }
 
 export interface UpdateSprintRequest extends CreateSprintRequest {

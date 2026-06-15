@@ -3,6 +3,7 @@ package com.collabpm.backend.project;
 import com.collabpm.backend.project.model.Project;
 import com.collabpm.backend.project.model.ProjectStatus;
 import com.collabpm.backend.sprint.model.Sprint;
+import com.collabpm.backend.sprint.model.SprintPriority;
 import com.collabpm.backend.sprint.model.SprintStatus;
 import com.collabpm.backend.sprint.repository.SprintRepository;
 import com.collabpm.backend.task.model.Task;
@@ -62,7 +63,9 @@ public class ProjectHealthService {
                 .count();
             long daysLeft = daysUntil(sprint.getEndDate(), today);
 
-            if ((daysLeft >= 0 && daysLeft <= 3 && sprintCompletion < 60.0) || sprintHighPriorityOpen >= 2) {
+            if ((daysLeft >= 0 && daysLeft <= 3 && sprintCompletion < 60.0)
+                || sprintHighPriorityOpen >= 2
+                || (sprint.getPriority() == SprintPriority.CRITICAL && sprintCompletion < 50.0)) {
                 return "AT_RISK";
             }
         }

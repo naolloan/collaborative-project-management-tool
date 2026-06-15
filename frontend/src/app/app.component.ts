@@ -10,7 +10,7 @@ import { CurrentUser } from './core/dto/current-user';
 import { OrganizationalUnit, OrganizationalUnitType } from './core/dto/organizational-unit';
 import { ProjectMember, ProjectRole } from './core/dto/project-member';
 import { CreateProjectRequest, Project, ProjectLifecycleStatus } from './core/dto/project';
-import { CreateSprintRequest, Sprint, SprintStatus, UpdateSprintRequest } from './core/dto/sprint';
+import { CreateSprintRequest, Sprint, SprintPriority, SprintStatus, UpdateSprintRequest } from './core/dto/sprint';
 import { CreateTaskRequest, Task, TaskPriority, TaskStatus } from './core/dto/task';
 import { DashboardPageComponent } from './pages/dashboard-page/dashboard-page.component';
 import { ProjectsPageComponent } from './pages/projects-page/projects-page.component';
@@ -43,6 +43,7 @@ export class AppComponent implements OnInit {
   sprints = signal<Sprint[]>([]);
   comments = signal<Comment[]>([]);
   activities = signal<Activity[]>([]);
+  projectActivities = signal<Activity[]>([]);
   activeWorkspace = signal<WorkspaceView>('dashboard');
   apiStatus = signal('Not checked');
   projectStatus = signal('Not loaded');
@@ -52,6 +53,7 @@ export class AppComponent implements OnInit {
   sprintStatus = signal('No project selected');
   commentStatus = signal('No task selected');
   activityStatus = signal('No task selected');
+  projectActivityStatus = signal('No project selected');
   creatingProject = signal(false);
   updatingProject = signal(false);
   archivingProject = signal(false);
@@ -77,6 +79,7 @@ export class AppComponent implements OnInit {
   readonly projectLifecycleStatuses: ProjectLifecycleStatus[] = ['PLANNED', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'ARCHIVED'];
   readonly organizationalUnitTypes: OrganizationalUnitType[] = ['HEAD_OFFICE', 'DEPARTMENT', 'BRANCH', 'DIVISION', 'TEAM'];
   readonly sprintStatuses: SprintStatus[] = ['PLANNED', 'ACTIVE', 'COMPLETED'];
+  readonly sprintPriorities: SprintPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
   readonly workspaceNavItems: { view: WorkspaceView; label: string; helper: string }[] = [
     { view: 'dashboard', label: 'Dashboard', helper: 'Overview' },
     { view: 'projects', label: 'Projects', helper: 'Planning' },
@@ -106,7 +109,8 @@ export class AppComponent implements OnInit {
     goal: '',
     startDate: '',
     endDate: '',
-    status: 'PLANNED'
+    status: 'PLANNED',
+    priority: 'MEDIUM'
   };
   editSprint: UpdateSprintRequest & { id: number | null } = {
     id: null,
@@ -114,7 +118,8 @@ export class AppComponent implements OnInit {
     goal: '',
     startDate: '',
     endDate: '',
-    status: 'PLANNED'
+    status: 'PLANNED',
+    priority: 'MEDIUM'
   };
   newUnit = {
     name: '',
@@ -422,15 +427,18 @@ export class AppComponent implements OnInit {
     this.sprints.set([]);
     this.comments.set([]);
     this.activities.set([]);
+    this.projectActivities.set([]);
     this.newTask.assigneeId = null;
     this.newTask.sprintId = null;
     this.memberStatus.set('Loading members...');
     this.sprintStatus.set('Loading sprints...');
     this.commentStatus.set('No task selected');
     this.activityStatus.set('No task selected');
+    this.projectActivityStatus.set('Loading activity...');
     this.loadProjectMembers(project.id);
     this.loadSprints(project.id);
     this.loadTasks(project.id);
+    this.loadProjectActivities(project.id);
   }
 
   updateSelectedProject(): void {
@@ -462,6 +470,7 @@ export class AppComponent implements OnInit {
         this.updatingProject.set(false);
         this.prepareProjectEdit(project);
         this.loadProjects();
+        this.loadProjectActivities(projectId);
       },
       error: () => {
         this.updatingProject.set(false);
@@ -491,11 +500,13 @@ export class AppComponent implements OnInit {
         this.tasks.set([]);
         this.comments.set([]);
         this.activities.set([]);
+        this.projectActivities.set([]);
         this.memberStatus.set('No project selected');
         this.sprintStatus.set('No project selected');
         this.taskStatus.set('No project selected');
         this.commentStatus.set('No task selected');
         this.activityStatus.set('No task selected');
+        this.projectActivityStatus.set('No project selected');
         this.loadProjects();
       },
       error: () => {
@@ -555,6 +566,7 @@ export class AppComponent implements OnInit {
         };
         this.addingMember.set(false);
         this.loadProjectMembers(projectId);
+        this.loadProjectActivities(projectId);
       },
       error: () => {
         this.addingMember.set(false);
@@ -612,7 +624,8 @@ export class AppComponent implements OnInit {
       goal: this.cleanOptional(this.newSprint.goal),
       startDate: this.cleanOptional(this.newSprint.startDate),
       endDate: this.cleanOptional(this.newSprint.endDate),
-      status: this.newSprint.status
+      status: this.newSprint.status,
+      priority: this.newSprint.priority
     }).subscribe({
       next: (sprint) => {
         this.creatingSprint.set(false);
@@ -621,10 +634,12 @@ export class AppComponent implements OnInit {
           goal: '',
           startDate: '',
           endDate: '',
-          status: 'PLANNED'
+          status: 'PLANNED',
+          priority: 'MEDIUM'
         };
         this.editSelectedSprint(sprint);
         this.loadSprints(projectId);
+        this.loadProjectActivities(projectId);
         this.refreshProjectSnapshot(projectId);
       },
       error: () => {
@@ -641,7 +656,8 @@ export class AppComponent implements OnInit {
       goal: sprint.goal ?? '',
       startDate: sprint.startDate ?? '',
       endDate: sprint.endDate ?? '',
-      status: sprint.status
+      status: sprint.status,
+      priority: sprint.priority
     };
   }
 
@@ -673,13 +689,15 @@ export class AppComponent implements OnInit {
       goal: this.cleanOptional(this.editSprint.goal),
       startDate: this.cleanOptional(this.editSprint.startDate),
       endDate: this.cleanOptional(this.editSprint.endDate),
-      status: this.editSprint.status
+      status: this.editSprint.status,
+      priority: this.editSprint.priority
     }).subscribe({
       next: (sprint) => {
         this.updatingSprint.set(false);
         this.editSelectedSprint(sprint);
         this.loadSprints(projectId);
         this.loadTasks(projectId);
+        this.loadProjectActivities(projectId);
         this.refreshProjectSnapshot(projectId);
       },
       error: () => {
@@ -755,6 +773,7 @@ export class AppComponent implements OnInit {
         this.commentStatus.set('No comments yet');
         this.loadTasks(projectId);
         this.loadSprints(projectId);
+        this.loadProjectActivities(projectId);
         this.refreshProjectSnapshot(projectId);
         this.loadActivities(createdTask.id);
       },
@@ -803,6 +822,7 @@ export class AppComponent implements OnInit {
         this.prepareTaskEdit(updatedTask);
         this.loadTasks(projectId);
         this.loadSprints(projectId);
+        this.loadProjectActivities(projectId);
         this.refreshProjectSnapshot(projectId);
         this.loadActivities(taskId);
       },
@@ -835,6 +855,7 @@ export class AppComponent implements OnInit {
         this.activityStatus.set('No task selected');
         this.loadTasks(projectId);
         this.loadSprints(projectId);
+        this.loadProjectActivities(projectId);
         this.refreshProjectSnapshot(projectId);
       },
       error: () => {
@@ -884,6 +905,10 @@ export class AppComponent implements OnInit {
         this.addingComment.set(false);
         this.loadComments(taskId);
         this.loadActivities(taskId);
+        const projectId = this.selectedProjectId();
+        if (projectId) {
+          this.loadProjectActivities(projectId);
+        }
       },
       error: () => {
         this.addingComment.set(false);
@@ -905,6 +930,21 @@ export class AppComponent implements OnInit {
         this.activities.set([]);
         this.activityStatus.set('Activity load failed');
         this.error.set('Could not load activity history for the selected task.');
+      }
+    });
+  }
+
+  loadProjectActivities(projectId: number): void {
+    this.projectActivityStatus.set('Loading project activity...');
+    this.apiService.listProjectActivities(projectId).subscribe({
+      next: (activities) => {
+        this.projectActivities.set(activities);
+        this.projectActivityStatus.set(`${activities.length} activit${activities.length === 1 ? 'y' : 'ies'}`);
+      },
+      error: () => {
+        this.projectActivities.set([]);
+        this.projectActivityStatus.set('Project activity load failed');
+        this.error.set('Could not load project activity history.');
       }
     });
   }
@@ -1012,6 +1052,7 @@ export class AppComponent implements OnInit {
         const projectId = this.selectedProjectId();
         if (projectId) {
           this.loadSprints(projectId);
+          this.loadProjectActivities(projectId);
           this.refreshProjectSnapshot(projectId);
         }
         if (task.id === this.selectedTaskId()) {
@@ -1180,6 +1221,59 @@ export class AppComponent implements OnInit {
     }
 
     return 'Timeline not yet defined';
+  }
+
+  sprintPriorityLabel(priority: SprintPriority | string | null | undefined): string {
+    if (!priority) {
+      return 'Medium';
+    }
+
+    return this.formatStatus(priority);
+  }
+
+  sprintPriorityTone(priority: SprintPriority | string | null | undefined): 'good' | 'warning' | 'danger' | 'neutral' {
+    const normalized = (priority || '').trim().toUpperCase();
+    switch (normalized) {
+      case 'LOW':
+        return 'good';
+      case 'HIGH':
+        return 'warning';
+      case 'CRITICAL':
+        return 'danger';
+      default:
+        return 'neutral';
+    }
+  }
+
+  projectProgressFromSprints(): number {
+    const sprints = this.sprints();
+    if (sprints.length === 0) {
+      return this.completionPercentage();
+    }
+
+    const totalSprintTasks = sprints.reduce((sum, sprint) => sum + sprint.totalTaskCount, 0);
+    if (totalSprintTasks === 0) {
+      return 0;
+    }
+
+    const completedSprintTasks = sprints.reduce((sum, sprint) => sum + sprint.completedTaskCount, 0);
+    return Math.round((completedSprintTasks / totalSprintTasks) * 100);
+  }
+
+  projectProgressTrend(): { label: string; value: number }[] {
+    const sprints = this.sprints();
+    if (sprints.length === 0) {
+      return [{ label: 'Backlog', value: this.completionPercentage() }];
+    }
+
+    return sprints.map((sprint, index) => ({
+      label: sprint.name || `Sprint ${index + 1}`,
+      value: this.sprintProgress(sprint)
+    }));
+  }
+
+  projectActivityPreview(): Activity[] {
+    return this.projectActivities().slice(0, 8);
   }
 
   taskCountForSprint(sprintId: number | null): number {

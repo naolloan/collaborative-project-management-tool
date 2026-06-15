@@ -141,10 +141,11 @@ public class TaskService {
     public void deleteTask(Long taskId, Authentication authentication) {
         Task task = taskRepository.findById(taskId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
-        projectAccessService.ensureCanManageProject(task.getProject().getId(), authentication);
+        User actor = projectAccessService.ensureCanManageProject(task.getProject().getId(), authentication);
 
+        activityService.recordTaskDeleted(task, actor);
         commentRepository.deleteByTaskId(taskId);
-        activityLogRepository.deleteByTaskId(taskId);
+        activityLogRepository.clearTaskReference(taskId);
         taskRepository.delete(task);
     }
 

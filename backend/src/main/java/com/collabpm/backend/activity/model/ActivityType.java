@@ -1,7 +1,15 @@
 package com.collabpm.backend.activity.model;
 
 public enum ActivityType {
+    PROJECT_CREATED,
+    PROJECT_UPDATED,
+    PROJECT_ARCHIVED,
+    PROJECT_MEMBER_ADDED,
+    SPRINT_CREATED,
+    SPRINT_UPDATED,
+    SPRINT_STATUS_CHANGED,
     TASK_CREATED,
+    TASK_DELETED,
     TASK_UPDATED,
     TASK_ASSIGNED,
     TASK_STATUS_CHANGED,

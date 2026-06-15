@@ -9,6 +9,7 @@ public record CreateSprintRequest(
     String goal,
     LocalDate startDate,
     LocalDate endDate,
-    String status
+    String status,
+    String priority
 ) {
 }

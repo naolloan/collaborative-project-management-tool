@@ -35,12 +35,16 @@ class ActivityControllerTest {
     void listsTaskActivitiesForAuthenticatedUsers() throws Exception {
         given(activityService.listTaskActivities(eq(10L), any(Authentication.class))).willReturn(List.of(new ActivityResponse(
             1L,
+            1L,
+            4L,
             10L,
+            "TASK",
+            "Build polished task board",
             "Admin Admin",
             "TASK_STATUS_CHANGED",
             "TO_DO",
             "IN_PROGRESS",
-            "Admin Admin moved this task from To Do to In Progress",
+            "Admin Admin moved task \"Build polished task board\" from To Do to In Progress",
             Instant.parse("2026-06-09T14:00:00Z"))));
 
         mockMvc.perform(get("/api/tasks/10/activities").with(jwt()))
@@ -48,7 +52,31 @@ class ActivityControllerTest {
             .andExpect(jsonPath("$", hasSize(1)))
             .andExpect(jsonPath("$[0].actorName").value("Admin Admin"))
             .andExpect(jsonPath("$[0].actionType").value("TASK_STATUS_CHANGED"))
-            .andExpect(jsonPath("$[0].message").value("Admin Admin moved this task from To Do to In Progress"));
+            .andExpect(jsonPath("$[0].message").value("Admin Admin moved task \"Build polished task board\" from To Do to In Progress"));
+    }
+
+    @Test
+    void listsProjectActivitiesForAuthenticatedUsers() throws Exception {
+        given(activityService.listProjectActivities(eq(1L), any(Authentication.class))).willReturn(List.of(new ActivityResponse(
+            2L,
+            1L,
+            4L,
+            null,
+            "SPRINT",
+            "Sprint 1",
+            "Admin Admin",
+            "SPRINT_CREATED",
+            null,
+            "ACTIVE",
+            "Admin Admin created sprint \"Sprint 1\"",
+            Instant.parse("2026-06-10T09:30:00Z"))));
+
+        mockMvc.perform(get("/api/projects/1/activities").with(jwt()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(1)))
+            .andExpect(jsonPath("$[0].subjectType").value("SPRINT"))
+            .andExpect(jsonPath("$[0].subjectName").value("Sprint 1"))
+            .andExpect(jsonPath("$[0].actionType").value("SPRINT_CREATED"));
     }
 
     @Test

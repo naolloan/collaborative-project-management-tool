@@ -1,5 +1,6 @@
 package com.collabpm.backend.project;
 
+import com.collabpm.backend.activity.ActivityService;
 import com.collabpm.backend.project.dto.AddProjectMemberRequest;
 import com.collabpm.backend.project.dto.ProjectMemberResponse;
 import com.collabpm.backend.project.model.Project;
@@ -27,19 +28,22 @@ public class ProjectMemberService {
     private final UserRepository userRepository;
     private final CurrentUserService currentUserService;
     private final ProjectAccessService projectAccessService;
+    private final ActivityService activityService;
 
     public ProjectMemberService(
         ProjectRepository projectRepository,
         ProjectMemberRepository projectMemberRepository,
         UserRepository userRepository,
         CurrentUserService currentUserService,
-        ProjectAccessService projectAccessService
+        ProjectAccessService projectAccessService,
+        ActivityService activityService
     ) {
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
         this.userRepository = userRepository;
         this.currentUserService = currentUserService;
         this.projectAccessService = projectAccessService;
+        this.activityService = activityService;
     }
 
     @Transactional(readOnly = true)
@@ -74,7 +78,9 @@ public class ProjectMemberService {
 
         ProjectRole role = request.projectRole() == null ? ProjectRole.MEMBER : request.projectRole();
         ProjectMember member = new ProjectMember(project, user, role, Instant.now());
-        return toResponse(projectMemberRepository.save(member));
+        ProjectMember savedMember = projectMemberRepository.save(member);
+        activityService.recordProjectMemberAdded(savedMember, currentUser);
+        return toResponse(savedMember);
     }
 
     private void ensureCanManageProjectMembers(Long projectId, User currentUser) {

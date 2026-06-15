@@ -248,17 +248,41 @@
         <p class="eyebrow">Project Summary</p>
         <h2>{{ selectedProjectName }}</h2>
       </div>
-      <strong class="completion-badge">{{ completionPercentage }}% complete</strong>
+      <strong class="completion-badge">{{ projectProgressPercentage }}% complete</strong>
     </div>
 
+    <p class="muted summary-copy">
+      Project progress is rolled up from sprint delivery, while each sprint progresses according to the tasks completed inside it.
+    </p>
+
     <div class="progress-track" aria-hidden="true">
-      <span [style.width.%]="completionPercentage"></span>
+      <span [style.width.%]="projectProgressPercentage"></span>
     </div>
 
     <div class="summary-grid">
       <article class="summary-card">
         <span>Total tasks</span>
         <strong>{{ totalTasks }}</strong>
+      </article>
+
+      <article class="summary-card">
+        <span>Sprints</span>
+        <strong>{{ sprints.length }}</strong>
+      </article>
+
+      <article class="summary-card">
+        <span>Active sprint</span>
+        <strong>{{ activeSprintLabel() }}</strong>
+      </article>
+
+      <article class="summary-card">
+        <span>Backlog tasks</span>
+        <strong>{{ backlogTaskCount() }}</strong>
+      </article>
+
+      <article class="summary-card">
+        <span>Task completion</span>
+        <strong>{{ completionPercentage }}%</strong>
       </article>
 
       <article class="summary-card">
@@ -289,6 +313,37 @@
       <article class="summary-card danger-card">
         <span>Overdue</span>
         <strong>{{ overdueTasks }}</strong>
+      </article>
+    </div>
+  </article>
+
+  <article class="panel sprint-progress-panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Sprint Progress</p>
+        <h2>Delivery Rollup</h2>
+      </div>
+      <span class="status-pill">{{ sprints.length }} sprint{{ sprints.length === 1 ? '' : 's' }}</span>
+    </div>
+
+    <div class="empty-state" *ngIf="sprints.length === 0">
+      <strong>No sprint progress to chart yet</strong>
+      <p class="muted">Create sprints for this project to turn task execution into a visible delivery graph.</p>
+    </div>
+
+    <div class="sprint-progress-chart" *ngIf="sprintProgressTrend().length > 0">
+      <article class="sprint-progress-row" *ngFor="let sprint of sprintProgressTrend()">
+        <div class="sprint-progress-meta">
+          <div>
+            <strong>{{ sprint.label }}</strong>
+            <p class="muted">{{ sprint.priority }} priority · {{ sprint.status }} · {{ sprint.completedTaskCount }} / {{ sprint.totalTaskCount }} done</p>
+          </div>
+          <span>{{ sprint.value }}%</span>
+        </div>
+
+        <div class="progress-track sprint-chart-track" aria-hidden="true">
+          <span [style.width.%]="sprint.value"></span>
+        </div>
       </article>
     </div>
   </article>

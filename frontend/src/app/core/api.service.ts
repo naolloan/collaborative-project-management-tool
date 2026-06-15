@@ -105,6 +105,10 @@ export class ApiService {
     return this.http.get<Activity[]>(`${this.apiBaseUrl}/tasks/${taskId}/activities`);
   }
 
+  listProjectActivities(projectId: number): Observable<Activity[]> {
+    return this.http.get<Activity[]>(`${this.apiBaseUrl}/projects/${projectId}/activities`);
+  }
+
   private resolveApiBaseUrl(): string {
     const developmentPorts = ['4200', '43297'];
     if (developmentPorts.includes(window.location.port)) {

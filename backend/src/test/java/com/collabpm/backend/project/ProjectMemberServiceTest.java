@@ -5,6 +5,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import com.collabpm.backend.activity.ActivityService;
 import com.collabpm.backend.project.dto.AddProjectMemberRequest;
 import com.collabpm.backend.project.model.Project;
 import com.collabpm.backend.project.model.ProjectMember;
@@ -28,12 +29,14 @@ class ProjectMemberServiceTest {
     private final UserRepository userRepository = mock(UserRepository.class);
     private final CurrentUserService currentUserService = mock(CurrentUserService.class);
     private final ProjectAccessService projectAccessService = mock(ProjectAccessService.class);
+    private final ActivityService activityService = mock(ActivityService.class);
     private final ProjectMemberService projectMemberService = new ProjectMemberService(
         projectRepository,
         projectMemberRepository,
         userRepository,
         currentUserService,
-        projectAccessService);
+        projectAccessService,
+        activityService);
 
     @Test
     void rejectsProjectMembersWhoTryToManageMembers() {

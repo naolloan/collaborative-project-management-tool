@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { OrganizationalUnit } from '../../core/dto/organizational-unit';
 import { Project } from '../../core/dto/project';
+import { Sprint } from '../../core/dto/sprint';
 import { Task, TaskStatus } from '../../core/dto/task';
 
 type HealthTone = 'good' | 'warning' | 'danger' | 'neutral';
@@ -18,6 +19,15 @@ interface UnitCoverageItem {
   unit: OrganizationalUnit;
   projectCount: number;
   coveragePercent: number;
+}
+
+interface SprintTrendItem {
+  label: string;
+  value: number;
+  priority: string;
+  status: string;
+  completedTaskCount: number;
+  totalTaskCount: number;
 }
 
 @Component({
@@ -49,6 +59,8 @@ export class DashboardPageComponent implements OnChanges {
   @Input() memberCount = 0;
   @Input() projects: Project[] = [];
   @Input() organizationalUnits: OrganizationalUnit[] = [];
+  @Input() sprints: Sprint[] = [];
+  @Input() projectProgressPercentage = 0;
 
   @Output() selectTask = new EventEmitter<Task>();
 
@@ -89,6 +101,31 @@ export class DashboardPageComponent implements OnChanges {
   selectedProjectHealthLabel(): string {
     const project = this.selectedProject();
     return project ? this.projectHealthLabel(project) : 'Select a project to load delivery context';
+  }
+
+  sprintProgressTrend(): SprintTrendItem[] {
+    if (this.sprints.length === 0) {
+      return [];
+    }
+
+    return this.sprints.map((sprint, index) => ({
+      label: sprint.name || `Sprint ${index + 1}`,
+      value: sprint.totalTaskCount === 0 ? 0 : Math.round((sprint.completedTaskCount / sprint.totalTaskCount) * 100),
+      priority: this.formatStatus(sprint.priority),
+      status: this.formatStatus(sprint.status),
+      completedTaskCount: sprint.completedTaskCount,
+      totalTaskCount: sprint.totalTaskCount
+    }));
+  }
+
+  activeSprintLabel(): string {
+    const activeSprint = this.sprints.find((sprint) => sprint.status === 'ACTIVE') ?? this.sprints[0];
+    return activeSprint ? activeSprint.name : 'No sprint in motion';
+  }
+
+  backlogTaskCount(): number {
+    const sprintTaskCount = this.sprints.reduce((sum, sprint) => sum + sprint.totalTaskCount, 0);
+    return Math.max(this.totalTasks - sprintTaskCount, 0);
   }
 
   private rebuildPortfolioView(): void {

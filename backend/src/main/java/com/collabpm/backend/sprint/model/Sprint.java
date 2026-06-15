@@ -34,16 +34,29 @@ public class Sprint extends BaseEntity {
     @Column(nullable = false)
     private SprintStatus status = SprintStatus.PLANNED;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private SprintPriority priority = SprintPriority.MEDIUM;
+
     protected Sprint() {
     }
 
-    public Sprint(Project project, String name, String goal, LocalDate startDate, LocalDate endDate, SprintStatus status) {
+    public Sprint(
+        Project project,
+        String name,
+        String goal,
+        LocalDate startDate,
+        LocalDate endDate,
+        SprintStatus status,
+        SprintPriority priority
+    ) {
         this.project = project;
         this.name = name;
         this.goal = goal;
         this.startDate = startDate;
         this.endDate = endDate;
         this.status = status == null ? SprintStatus.PLANNED : status;
+        this.priority = priority == null ? SprintPriority.MEDIUM : priority;
     }
 
     public Project getProject() {
@@ -88,5 +101,13 @@ public class Sprint extends BaseEntity {
 
     public void setStatus(SprintStatus status) {
         this.status = status;
+    }
+
+    public SprintPriority getPriority() {
+        return priority;
+    }
+
+    public void setPriority(SprintPriority priority) {
+        this.priority = priority == null ? SprintPriority.MEDIUM : priority;
     }
 }

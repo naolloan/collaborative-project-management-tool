@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/tasks/{taskId}/activities")
+@RequestMapping("/api")
 public class ActivityController {
 
     private final ActivityService activityService;
@@ -18,7 +18,12 @@ public class ActivityController {
         this.activityService = activityService;
     }
 
-    @GetMapping
+    @GetMapping("/projects/{projectId}/activities")
+    public List<ActivityResponse> listProjectActivities(@PathVariable Long projectId, Authentication authentication) {
+        return activityService.listProjectActivities(projectId, authentication);
+    }
+
+    @GetMapping("/tasks/{taskId}/activities")
     public List<ActivityResponse> listTaskActivities(@PathVariable Long taskId, Authentication authentication) {
         return activityService.listTaskActivities(taskId, authentication);
     }

@@ -10,6 +10,7 @@ public record SprintResponse(
     LocalDate startDate,
     LocalDate endDate,
     String status,
+    String priority,
     long totalTaskCount,
     long completedTaskCount
 ) {
