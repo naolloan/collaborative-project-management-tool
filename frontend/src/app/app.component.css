@@ -981,6 +981,10 @@ button:disabled {
   font-size: 1.2rem;
 }
 
+.member-picker-empty {
+  margin: 0.75rem 0 0;
+}
+
 .team-list {
   display: grid;
   gap: 0.75rem;
@@ -1100,6 +1104,18 @@ label {
   color: var(--muted);
   font-size: 0.82rem;
   font-weight: 700;
+}
+
+.browse-control,
+.member-search-control {
+  margin-bottom: 0.9rem;
+}
+
+.browse-control input,
+.member-search-control input {
+  min-height: 2.35rem;
+  border-radius: 12px;
+  background: #fff;
 }
 
 input,
@@ -1675,6 +1691,86 @@ select:focus {
   gap: 1rem;
 }
 
+.summary-metric-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.summary-metric-strip article {
+  min-width: 0;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.summary-metric-strip span,
+.graph-row-meta span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.summary-metric-strip strong {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--primary-dark);
+  font-size: 1.06rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.project-status-graph,
+.task-status-graph {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.task-status-graph {
+  margin-top: 0.9rem;
+}
+
+.graph-row {
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ffffff, var(--surface-soft));
+}
+
+.graph-row-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.graph-row-meta strong {
+  color: var(--primary-dark);
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.graph-track {
+  height: 0.55rem;
+}
+
+.graph-row.warning-tone-row .graph-track span {
+  background: linear-gradient(90deg, #f59e0b, #facc15);
+}
+
+.graph-row.danger-tone-row .graph-track span {
+  background: linear-gradient(90deg, #c2413b, #fb7185);
+}
+
+.graph-row.good-tone-row .graph-track span {
+  background: linear-gradient(90deg, var(--primary), var(--success));
+}
+
 .summary-card {
   position: relative;
   overflow: hidden;
@@ -2244,6 +2340,7 @@ dd {
   .profile-detail-grid,
   .profile-summary-list,
   .project-command-strip,
+  .summary-metric-strip,
   .sprint-workspace,
   .team-grid,
   .team-summary-strip,

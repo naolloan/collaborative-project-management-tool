@@ -38,6 +38,8 @@ export class ProjectsPageComponent {
   @Output() archiveProject = new EventEmitter<void>();
   @Output() manageProjectTeams = new EventEmitter<void>();
 
+  projectSearch = '';
+
   formatUnitType(type: string | null | undefined): string {
     if (!type) {
       return 'Unassigned';
@@ -145,6 +147,22 @@ export class ProjectsPageComponent {
 
   activeDeliveryCount(): number {
     return this.projects.filter((project) => project.status === 'ACTIVE').length;
+  }
+
+  filteredProjects(): Project[] {
+    const search = this.projectSearch.trim().toLowerCase();
+    if (!search) {
+      return this.projects;
+    }
+
+    return this.projects.filter((project) => {
+      const teamNames = (project.teams ?? []).map((team) => team.name).join(' ').toLowerCase();
+      return project.name.toLowerCase().includes(search)
+        || (project.description ?? '').toLowerCase().includes(search)
+        || teamNames.includes(search)
+        || this.formatProjectStatus(project.status).toLowerCase().includes(search)
+        || this.formatProjectHealth(project.health).toLowerCase().includes(search);
+    });
   }
 
   teamUnits(): OrganizationalUnit[] {

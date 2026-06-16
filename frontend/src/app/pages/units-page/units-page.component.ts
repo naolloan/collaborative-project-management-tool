@@ -37,6 +37,10 @@ export class TeamsPageComponent {
   @Output() selectTeam = new EventEmitter<ProjectTeam>();
   @Output() updateTeam = new EventEmitter<void>();
 
+  teamSearch = '';
+  createMemberSearch = '';
+  editMemberSearch = '';
+
   formatRole(role: string | null | undefined): string {
     return role ? role.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase()) : 'Member';
   }
@@ -47,6 +51,33 @@ export class TeamsPageComponent {
 
   projectManagerCount(): number {
     return this.projectMembers.filter((member) => member.projectRole === 'MANAGER').length;
+  }
+
+  filteredProjectTeams(): ProjectTeam[] {
+    const search = this.teamSearch.trim().toLowerCase();
+    if (!search) {
+      return this.projectTeams;
+    }
+
+    return this.projectTeams.filter((team) => {
+      const memberNames = team.members.map((member) => `${member.fullName} ${member.email}`).join(' ').toLowerCase();
+      return team.name.toLowerCase().includes(search)
+        || (team.description ?? '').toLowerCase().includes(search)
+        || memberNames.includes(search);
+    });
+  }
+
+  filteredProjectMembers(scope: 'create' | 'edit'): ProjectMember[] {
+    const search = (scope === 'create' ? this.createMemberSearch : this.editMemberSearch).trim().toLowerCase();
+    if (!search) {
+      return this.projectMembers;
+    }
+
+    return this.projectMembers.filter((member) => (
+      member.fullName.toLowerCase().includes(search)
+      || member.email.toLowerCase().includes(search)
+      || this.formatRole(member.projectRole).toLowerCase().includes(search)
+    ));
   }
 
   isMemberSelected(memberUserIds: number[], userId: number): boolean {

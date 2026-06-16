@@ -122,15 +122,29 @@
       </article>
     </div>
 
+    <label class="browse-control">
+      Browse projects
+      <input
+        type="search"
+        name="projectBrowse"
+        [(ngModel)]="projectSearch"
+        placeholder="Search name, team, status, or health">
+    </label>
+
     <div class="empty-state" *ngIf="projects.length === 0">
       <strong>No projects yet</strong>
       <p class="muted">Create the first project to verify the delivery workspace is ready for real COOP execution tracking.</p>
     </div>
 
-    <div class="project-directory" *ngIf="projects.length > 0">
+    <div class="empty-state" *ngIf="projects.length > 0 && filteredProjects().length === 0">
+      <strong>No matching projects</strong>
+      <p class="muted">Adjust the project search to browse the current portfolio.</p>
+    </div>
+
+    <div class="project-directory" *ngIf="filteredProjects().length > 0">
       <article
         class="project-card selectable project-directory-card"
-        *ngFor="let project of projects"
+        *ngFor="let project of filteredProjects()"
         [class.selected]="project.id === selectedProjectId"
         (click)="selectProject.emit(project)">
         <div class="project-card-header">

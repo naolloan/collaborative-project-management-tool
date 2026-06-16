@@ -34,15 +34,29 @@
           </article>
         </div>
 
+        <label class="browse-control">
+          Browse teams
+          <input
+            type="search"
+            name="teamBrowse"
+            [(ngModel)]="teamSearch"
+            placeholder="Search team or member">
+        </label>
+
         <div class="empty-state" *ngIf="projectTeams.length === 0">
           <strong>No project teams yet</strong>
           <p class="muted">Create the first team to start assigning people to delivery streams.</p>
         </div>
 
-        <div class="team-list" *ngIf="projectTeams.length > 0">
+        <div class="empty-state" *ngIf="projectTeams.length > 0 && filteredProjectTeams().length === 0">
+          <strong>No matching teams</strong>
+          <p class="muted">Adjust the team search to browse this project workspace.</p>
+        </div>
+
+        <div class="team-list" *ngIf="filteredProjectTeams().length > 0">
           <article
             class="team-card selectable"
-            *ngFor="let team of projectTeams"
+            *ngFor="let team of filteredProjectTeams()"
             [class.selected]="team.id === editTeam.id"
             (click)="selectTeam.emit(team)">
             <div class="team-card-head">
@@ -79,7 +93,14 @@
 
             <fieldset class="member-picker">
               <legend>Initial team members</legend>
-              <label *ngFor="let member of projectMembers" class="member-toggle">
+              <label class="member-search-control">
+                <input
+                  type="search"
+                  name="createTeamMemberBrowse"
+                  [(ngModel)]="createMemberSearch"
+                  placeholder="Browse members by name, email, or role">
+              </label>
+              <label *ngFor="let member of filteredProjectMembers('create')" class="member-toggle">
                 <input
                   type="checkbox"
                   [checked]="isMemberSelected(newTeam.memberUserIds, member.userId)"
@@ -89,6 +110,9 @@
                   <small>{{ formatRole(member.projectRole) }}</small>
                 </span>
               </label>
+              <p class="muted member-picker-empty" *ngIf="projectMembers.length > 0 && filteredProjectMembers('create').length === 0">
+                No matching project members.
+              </p>
             </fieldset>
 
             <button type="submit" class="primary" [disabled]="creatingTeam">
@@ -121,7 +145,14 @@
 
             <fieldset class="member-picker">
               <legend>Team members</legend>
-              <label *ngFor="let member of projectMembers" class="member-toggle">
+              <label class="member-search-control">
+                <input
+                  type="search"
+                  name="editTeamMemberBrowse"
+                  [(ngModel)]="editMemberSearch"
+                  placeholder="Browse members by name, email, or role">
+              </label>
+              <label *ngFor="let member of filteredProjectMembers('edit')" class="member-toggle">
                 <input
                   type="checkbox"
                   [checked]="isMemberSelected(editTeam.memberUserIds, member.userId)"
@@ -131,6 +162,9 @@
                   <small>{{ formatRole(member.projectRole) }}</small>
                 </span>
               </label>
+              <p class="muted member-picker-empty" *ngIf="projectMembers.length > 0 && filteredProjectMembers('edit').length === 0">
+                No matching project members.
+              </p>
             </fieldset>
 
             <button type="submit" class="primary" [disabled]="updatingTeam">

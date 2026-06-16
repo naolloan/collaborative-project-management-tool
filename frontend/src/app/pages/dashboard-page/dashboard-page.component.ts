@@ -6,6 +6,7 @@ import { Sprint } from '../../core/dto/sprint';
 import { Task, TaskStatus } from '../../core/dto/task';
 
 type HealthTone = 'good' | 'warning' | 'danger' | 'neutral';
+type ChartTone = 'good' | 'warning' | 'danger' | 'neutral';
 
 interface PortfolioWatchItem {
   project: Project;
@@ -28,6 +29,13 @@ interface SprintTrendItem {
   status: string;
   completedTaskCount: number;
   totalTaskCount: number;
+}
+
+interface GraphItem {
+  label: string;
+  value: string;
+  percent: number;
+  tone: ChartTone;
 }
 
 @Component({
@@ -126,6 +134,49 @@ export class DashboardPageComponent implements OnChanges {
   backlogTaskCount(): number {
     const sprintTaskCount = this.sprints.reduce((sum, sprint) => sum + sprint.totalTaskCount, 0);
     return Math.max(this.totalTasks - sprintTaskCount, 0);
+  }
+
+  projectSignalGraph(): GraphItem[] {
+    const totalTasks = Math.max(this.totalTasks, 1);
+    return [
+      {
+        label: 'Project progress',
+        value: `${this.projectProgressPercentage}%`,
+        percent: this.projectProgressPercentage,
+        tone: 'good'
+      },
+      {
+        label: 'Task completion',
+        value: `${this.completionPercentage}%`,
+        percent: this.completionPercentage,
+        tone: 'good'
+      },
+      {
+        label: 'High priority load',
+        value: `${this.highPriorityTasks}`,
+        percent: Math.min(100, Math.round((this.highPriorityTasks / totalTasks) * 100)),
+        tone: 'warning'
+      },
+      {
+        label: 'Overdue pressure',
+        value: `${this.overdueTasks}`,
+        percent: Math.min(100, Math.round((this.overdueTasks / totalTasks) * 100)),
+        tone: 'danger'
+      }
+    ];
+  }
+
+  taskStatusGraph(): GraphItem[] {
+    return [
+      { label: 'To do', value: `${this.toDoTasks}`, percent: this.taskStatusPercent(this.toDoTasks), tone: 'neutral' },
+      { label: 'In progress', value: `${this.inProgressTasks}`, percent: this.taskStatusPercent(this.inProgressTasks), tone: 'warning' },
+      { label: 'Review', value: `${this.reviewTasks}`, percent: this.taskStatusPercent(this.reviewTasks), tone: 'warning' },
+      { label: 'Done', value: `${this.completedTasks}`, percent: this.taskStatusPercent(this.completedTasks), tone: 'good' }
+    ];
+  }
+
+  private taskStatusPercent(value: number): number {
+    return this.totalTasks === 0 ? 0 : Math.round((value / this.totalTasks) * 100);
   }
 
   private rebuildPortfolioView(): void {

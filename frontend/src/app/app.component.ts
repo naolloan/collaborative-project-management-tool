@@ -151,6 +151,8 @@ export class AppComponent implements OnInit {
     assigneeId: null as number | null,
     sprintId: 'ALL' as SprintScope
   };
+  memberSearch = '';
+  sprintSearch = '';
   editTask = {
     title: '',
     description: '',
@@ -998,6 +1000,33 @@ export class AppComponent implements OnInit {
 
   taskCountByStatus(status: TaskStatus): number {
     return this.tasks().filter((task) => task.status === status).length;
+  }
+
+  filteredProjectMembers(): ProjectMember[] {
+    const search = this.memberSearch.trim().toLowerCase();
+    if (!search) {
+      return this.projectMembers();
+    }
+
+    return this.projectMembers().filter((member) => (
+      member.fullName.toLowerCase().includes(search)
+      || member.email.toLowerCase().includes(search)
+      || member.projectRole.toLowerCase().includes(search)
+    ));
+  }
+
+  filteredSprints(): Sprint[] {
+    const search = this.sprintSearch.trim().toLowerCase();
+    if (!search) {
+      return this.sprints();
+    }
+
+    return this.sprints().filter((sprint) => (
+      sprint.name.toLowerCase().includes(search)
+      || (sprint.goal ?? '').toLowerCase().includes(search)
+      || sprint.status.toLowerCase().includes(search)
+      || sprint.priority.toLowerCase().includes(search)
+    ));
   }
 
   completedTaskCount(): number {

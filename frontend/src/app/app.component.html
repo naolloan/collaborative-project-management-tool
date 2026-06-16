@@ -237,8 +237,17 @@
       </div>
 
       <ng-container *ngIf="selectedProjectId()">
-        <div class="member-list" *ngIf="projectMembers().length > 0; else noMembers">
-          <article class="member-card" *ngFor="let member of projectMembers()">
+        <label class="browse-control">
+          Browse members
+          <input
+            type="search"
+            name="memberBrowse"
+            [(ngModel)]="memberSearch"
+            placeholder="Search name, email, or role">
+        </label>
+
+        <div class="member-list" *ngIf="filteredProjectMembers().length > 0; else noMembers">
+          <article class="member-card" *ngFor="let member of filteredProjectMembers()">
             <div>
               <strong>{{ member.fullName }}</strong>
               <span class="status-pill">{{ member.projectRole }}</span>
@@ -248,7 +257,7 @@
         </div>
 
         <ng-template #noMembers>
-          <p class="muted">No members loaded for this project yet.</p>
+          <p class="muted">{{ projectMembers().length === 0 ? 'No members loaded for this project yet.' : 'No matching members found.' }}</p>
         </ng-template>
 
         <form class="member-form" *ngIf="canManageProjectMembers(); else memberManagementLocked" (ngSubmit)="addProjectMember()">
@@ -344,10 +353,19 @@
       </div>
 
       <ng-container *ngIf="selectedProjectId()">
-        <div class="sprint-list" *ngIf="sprints().length > 0; else noSprints">
+        <label class="browse-control">
+          Browse sprints
+          <input
+            type="search"
+            name="sprintBrowse"
+            [(ngModel)]="sprintSearch"
+            placeholder="Search sprint, goal, status, or priority">
+        </label>
+
+        <div class="sprint-list" *ngIf="filteredSprints().length > 0; else noSprints">
           <article
             class="sprint-card selectable"
-            *ngFor="let sprint of sprints()"
+            *ngFor="let sprint of filteredSprints()"
             [class.selected]="sprint.id === editSprint.id"
             (click)="editSelectedSprint(sprint)">
             <div class="sprint-card-top">
@@ -392,8 +410,8 @@
 
         <ng-template #noSprints>
           <div class="empty-state">
-            <strong>No sprints created yet</strong>
-            <p class="muted">Start with a planned sprint, then connect tasks to it from the task intake and board views.</p>
+            <strong>{{ sprints().length === 0 ? 'No sprints created yet' : 'No matching sprints' }}</strong>
+            <p class="muted">{{ sprints().length === 0 ? 'Start with a planned sprint, then connect tasks to it from the task intake and board views.' : 'Adjust the sprint search to browse this project plan.' }}</p>
           </div>
         </ng-template>
       </ng-container>

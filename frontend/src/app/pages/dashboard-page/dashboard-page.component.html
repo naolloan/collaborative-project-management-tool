@@ -259,60 +259,55 @@
       <span [style.width.%]="projectProgressPercentage"></span>
     </div>
 
-    <div class="summary-grid">
-      <article class="summary-card">
+    <div class="summary-metric-strip">
+      <article>
         <span>Total tasks</span>
         <strong>{{ totalTasks }}</strong>
       </article>
-
-      <article class="summary-card">
+      <article>
         <span>Sprints</span>
         <strong>{{ sprints.length }}</strong>
       </article>
-
-      <article class="summary-card">
+      <article>
         <span>Active sprint</span>
         <strong>{{ activeSprintLabel() }}</strong>
       </article>
-
-      <article class="summary-card">
-        <span>Backlog tasks</span>
+      <article>
+        <span>Backlog</span>
         <strong>{{ backlogTaskCount() }}</strong>
       </article>
+    </div>
 
-      <article class="summary-card">
-        <span>Task completion</span>
-        <strong>{{ completionPercentage }}%</strong>
+    <div class="project-status-graph">
+      <article
+        class="graph-row"
+        *ngFor="let signal of projectSignalGraph()"
+        [class.good-tone-row]="signal.tone === 'good'"
+        [class.warning-tone-row]="signal.tone === 'warning'"
+        [class.danger-tone-row]="signal.tone === 'danger'">
+        <div class="graph-row-meta">
+          <span>{{ signal.label }}</span>
+          <strong>{{ signal.value }}</strong>
+        </div>
+        <div class="progress-track graph-track" aria-hidden="true">
+          <span [style.width.%]="signal.percent"></span>
+        </div>
       </article>
+    </div>
 
-      <article class="summary-card">
-        <span>To do</span>
-        <strong>{{ toDoTasks }}</strong>
-      </article>
-
-      <article class="summary-card">
-        <span>In progress</span>
-        <strong>{{ inProgressTasks }}</strong>
-      </article>
-
-      <article class="summary-card">
-        <span>Review</span>
-        <strong>{{ reviewTasks }}</strong>
-      </article>
-
-      <article class="summary-card success">
-        <span>Done</span>
-        <strong>{{ completedTasks }}</strong>
-      </article>
-
-      <article class="summary-card warning">
-        <span>High priority</span>
-        <strong>{{ highPriorityTasks }}</strong>
-      </article>
-
-      <article class="summary-card danger-card">
-        <span>Overdue</span>
-        <strong>{{ overdueTasks }}</strong>
+    <div class="task-status-graph">
+      <article
+        class="graph-row"
+        *ngFor="let status of taskStatusGraph()"
+        [class.good-tone-row]="status.tone === 'good'"
+        [class.warning-tone-row]="status.tone === 'warning'">
+        <div class="graph-row-meta">
+          <span>{{ status.label }}</span>
+          <strong>{{ status.value }}</strong>
+        </div>
+        <div class="progress-track graph-track" aria-hidden="true">
+          <span [style.width.%]="status.percent"></span>
+        </div>
       </article>
     </div>
   </article>
