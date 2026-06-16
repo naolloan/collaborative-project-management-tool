@@ -778,7 +778,13 @@ button:disabled {
 }
 
 .task-intake-grid {
+  display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.task-sprint-field {
+  grid-column: 1 / -1;
 }
 
 .board-column header small {
