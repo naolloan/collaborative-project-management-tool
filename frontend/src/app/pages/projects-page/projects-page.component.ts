@@ -41,6 +41,8 @@ export class ProjectsPageComponent {
   projectSearch = '';
   projectStatusFilter: ProjectLifecycleStatus | '' = '';
   projectHealthFilter: ProjectHealth | '' = '';
+  newProjectTeamSearch = '';
+  editProjectTeamSearch = '';
   readonly projectHealthFilters: ProjectHealth[] = ['ON_TRACK', 'AT_RISK', 'OFF_TRACK', 'BLOCKED'];
 
   formatUnitType(type: string | null | undefined): string {
@@ -182,6 +184,14 @@ export class ProjectsPageComponent {
     return this.organizationalUnits.filter((unit) => unit.type === 'TEAM');
   }
 
+  filteredNewProjectTeams(): OrganizationalUnit[] {
+    return this.filteredTeamUnits(this.newProjectTeamSearch);
+  }
+
+  filteredEditProjectTeams(): OrganizationalUnit[] {
+    return this.filteredTeamUnits(this.editProjectTeamSearch);
+  }
+
   toggleNewProjectTeam(teamId: number): void {
     this.newProject.teamIds = this.toggleTeamSelection(this.newProject.teamIds ?? [], teamId);
   }
@@ -251,6 +261,18 @@ export class ProjectsPageComponent {
     return this.teamUnits()
       .filter((team) => selectedTeamIdSet.has(team.id))
       .map((team) => team.name);
+  }
+
+  private filteredTeamUnits(searchValue: string): OrganizationalUnit[] {
+    const search = searchValue.trim().toLowerCase();
+    if (!search) {
+      return this.teamUnits();
+    }
+
+    return this.teamUnits().filter((team) => (
+      team.name.toLowerCase().includes(search)
+      || (team.description ?? '').toLowerCase().includes(search)
+    ));
   }
 
   private formatLabel(value: string): string {

@@ -31,9 +31,9 @@ interface SprintTrendItem {
   totalTaskCount: number;
 }
 
-interface GraphItem {
+interface ChartLegendItem {
   label: string;
-  value: string;
+  value: number;
   percent: number;
   tone: ChartTone;
 }
@@ -136,47 +136,106 @@ export class DashboardPageComponent implements OnChanges {
     return Math.max(this.totalTasks - sprintTaskCount, 0);
   }
 
-  projectSignalGraph(): GraphItem[] {
-    const totalTasks = Math.max(this.totalTasks, 1);
+  portfolioReadinessChart(): ChartLegendItem[] {
     return [
       {
-        label: 'Project progress',
-        value: `${this.projectProgressPercentage}%`,
-        percent: this.projectProgressPercentage,
+        label: 'Team aligned',
+        value: this.alignedProjectCount,
+        percent: this.projectPercent(this.alignedProjectCount),
         tone: 'good'
       },
       {
+        label: 'Needs attention',
+        value: this.attentionProjectCount,
+        percent: this.projectPercent(this.attentionProjectCount),
+        tone: 'warning'
+      },
+      {
+        label: 'Without teams',
+        value: this.unassignedProjectCount,
+        percent: this.projectPercent(this.unassignedProjectCount),
+        tone: 'danger'
+      }
+    ];
+  }
+
+  portfolioReadinessConic(): string {
+    return this.conicGradient(this.portfolioReadinessChart());
+  }
+
+  taskStatusConic(): string {
+    return this.conicGradient(this.taskStatusChart());
+  }
+
+  projectPressureChart(): ChartLegendItem[] {
+    const totalTasks = Math.max(this.totalTasks, 1);
+    return [
+      {
         label: 'Task completion',
-        value: `${this.completionPercentage}%`,
+        value: this.completedTasks,
         percent: this.completionPercentage,
         tone: 'good'
       },
       {
-        label: 'High priority load',
-        value: `${this.highPriorityTasks}`,
+        label: 'High priority',
+        value: this.highPriorityTasks,
         percent: Math.min(100, Math.round((this.highPriorityTasks / totalTasks) * 100)),
         tone: 'warning'
       },
       {
-        label: 'Overdue pressure',
-        value: `${this.overdueTasks}`,
+        label: 'Overdue',
+        value: this.overdueTasks,
         percent: Math.min(100, Math.round((this.overdueTasks / totalTasks) * 100)),
         tone: 'danger'
       }
     ];
   }
 
-  taskStatusGraph(): GraphItem[] {
+  taskStatusChart(): ChartLegendItem[] {
     return [
-      { label: 'To do', value: `${this.toDoTasks}`, percent: this.taskStatusPercent(this.toDoTasks), tone: 'neutral' },
-      { label: 'In progress', value: `${this.inProgressTasks}`, percent: this.taskStatusPercent(this.inProgressTasks), tone: 'warning' },
-      { label: 'Review', value: `${this.reviewTasks}`, percent: this.taskStatusPercent(this.reviewTasks), tone: 'warning' },
-      { label: 'Done', value: `${this.completedTasks}`, percent: this.taskStatusPercent(this.completedTasks), tone: 'good' }
+      { label: 'To do', value: this.toDoTasks, percent: this.taskStatusPercent(this.toDoTasks), tone: 'neutral' },
+      { label: 'In progress', value: this.inProgressTasks, percent: this.taskStatusPercent(this.inProgressTasks), tone: 'warning' },
+      { label: 'Review', value: this.reviewTasks, percent: this.taskStatusPercent(this.reviewTasks), tone: 'warning' },
+      { label: 'Done', value: this.completedTasks, percent: this.taskStatusPercent(this.completedTasks), tone: 'good' }
     ];
+  }
+
+  chartToneClass(tone: ChartTone): string {
+    return `chart-${tone}`;
   }
 
   private taskStatusPercent(value: number): number {
     return this.totalTasks === 0 ? 0 : Math.round((value / this.totalTasks) * 100);
+  }
+
+  private projectPercent(value: number): number {
+    return this.projectCount === 0 ? 0 : Math.round((value / this.projectCount) * 100);
+  }
+
+  private conicGradient(items: ChartLegendItem[]): string {
+    const palette: Record<ChartTone, string> = {
+      good: '#0f9f6e',
+      warning: '#f59e0b',
+      danger: '#c2413b',
+      neutral: '#00aee9'
+    };
+    const total = items.reduce((sum, item) => sum + item.value, 0);
+
+    if (total === 0) {
+      return 'conic-gradient(#dff6ff 0deg 360deg)';
+    }
+
+    let cursor = 0;
+    const segments = items
+      .filter((item) => item.value > 0)
+      .map((item) => {
+        const start = cursor;
+        const size = (item.value / total) * 360;
+        cursor += size;
+        return `${palette[item.tone]} ${start}deg ${cursor}deg`;
+      });
+
+    return `conic-gradient(${segments.join(', ')})`;
   }
 
   private rebuildPortfolioView(): void {

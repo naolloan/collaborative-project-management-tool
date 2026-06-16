@@ -63,39 +63,6 @@
     </ng-container>
   </article>
 
-  <article class="panel readiness-panel">
-    <div class="panel-heading">
-      <div>
-        <p class="eyebrow">Immediate Pressure</p>
-        <h2>Execution Signals</h2>
-      </div>
-    </div>
-
-    <div class="empty-state" *ngIf="!authenticated">
-      <strong>Sign in to load personal and delivery indicators</strong>
-      <p class="muted">Assigned work, overdue tasks, and project pressure indicators will appear after authentication.</p>
-    </div>
-
-    <div class="readiness-list" *ngIf="authenticated">
-      <article class="readiness-item danger">
-        <span>Overdue Tasks</span>
-        <strong>{{ overdueTasks }}</strong>
-        <p class="muted">Open work items that are already past their due date.</p>
-      </article>
-
-      <article class="readiness-item warning">
-        <span>High Priority</span>
-        <strong>{{ highPriorityTasks }}</strong>
-        <p class="muted">Priority work items that may require closer follow-up.</p>
-      </article>
-
-      <article class="readiness-item">
-        <span>Assigned to Me</span>
-        <strong>{{ assignedTasks.length }}</strong>
-        <p class="muted">Personally assigned work items in the currently selected project.</p>
-      </article>
-    </div>
-  </article>
 </section>
 
 <section class="portfolio-workspace" *ngIf="authenticated">
@@ -108,34 +75,20 @@
       <strong class="completion-badge">{{ portfolioAlignmentRate }}% aligned</strong>
     </div>
 
-    <p class="muted portfolio-copy">
-      Track multi-team collaboration, timeline pressure, and emerging delivery risk across the active COOP portfolio.
-    </p>
+    <div class="chart-layout">
+      <div class="donut-chart" [style.background]="portfolioReadinessConic()" aria-hidden="true">
+        <span>{{ portfolioAlignmentRate }}%</span>
+      </div>
 
-    <div class="summary-grid portfolio-summary-grid">
-      <article class="summary-card">
-        <span>Team aligned</span>
-        <strong>{{ alignedProjectCount }}</strong>
-        <p class="muted">Projects already assigned to collaborating delivery teams.</p>
-      </article>
-
-      <article class="summary-card danger-card">
-        <span>Without teams</span>
-        <strong>{{ unassignedProjectCount }}</strong>
-        <p class="muted">Projects still missing collaborating delivery teams.</p>
-      </article>
-
-      <article class="summary-card warning">
-        <span>Due soon</span>
-        <strong>{{ dueSoonProjectCount }}</strong>
-        <p class="muted">Projects with a due date in the next 14 days.</p>
-      </article>
-
-      <article class="summary-card">
-        <span>Needs attention</span>
-        <strong>{{ attentionProjectCount }}</strong>
-        <p class="muted">Projects needing team alignment or schedule follow-up.</p>
-      </article>
+      <div class="chart-legend">
+        <article *ngFor="let item of portfolioReadinessChart()">
+          <span class="legend-dot" [ngClass]="chartToneClass(item.tone)"></span>
+          <div>
+            <strong>{{ item.label }}</strong>
+            <p class="muted">{{ item.value }} project{{ item.value === 1 ? '' : 's' }} · {{ item.percent }}%</p>
+          </div>
+        </article>
+      </div>
     </div>
   </article>
 
@@ -238,58 +191,55 @@
       Project progress is rolled up from sprint delivery, while each sprint progresses according to the tasks completed inside it.
     </p>
 
-    <div class="progress-track" aria-hidden="true">
-      <span [style.width.%]="projectProgressPercentage"></span>
-    </div>
-
-    <div class="summary-metric-strip">
-      <article>
-        <span>Total tasks</span>
-        <strong>{{ totalTasks }}</strong>
-      </article>
-      <article>
-        <span>Sprints</span>
-        <strong>{{ sprints.length }}</strong>
-      </article>
-      <article>
-        <span>Active sprint</span>
-        <strong>{{ activeSprintLabel() }}</strong>
-      </article>
-      <article>
-        <span>Backlog</span>
-        <strong>{{ backlogTaskCount() }}</strong>
-      </article>
-    </div>
-
-    <div class="project-status-graph">
-      <article
-        class="graph-row"
-        *ngFor="let signal of projectSignalGraph()"
-        [class.good-tone-row]="signal.tone === 'good'"
-        [class.warning-tone-row]="signal.tone === 'warning'"
-        [class.danger-tone-row]="signal.tone === 'danger'">
-        <div class="graph-row-meta">
-          <span>{{ signal.label }}</span>
-          <strong>{{ signal.value }}</strong>
+    <div class="project-chart-grid">
+      <article class="chart-card">
+        <div class="panel-heading chart-heading">
+          <div>
+            <p class="eyebrow">Task Status</p>
+            <h2>{{ totalTasks }} task{{ totalTasks === 1 ? '' : 's' }}</h2>
+          </div>
+          <span class="status-pill">{{ activeSprintLabel() }}</span>
         </div>
-        <div class="progress-track graph-track" aria-hidden="true">
-          <span [style.width.%]="signal.percent"></span>
+
+        <div class="chart-layout">
+          <div class="donut-chart small-donut" [style.background]="taskStatusConic()" aria-hidden="true">
+            <span>{{ completionPercentage }}%</span>
+          </div>
+          <div class="chart-legend">
+            <article *ngFor="let status of taskStatusChart()">
+              <span class="legend-dot" [ngClass]="chartToneClass(status.tone)"></span>
+              <div>
+                <strong>{{ status.label }}</strong>
+                <p class="muted">{{ status.value }} task{{ status.value === 1 ? '' : 's' }} · {{ status.percent }}%</p>
+              </div>
+            </article>
+          </div>
         </div>
       </article>
-    </div>
 
-    <div class="task-status-graph">
-      <article
-        class="graph-row"
-        *ngFor="let status of taskStatusGraph()"
-        [class.good-tone-row]="status.tone === 'good'"
-        [class.warning-tone-row]="status.tone === 'warning'">
-        <div class="graph-row-meta">
-          <span>{{ status.label }}</span>
-          <strong>{{ status.value }}</strong>
+      <article class="chart-card">
+        <div class="panel-heading chart-heading">
+          <div>
+            <p class="eyebrow">Delivery Pressure</p>
+            <h2>Priority and schedule</h2>
+          </div>
+          <span class="status-pill">{{ backlogTaskCount() }} backlog</span>
         </div>
-        <div class="progress-track graph-track" aria-hidden="true">
-          <span [style.width.%]="status.percent"></span>
+
+        <div class="pressure-bars">
+          <article *ngFor="let item of projectPressureChart()">
+            <div class="graph-row-meta">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+            </div>
+            <div class="progress-track graph-track" aria-hidden="true">
+              <span
+                [style.width.%]="item.percent"
+                [class.chart-good]="item.tone === 'good'"
+                [class.chart-warning]="item.tone === 'warning'"
+                [class.chart-danger]="item.tone === 'danger'"></span>
+            </div>
+          </article>
         </div>
       </article>
     </div>

@@ -45,17 +45,28 @@
           <strong>No delivery teams available</strong>
           <p class="muted">Create teams from the Teams workspace before assigning them to a project.</p>
         </div>
-        <div class="team-option-grid" *ngIf="teamUnits().length > 0">
+        <label class="browse-control team-picker-browse" *ngIf="teamUnits().length > 0">
+          Browse teams
+          <input
+            type="search"
+            name="newProjectTeamBrowse"
+            [(ngModel)]="newProjectTeamSearch"
+            placeholder="Search team name or description">
+        </label>
+        <div class="team-option-grid" *ngIf="filteredNewProjectTeams().length > 0">
           <button
             type="button"
             class="team-option-card"
-            *ngFor="let unit of teamUnits()"
+            *ngFor="let unit of filteredNewProjectTeams()"
             [class.selected]="isNewProjectTeamSelected(unit.id)"
             (click)="toggleNewProjectTeam(unit.id)">
             <span>{{ unit.name }}</span>
             <small>{{ formatUnitType(unit.type) }}</small>
           </button>
         </div>
+        <p class="muted member-picker-empty" *ngIf="teamUnits().length > 0 && filteredNewProjectTeams().length === 0">
+          No matching delivery teams.
+        </p>
         <p class="team-selection-summary">{{ newProjectTeamSummary() }}</p>
       </fieldset>
 
@@ -277,17 +288,28 @@
           <strong>No delivery teams available</strong>
           <p class="muted">Create teams from the Teams workspace before assigning them to this project.</p>
         </div>
-        <div class="team-option-grid" *ngIf="teamUnits().length > 0">
+        <label class="browse-control team-picker-browse" *ngIf="teamUnits().length > 0">
+          Browse teams
+          <input
+            type="search"
+            name="editProjectTeamBrowse"
+            [(ngModel)]="editProjectTeamSearch"
+            placeholder="Search team name or description">
+        </label>
+        <div class="team-option-grid" *ngIf="filteredEditProjectTeams().length > 0">
           <button
             type="button"
             class="team-option-card"
-            *ngFor="let unit of teamUnits()"
+            *ngFor="let unit of filteredEditProjectTeams()"
             [class.selected]="isEditProjectTeamSelected(unit.id)"
             (click)="toggleEditProjectTeam(unit.id)">
             <span>{{ unit.name }}</span>
             <small>{{ formatUnitType(unit.type) }}</small>
           </button>
         </div>
+        <p class="muted member-picker-empty" *ngIf="teamUnits().length > 0 && filteredEditProjectTeams().length === 0">
+          No matching delivery teams.
+        </p>
         <p class="team-selection-summary">{{ editProjectTeamSummary() }}</p>
       </fieldset>
 
