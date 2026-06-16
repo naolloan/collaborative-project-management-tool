@@ -10,26 +10,6 @@
     </div>
 
     <div class="topbar-side">
-      <div class="topbar-meta" *ngIf="authenticated(); else signedOutTopbar">
-        <div class="meta-card">
-          <span class="meta-label">Portfolio Footprint</span>
-          <strong>{{ projects().length }} Projects / {{ teamDirectory().length }} Teams</strong>
-        </div>
-        <div class="meta-card">
-          <span class="meta-label">Current Operator</span>
-          <strong>{{ currentOperatorLabel() }}</strong>
-        </div>
-      </div>
-
-      <ng-template #signedOutTopbar>
-        <div class="topbar-meta">
-          <div class="meta-card">
-            <span class="meta-label">Status</span>
-            <strong>Awaiting authentication</strong>
-          </div>
-        </div>
-      </ng-template>
-
       <div class="actions">
         <button type="button" class="ghost" *ngIf="authenticated()" (click)="setWorkspace('profile')">
           Profile
@@ -43,25 +23,6 @@
       </div>
     </div>
   </header>
-
-  <section class="status-strip" *ngIf="authenticated() && activeWorkspace() !== 'profile'">
-    <div>
-      <span class="label">Portfolio</span>
-      <strong>{{ projects().length }} projects / {{ teamDirectory().length }} teams</strong>
-    </div>
-    <div>
-      <span class="label">Current Focus</span>
-      <strong>{{ selectedProject()?.name || 'No active project selected' }}</strong>
-    </div>
-    <div>
-      <span class="label">My Work</span>
-      <strong>{{ myAssignedTasks().length }} assigned / {{ myAssignedTaskCountByStatus('IN_PROGRESS') }} in progress</strong>
-    </div>
-    <div>
-      <span class="label">Timeline Pressure</span>
-      <strong>{{ portfolioDueSoonProjectCount() }} due soon / {{ overdueTaskCount() }} overdue tasks</strong>
-    </div>
-  </section>
 
   <section class="workspace-focus" *ngIf="authenticated() && activeWorkspace() !== 'profile'">
     <div>
@@ -198,7 +159,6 @@
     [displayName]="currentOperatorLabel()"
     [username]="profile()?.username || currentUser()?.username"
     [email]="profile()?.email || currentUser()?.email"
-    [userId]="currentUser()?.id"
     [systemRole]="currentUser()?.systemRole"
     [roles]="roles()"
     [primaryRoleLabel]="primaryRoleLabel()"
@@ -211,16 +171,12 @@
     [highPriorityAssignedTasks]="myHighPriorityAssignedTaskCount()"
     [projectCount]="projects().length"
     [unitCount]="teamDirectory().length"
-    [projectMemberCount]="projectMembers().length"
     [selectedProjectName]="selectedProject()?.name"
     [selectedProjectDescription]="selectedProject()?.description"
     [selectedProjectTeamName]="selectedProjectTeamLabel()"
     [selectedProjectTimeline]="selectedProjectTimelineLabel()"
     [deliveryPressureLabel]="deliveryPressureLabel()"
-    [portfolioCoverageLabel]="portfolioCoverageLabel()"
     [nextLandingSuggestion]="nextLandingSuggestion()"
-    [backendStatus]="apiStatus()"
-    [sessionStatus]="sessionStatusLabel()"
     (refreshProfile)="loadCurrentUser()">
   </app-profile-page>
 
@@ -769,13 +725,22 @@
 
             <div class="task-card-footer">
               <span class="task-owner">{{ task.createdByName || 'Created by current workspace' }}</span>
-              <button
-                type="button"
-                class="ghost compact"
-                *ngIf="task.status !== 'DONE'"
-                (click)="$event.stopPropagation(); moveTaskForward(task)">
-                Move Forward
-              </button>
+              <div class="task-move-actions">
+                <button
+                  type="button"
+                  class="ghost compact"
+                  *ngIf="task.status !== 'TO_DO'"
+                  (click)="$event.stopPropagation(); moveTaskBackward(task)">
+                  Move Back
+                </button>
+                <button
+                  type="button"
+                  class="ghost compact"
+                  *ngIf="task.status !== 'DONE'"
+                  (click)="$event.stopPropagation(); moveTaskForward(task)">
+                  Move Forward
+                </button>
+              </div>
             </div>
           </article>
 

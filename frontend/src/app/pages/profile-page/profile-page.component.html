@@ -18,16 +18,12 @@
 
       <dl class="profile-summary-list">
         <div>
-          <dt>User ID</dt>
-          <dd>{{ userId || 'Pending backend sync' }}</dd>
-        </div>
-        <div>
           <dt>Workspace Role</dt>
           <dd>{{ formatRoleLabel(systemRole) }}</dd>
         </div>
         <div>
-          <dt>Portfolio Reach</dt>
-          <dd>{{ portfolioCoverageLabel }}</dd>
+          <dt>Primary Access</dt>
+          <dd>{{ primaryRoleLabel || 'Access Pending' }}</dd>
         </div>
       </dl>
     </article>
@@ -74,37 +70,6 @@
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <p class="eyebrow">Access</p>
-          <h2>Access Summary</h2>
-        </div>
-      </div>
-
-      <dl class="profile-section-list">
-        <div>
-          <dt>Primary Access</dt>
-          <dd>{{ primaryRoleLabel || 'Access Pending' }}</dd>
-        </div>
-        <div>
-          <dt>Workspace Roles</dt>
-          <dd class="chips">
-            <span *ngFor="let role of roles">{{ role }}</span>
-            <span *ngIf="roles.length === 0">No roles loaded</span>
-          </dd>
-        </div>
-        <div>
-          <dt>Loaded collaborators</dt>
-          <dd>{{ projectMemberCount }}</dd>
-        </div>
-        <div>
-          <dt>Delivery pressure</dt>
-          <dd>{{ deliveryPressureLabel }}</dd>
-        </div>
-      </dl>
-    </article>
-
-    <article class="panel">
-      <div class="panel-heading">
-        <div>
           <p class="eyebrow">Current Focus</p>
           <h2>{{ selectedProjectName || 'No active project selected' }}</h2>
         </div>
@@ -128,65 +93,17 @@
           <dd>{{ assignedTaskCount }}</dd>
         </div>
         <div>
-          <dt>Suggested landing view</dt>
+          <dt>Delivery pressure</dt>
+          <dd>{{ deliveryPressureLabel }}</dd>
+        </div>
+        <div>
+          <dt>Suggested landing</dt>
           <dd>{{ nextLandingSuggestion }}</dd>
-        </div>
-      </dl>
-    </article>
-
-    <article class="panel">
-      <div class="panel-heading">
-        <div>
-          <p class="eyebrow">Preferences</p>
-          <h2>Workspace Posture</h2>
-        </div>
-      </div>
-
-      <dl class="profile-section-list">
-        <div>
-          <dt>Preferred mode</dt>
-          <dd>{{ preferenceSummary() }}</dd>
-        </div>
-        <div>
-          <dt>Recommended landing</dt>
-          <dd>{{ nextLandingSuggestion }}</dd>
-        </div>
-        <div>
-          <dt>Experience mode</dt>
-          <dd>Wide workspace / business-first dashboard</dd>
         </div>
       </dl>
 
       <div class="profile-action-row">
         <button type="button" class="ghost" (click)="refreshProfile.emit()">Refresh Profile</button>
-      </div>
-    </article>
-
-    <article class="panel">
-      <div class="panel-heading">
-        <div>
-          <p class="eyebrow">Support</p>
-          <h2>Session Context</h2>
-        </div>
-      </div>
-
-      <dl class="profile-section-list">
-        <div>
-          <dt>Session state</dt>
-          <dd>{{ sessionStatus || 'Session state unavailable' }}</dd>
-        </div>
-        <div>
-          <dt>Backend status</dt>
-          <dd>{{ backendStatus || 'Backend status unavailable' }}</dd>
-        </div>
-        <div>
-          <dt>Technical placement</dt>
-          <dd>Support details stay here, not on the business dashboard.</dd>
-        </div>
-      </dl>
-
-      <div class="profile-action-row">
-        <button type="button" class="ghost" (click)="refreshProfile.emit()">Refresh Session Context</button>
       </div>
     </article>
   </section>

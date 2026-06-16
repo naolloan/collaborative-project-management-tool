@@ -12,7 +12,6 @@ export class ProfilePageComponent {
   @Input() displayName: string | null | undefined;
   @Input() username: string | null | undefined;
   @Input() email: string | null | undefined;
-  @Input() userId: number | null | undefined;
   @Input() systemRole: string | null | undefined;
   @Input() roles: string[] = [];
   @Input() primaryRoleLabel = '';
@@ -25,16 +24,12 @@ export class ProfilePageComponent {
   @Input() highPriorityAssignedTasks = 0;
   @Input() projectCount = 0;
   @Input() unitCount = 0;
-  @Input() projectMemberCount = 0;
   @Input() selectedProjectName: string | null | undefined;
   @Input() selectedProjectDescription: string | null | undefined;
   @Input() selectedProjectTeamName = 'No active project context';
   @Input() selectedProjectTimeline = 'Timeline not yet defined';
   @Input() deliveryPressureLabel = 'Personal workload is stable';
-  @Input() portfolioCoverageLabel = 'No portfolio coverage loaded';
   @Input() nextLandingSuggestion = 'Dashboard';
-  @Input() backendStatus = '';
-  @Input() sessionStatus = '';
 
   @Output() refreshProfile = new EventEmitter<void>();
 
@@ -59,9 +54,4 @@ export class ProfilePageComponent {
     return value.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
 
-  preferenceSummary(): string {
-    return this.assignedTaskCount > 0
-      ? 'Task-focused landing / Compact delivery rhythm'
-      : 'Dashboard landing / Standard delivery rhythm';
-  }
 }

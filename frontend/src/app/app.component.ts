@@ -1075,7 +1075,20 @@ export class AppComponent implements OnInit {
       return;
     }
 
-    this.apiService.updateTaskStatus(task.id, nextStatus).subscribe({
+    this.moveTaskToStatus(task, nextStatus);
+  }
+
+  moveTaskBackward(task: Task): void {
+    const previousStatus = this.previousStatus(task.status);
+    if (!previousStatus) {
+      return;
+    }
+
+    this.moveTaskToStatus(task, previousStatus);
+  }
+
+  private moveTaskToStatus(task: Task, status: TaskStatus): void {
+    this.apiService.updateTaskStatus(task.id, status).subscribe({
       next: () => {
         this.loadSelectedProjectTasks();
         const projectId = this.selectedProjectId();
@@ -1191,12 +1204,6 @@ export class AppComponent implements OnInit {
     }
 
     return 'Personal workload is stable';
-  }
-
-  portfolioCoverageLabel(): string {
-    const projectCount = this.projects().length;
-    const teamCount = this.teamDirectory().length;
-    return `${projectCount} active project${projectCount === 1 ? '' : 's'} across ${teamCount} team${teamCount === 1 ? '' : 's'}`;
   }
 
   nextLandingSuggestion(): string {
@@ -1369,14 +1376,6 @@ export class AppComponent implements OnInit {
     return 'Timeline not yet defined';
   }
 
-  sessionStatusLabel(): string {
-    if (this.initializing()) {
-      return 'Initializing authentication';
-    }
-
-    return this.authenticated() ? 'Authenticated via Keycloak' : 'Awaiting sign-in';
-  }
-
   private weightedTaskCompletion(tasks: Task[]): number {
     const totalWeight = this.totalTaskWeight(tasks);
     if (totalWeight === 0) {
@@ -1523,6 +1522,19 @@ export class AppComponent implements OnInit {
         return 'DONE';
       case 'DONE':
         return undefined;
+    }
+  }
+
+  private previousStatus(status: TaskStatus): TaskStatus | undefined {
+    switch (status) {
+      case 'TO_DO':
+        return undefined;
+      case 'IN_PROGRESS':
+        return 'TO_DO';
+      case 'REVIEW':
+        return 'IN_PROGRESS';
+      case 'DONE':
+        return 'REVIEW';
     }
   }
 }
