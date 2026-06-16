@@ -8,6 +8,7 @@ import com.collabpm.backend.project.model.ProjectMember;
 import com.collabpm.backend.project.model.ProjectRole;
 import com.collabpm.backend.project.repository.ProjectMemberRepository;
 import com.collabpm.backend.project.repository.ProjectRepository;
+import com.collabpm.backend.project.repository.ProjectTeamMemberRepository;
 import com.collabpm.backend.user.CurrentUserService;
 import com.collabpm.backend.user.SystemRole;
 import com.collabpm.backend.user.User;
@@ -29,6 +30,7 @@ public class ProjectMemberService {
     private final CurrentUserService currentUserService;
     private final ProjectAccessService projectAccessService;
     private final ActivityService activityService;
+    private final ProjectTeamMemberRepository projectTeamMemberRepository;
 
     public ProjectMemberService(
         ProjectRepository projectRepository,
@@ -36,7 +38,8 @@ public class ProjectMemberService {
         UserRepository userRepository,
         CurrentUserService currentUserService,
         ProjectAccessService projectAccessService,
-        ActivityService activityService
+        ActivityService activityService,
+        ProjectTeamMemberRepository projectTeamMemberRepository
     ) {
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
@@ -44,6 +47,7 @@ public class ProjectMemberService {
         this.currentUserService = currentUserService;
         this.projectAccessService = projectAccessService;
         this.activityService = activityService;
+        this.projectTeamMemberRepository = projectTeamMemberRepository;
     }
 
     @Transactional(readOnly = true)
@@ -81,6 +85,21 @@ public class ProjectMemberService {
         ProjectMember savedMember = projectMemberRepository.save(member);
         activityService.recordProjectMemberAdded(savedMember, currentUser);
         return toResponse(savedMember);
+    }
+
+    @Transactional
+    public void removeProjectMember(Long projectId, Long memberId, Authentication authentication) {
+        ensureProjectExists(projectId);
+        User currentUser = currentUserService.getOrCreateCurrentUser(authentication);
+        ensureCanManageProjectMembers(projectId, currentUser);
+
+        ProjectMember member = projectMemberRepository.findById(memberId)
+            .filter(candidate -> candidate.getProject().getId().equals(projectId))
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project member not found"));
+
+        projectTeamMemberRepository.deleteByProjectIdAndUserId(projectId, member.getUser().getId());
+        activityService.recordProjectMemberRemoved(member, currentUser);
+        projectMemberRepository.delete(member);
     }
 
     private void ensureCanManageProjectMembers(Long projectId, User currentUser) {

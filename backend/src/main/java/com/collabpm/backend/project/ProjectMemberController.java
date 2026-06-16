@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,5 +38,15 @@ public class ProjectMemberController {
         Authentication authentication
     ) {
         return projectMemberService.addProjectMember(projectId, request, authentication);
+    }
+
+    @DeleteMapping("/{memberId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeProjectMember(
+        @PathVariable Long projectId,
+        @PathVariable Long memberId,
+        Authentication authentication
+    ) {
+        projectMemberService.removeProjectMember(projectId, memberId, authentication);
     }
 }

@@ -12,6 +12,7 @@ import com.collabpm.backend.project.model.ProjectMember;
 import com.collabpm.backend.project.model.ProjectRole;
 import com.collabpm.backend.project.repository.ProjectMemberRepository;
 import com.collabpm.backend.project.repository.ProjectRepository;
+import com.collabpm.backend.project.repository.ProjectTeamMemberRepository;
 import com.collabpm.backend.user.CurrentUserService;
 import com.collabpm.backend.user.SystemRole;
 import com.collabpm.backend.user.User;
@@ -30,13 +31,15 @@ class ProjectMemberServiceTest {
     private final CurrentUserService currentUserService = mock(CurrentUserService.class);
     private final ProjectAccessService projectAccessService = mock(ProjectAccessService.class);
     private final ActivityService activityService = mock(ActivityService.class);
+    private final ProjectTeamMemberRepository projectTeamMemberRepository = mock(ProjectTeamMemberRepository.class);
     private final ProjectMemberService projectMemberService = new ProjectMemberService(
         projectRepository,
         projectMemberRepository,
         userRepository,
         currentUserService,
         projectAccessService,
-        activityService);
+        activityService,
+        projectTeamMemberRepository);
 
     @Test
     void rejectsProjectMembersWhoTryToManageMembers() {

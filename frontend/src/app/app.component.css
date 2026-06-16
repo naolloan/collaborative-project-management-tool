@@ -53,6 +53,9 @@
   display: flex;
   align-items: center;
   gap: 1.15rem;
+  flex: 1;
+  justify-content: center;
+  text-align: center;
 }
 
 .coop-logo {
@@ -1925,6 +1928,10 @@ select:focus {
   margin: 0.6rem 0 0;
 }
 
+.member-remove-button {
+  margin-top: 0.85rem;
+}
+
 .member-form {
   display: grid;
   grid-template-columns: minmax(220px, 1fr) minmax(160px, 0.35fr) auto;
@@ -2385,6 +2392,7 @@ dd {
   .brand-lockup {
     align-items: flex-start;
     flex-direction: column;
+    text-align: left;
   }
 
   .coop-logo {

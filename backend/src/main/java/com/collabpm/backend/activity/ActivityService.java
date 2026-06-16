@@ -79,6 +79,20 @@ public class ActivityService {
         );
     }
 
+    public void recordProjectMemberRemoved(ProjectMember member, User actor) {
+        save(
+            member.getProject(),
+            null,
+            null,
+            actor,
+            ActivityType.PROJECT_MEMBER_REMOVED,
+            ActivitySubjectType.MEMBER,
+            member.getUser().getFullName(),
+            member.getProjectRole().name(),
+            null
+        );
+    }
+
     public void recordSprintCreated(Sprint sprint, User actor) {
         save(sprint.getProject(), sprint, null, actor, ActivityType.SPRINT_CREATED, ActivitySubjectType.SPRINT, sprint.getName(), null, sprint.getStatus().name());
     }

@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -76,6 +77,12 @@ class ProjectMemberControllerTest {
             .andExpect(jsonPath("$.userId").value(21))
             .andExpect(jsonPath("$.email").value("member@example.com"))
             .andExpect(jsonPath("$.projectRole").value("MEMBER"));
+    }
+
+    @Test
+    void removesProjectMembersForAuthenticatedUsers() throws Exception {
+        mockMvc.perform(delete("/api/projects/1/members/101").with(jwt()))
+            .andExpect(status().isNoContent());
     }
 
     @Test

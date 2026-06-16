@@ -62,6 +62,10 @@ export class ApiService {
     return this.http.post<ProjectMember>(`${this.apiBaseUrl}/projects/${projectId}/members`, request);
   }
 
+  removeProjectMember(projectId: number, memberId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiBaseUrl}/projects/${projectId}/members/${memberId}`);
+  }
+
   listProjectTeams(projectId: number): Observable<ProjectTeam[]> {
     return this.http.get<ProjectTeam[]>(`${this.apiBaseUrl}/projects/${projectId}/teams`);
   }

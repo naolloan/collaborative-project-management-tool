@@ -18,7 +18,7 @@ import { ProjectsPageComponent } from './pages/projects-page/projects-page.compo
 import { TeamsPageComponent } from './pages/units-page/units-page.component';
 import { ProfilePageComponent } from './pages/profile-page/profile-page.component';
 
-type WorkspaceView = 'dashboard' | 'projects' | 'teams' | 'members' | 'tasks' | 'activity' | 'profile';
+type WorkspaceView = 'dashboard' | 'projects' | 'sprints' | 'teams' | 'members' | 'tasks' | 'activity' | 'profile';
 type SprintScope = 'ALL' | 'BACKLOG' | number;
 
 @Component({
@@ -62,6 +62,7 @@ export class AppComponent implements OnInit {
   creatingTeam = signal(false);
   updatingTeam = signal(false);
   addingMember = signal(false);
+  removingMember = signal<number | null>(null);
   creatingSprint = signal(false);
   updatingSprint = signal(false);
   creatingTask = signal(false);
@@ -84,6 +85,7 @@ export class AppComponent implements OnInit {
   readonly workspaceNavItems: { view: WorkspaceView; label: string; helper: string }[] = [
     { view: 'dashboard', label: 'Dashboard', helper: 'Overview' },
     { view: 'projects', label: 'Projects', helper: 'Planning' },
+    { view: 'sprints', label: 'Sprints', helper: 'Planning cycles' },
     { view: 'teams', label: 'Teams', helper: 'Delivery squads' },
     { view: 'members', label: 'Members', helper: 'Access' },
     { view: 'tasks', label: 'Task Board', helper: 'Delivery' },
@@ -486,6 +488,36 @@ export class AppComponent implements OnInit {
       error: () => {
         this.addingMember.set(false);
         this.error.set('Could not add member. The user must log in once before they can be added by email.');
+      }
+    });
+  }
+
+  removeProjectMember(member: ProjectMember): void {
+    const projectId = this.selectedProjectId();
+
+    if (!this.canManageProjectMembers()) {
+      this.error.set('Only project managers or administrators can remove members.');
+      return;
+    }
+
+    if (!projectId) {
+      this.error.set('Select a project before removing members.');
+      return;
+    }
+
+    this.removingMember.set(member.id);
+    this.error.set(undefined);
+
+    this.apiService.removeProjectMember(projectId, member.id).subscribe({
+      next: () => {
+        this.removingMember.set(null);
+        this.loadProjectMembers(projectId);
+        this.loadProjectTeams(projectId);
+        this.loadProjectActivities(projectId);
+      },
+      error: () => {
+        this.removingMember.set(null);
+        this.error.set('Could not remove member from the project.');
       }
     });
   }

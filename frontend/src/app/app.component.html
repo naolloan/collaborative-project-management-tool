@@ -64,6 +64,11 @@
           <h2>Projects</h2>
           <p class="muted">Create projects, assign collaborating teams, plan sprints, and maintain delivery details.</p>
         </div>
+        <div *ngSwitchCase="'sprints'">
+          <p class="eyebrow">Planning Cycles</p>
+          <h2>Sprints</h2>
+          <p class="muted">Plan sprint goals, priorities, timelines, and delivery progress for the selected project.</p>
+        </div>
         <div *ngSwitchCase="'teams'">
           <p class="eyebrow">Collaboration</p>
           <h2>Project Teams</h2>
@@ -228,6 +233,14 @@
               <span class="status-pill">{{ member.projectRole }}</span>
             </div>
             <p class="muted">{{ member.email }}</p>
+            <button
+              type="button"
+              class="danger compact member-remove-button"
+              *ngIf="canManageProjectMembers()"
+              (click)="removeProjectMember(member)"
+              [disabled]="removingMember() === member.id">
+              {{ removingMember() === member.id ? 'Removing...' : 'Remove' }}
+            </button>
           </article>
         </div>
 
@@ -277,9 +290,6 @@
           <button type="button" class="ghost compact" (click)="loadSelectedProjectTasks()" [disabled]="!selectedProjectId()">
             Refresh Board
           </button>
-          <button type="button" class="ghost compact" (click)="selectedProjectId() && loadSprints(selectedProjectId()!)" [disabled]="!selectedProjectId()">
-            Refresh Sprints
-          </button>
         </div>
       </div>
 
@@ -312,7 +322,7 @@
     </article>
   </section>
 
-  <section class="sprint-workspace" *ngIf="authenticated() && activeWorkspace() === 'tasks'">
+  <section class="sprint-workspace" *ngIf="authenticated() && activeWorkspace() === 'sprints'">
     <article class="panel sprint-directory-panel">
       <div class="panel-heading">
         <div>
