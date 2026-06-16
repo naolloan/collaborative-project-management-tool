@@ -592,12 +592,21 @@
         <div class="date-row task-intake-grid">
           <label>
             Sprint
+            <input
+              type="search"
+              name="taskSprintBrowse"
+              class="select-browse-input"
+              [(ngModel)]="taskSprintSearch"
+              placeholder="Browse sprint name, goal, status, or priority">
             <select name="taskSprint" [(ngModel)]="newTask.sprintId">
               <option [ngValue]="null">Backlog / No sprint</option>
-              <option *ngFor="let sprint of sprints()" [ngValue]="sprint.id">
+              <option *ngFor="let sprint of filteredTaskSprintOptions('create')" [ngValue]="sprint.id">
                 {{ sprint.name }} - {{ sprint.status }}
               </option>
             </select>
+            <small class="field-hint" *ngIf="sprints().length > 0">
+              Showing {{ filteredTaskSprintOptions('create').length }} of {{ sprints().length }} sprints
+            </small>
           </label>
 
           <label>
@@ -828,12 +837,21 @@
 
             <label>
               Sprint
+              <input
+                type="search"
+                name="editTaskSprintBrowse"
+                class="select-browse-input"
+                [(ngModel)]="editTaskSprintSearch"
+                placeholder="Browse sprint name, goal, status, or priority">
               <select name="editTaskSprint" [(ngModel)]="editTask.sprintId">
                 <option [ngValue]="null">Backlog / No sprint</option>
-                <option *ngFor="let sprint of sprints()" [ngValue]="sprint.id">
+                <option *ngFor="let sprint of filteredTaskSprintOptions('edit')" [ngValue]="sprint.id">
                   {{ sprint.name }} - {{ sprint.status }}
                 </option>
               </select>
+              <small class="field-hint" *ngIf="sprints().length > 0">
+                Showing {{ filteredTaskSprintOptions('edit').length }} of {{ sprints().length }} sprints
+              </small>
             </label>
 
             <label>

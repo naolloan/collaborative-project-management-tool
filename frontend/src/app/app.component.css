@@ -1082,6 +1082,44 @@ select:focus {
   box-shadow: 0 0 0 1px rgba(0, 174, 233, 0.05);
 }
 
+.select-browse-input {
+  margin-bottom: 0.45rem;
+}
+
+.field-hint {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.project-directory,
+.team-list,
+.sprint-list,
+.member-list,
+.assigned-list,
+.unit-coverage-list,
+.watchlist-grid {
+  scrollbar-color: rgba(0, 119, 168, 0.38) transparent;
+  scrollbar-width: thin;
+}
+
+.project-directory,
+.team-list,
+.sprint-list,
+.unit-coverage-list,
+.watchlist-grid {
+  max-height: min(34rem, 68vh);
+  overflow: auto;
+  padding-right: 0.25rem;
+}
+
+.member-list,
+.assigned-list {
+  max-height: min(30rem, 62vh);
+  overflow: auto;
+  padding-right: 0.25rem;
+}
+
 .date-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1942,6 +1980,11 @@ select:focus {
 
 .board-column {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: min(42rem, 74vh);
+  overflow: auto;
   min-height: 18rem;
   padding: 0.85rem;
   border: 1px solid var(--border);

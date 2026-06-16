@@ -151,6 +151,8 @@ export class AppComponent implements OnInit {
     assigneeId: null as number | null,
     sprintId: 'ALL' as SprintScope
   };
+  taskSprintSearch = '';
+  editTaskSprintSearch = '';
   memberSearch = '';
   memberRoleFilter: ProjectRole | '' = '';
   sprintSearch = '';
@@ -1025,6 +1027,20 @@ export class AppComponent implements OnInit {
         || (sprint.goal ?? '').toLowerCase().includes(search))
       && (!this.sprintStatusFilter || sprint.status === this.sprintStatusFilter)
       && (!this.sprintPriorityFilter || sprint.priority === this.sprintPriorityFilter)
+    ));
+  }
+
+  filteredTaskSprintOptions(scope: 'create' | 'edit'): Sprint[] {
+    const search = (scope === 'create' ? this.taskSprintSearch : this.editTaskSprintSearch).trim().toLowerCase();
+    if (!search) {
+      return this.sprints();
+    }
+
+    return this.sprints().filter((sprint) => (
+      sprint.name.toLowerCase().includes(search)
+      || (sprint.goal ?? '').toLowerCase().includes(search)
+      || this.formatStatus(sprint.status).toLowerCase().includes(search)
+      || this.sprintPriorityLabel(sprint.priority).toLowerCase().includes(search)
     ));
   }
 
