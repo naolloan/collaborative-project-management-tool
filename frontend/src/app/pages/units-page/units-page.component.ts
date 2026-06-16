@@ -38,8 +38,11 @@ export class TeamsPageComponent {
   @Output() updateTeam = new EventEmitter<void>();
 
   teamSearch = '';
+  teamRoleFilter: 'MANAGER' | 'MEMBER' | '' = '';
   createMemberSearch = '';
   editMemberSearch = '';
+  createMemberRoleFilter: 'MANAGER' | 'MEMBER' | '' = '';
+  editMemberRoleFilter: 'MANAGER' | 'MEMBER' | '' = '';
 
   formatRole(role: string | null | undefined): string {
     return role ? role.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase()) : 'Member';
@@ -61,22 +64,25 @@ export class TeamsPageComponent {
 
     return this.projectTeams.filter((team) => {
       const memberNames = team.members.map((member) => `${member.fullName} ${member.email}`).join(' ').toLowerCase();
-      return team.name.toLowerCase().includes(search)
+      const matchesSearch = !search
+        || team.name.toLowerCase().includes(search)
         || (team.description ?? '').toLowerCase().includes(search)
         || memberNames.includes(search);
+      const matchesRole = !this.teamRoleFilter || team.members.some((member) => member.projectRole === this.teamRoleFilter);
+
+      return matchesSearch && matchesRole;
     });
   }
 
   filteredProjectMembers(scope: 'create' | 'edit'): ProjectMember[] {
     const search = (scope === 'create' ? this.createMemberSearch : this.editMemberSearch).trim().toLowerCase();
-    if (!search) {
-      return this.projectMembers;
-    }
+    const roleFilter = scope === 'create' ? this.createMemberRoleFilter : this.editMemberRoleFilter;
 
     return this.projectMembers.filter((member) => (
-      member.fullName.toLowerCase().includes(search)
-      || member.email.toLowerCase().includes(search)
-      || this.formatRole(member.projectRole).toLowerCase().includes(search)
+      (!search
+        || member.fullName.toLowerCase().includes(search)
+        || member.email.toLowerCase().includes(search))
+      && (!roleFilter || member.projectRole === roleFilter)
     ));
   }
 

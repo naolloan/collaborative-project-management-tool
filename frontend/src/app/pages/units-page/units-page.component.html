@@ -19,29 +19,29 @@
 
     <div class="team-grid" *ngIf="selectedProjectId">
       <section class="team-list-panel">
-        <div class="team-summary-strip">
-          <article>
-            <span>Teams</span>
-            <strong>{{ projectTeams.length }}</strong>
-          </article>
-          <article>
-            <span>Members</span>
-            <strong>{{ projectMembers.length }}</strong>
-          </article>
-          <article>
-            <span>Managers</span>
-            <strong>{{ projectManagerCount() }}</strong>
-          </article>
-        </div>
+        <form class="browse-filter-row team-browse-row">
+          <label class="browse-control">
+            Browse teams
+            <input
+              type="search"
+              name="teamBrowse"
+              [(ngModel)]="teamSearch"
+              placeholder="Search team or member">
+          </label>
 
-        <label class="browse-control">
-          Browse teams
-          <input
-            type="search"
-            name="teamBrowse"
-            [(ngModel)]="teamSearch"
-            placeholder="Search team or member">
-        </label>
+          <label>
+            Member role
+            <select name="teamRoleBrowse" [(ngModel)]="teamRoleFilter">
+              <option value="">Any role</option>
+              <option value="MANAGER">Manager</option>
+              <option value="MEMBER">Member</option>
+            </select>
+          </label>
+        </form>
+
+        <p class="muted filter-summary">
+          Showing {{ filteredProjectTeams().length }} of {{ projectTeams.length }} teams.
+        </p>
 
         <div class="empty-state" *ngIf="projectTeams.length === 0">
           <strong>No project teams yet</strong>
@@ -93,13 +93,23 @@
 
             <fieldset class="member-picker">
               <legend>Initial team members</legend>
-              <label class="member-search-control">
-                <input
-                  type="search"
-                  name="createTeamMemberBrowse"
-                  [(ngModel)]="createMemberSearch"
-                  placeholder="Browse members by name, email, or role">
-              </label>
+              <div class="member-picker-filters">
+                <label class="member-search-control">
+                  <input
+                    type="search"
+                    name="createTeamMemberBrowse"
+                    [(ngModel)]="createMemberSearch"
+                    placeholder="Browse members by name or email">
+                </label>
+                <label>
+                  Role
+                  <select name="createTeamMemberRoleBrowse" [(ngModel)]="createMemberRoleFilter">
+                    <option value="">Any role</option>
+                    <option value="MANAGER">Manager</option>
+                    <option value="MEMBER">Member</option>
+                  </select>
+                </label>
+              </div>
               <label *ngFor="let member of filteredProjectMembers('create')" class="member-toggle">
                 <input
                   type="checkbox"
@@ -145,13 +155,23 @@
 
             <fieldset class="member-picker">
               <legend>Team members</legend>
-              <label class="member-search-control">
-                <input
-                  type="search"
-                  name="editTeamMemberBrowse"
-                  [(ngModel)]="editMemberSearch"
-                  placeholder="Browse members by name, email, or role">
-              </label>
+              <div class="member-picker-filters">
+                <label class="member-search-control">
+                  <input
+                    type="search"
+                    name="editTeamMemberBrowse"
+                    [(ngModel)]="editMemberSearch"
+                    placeholder="Browse members by name or email">
+                </label>
+                <label>
+                  Role
+                  <select name="editTeamMemberRoleBrowse" [(ngModel)]="editMemberRoleFilter">
+                    <option value="">Any role</option>
+                    <option value="MANAGER">Manager</option>
+                    <option value="MEMBER">Member</option>
+                  </select>
+                </label>
+              </div>
               <label *ngFor="let member of filteredProjectMembers('edit')" class="member-toggle">
                 <input
                   type="checkbox"

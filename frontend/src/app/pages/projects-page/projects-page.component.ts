@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { OrganizationalUnit } from '../../core/dto/organizational-unit';
-import { CreateProjectRequest, Project, ProjectLifecycleStatus } from '../../core/dto/project';
+import { CreateProjectRequest, Project, ProjectHealth, ProjectLifecycleStatus } from '../../core/dto/project';
 
 type HealthTone = 'good' | 'warning' | 'danger' | 'neutral';
 
@@ -39,6 +39,9 @@ export class ProjectsPageComponent {
   @Output() manageProjectTeams = new EventEmitter<void>();
 
   projectSearch = '';
+  projectStatusFilter: ProjectLifecycleStatus | '' = '';
+  projectHealthFilter: ProjectHealth | '' = '';
+  readonly projectHealthFilters: ProjectHealth[] = ['ON_TRACK', 'AT_RISK', 'OFF_TRACK', 'BLOCKED'];
 
   formatUnitType(type: string | null | undefined): string {
     if (!type) {
@@ -151,18 +154,28 @@ export class ProjectsPageComponent {
 
   filteredProjects(): Project[] {
     const search = this.projectSearch.trim().toLowerCase();
-    if (!search) {
-      return this.projects;
-    }
 
     return this.projects.filter((project) => {
       const teamNames = (project.teams ?? []).map((team) => team.name).join(' ').toLowerCase();
-      return project.name.toLowerCase().includes(search)
+      const matchesSearch = !search
+        || project.name.toLowerCase().includes(search)
         || (project.description ?? '').toLowerCase().includes(search)
-        || teamNames.includes(search)
-        || this.formatProjectStatus(project.status).toLowerCase().includes(search)
-        || this.formatProjectHealth(project.health).toLowerCase().includes(search);
+        || teamNames.includes(search);
+      const matchesStatus = !this.projectStatusFilter || project.status === this.projectStatusFilter;
+      const matchesHealth = !this.projectHealthFilter || project.health === this.projectHealthFilter;
+
+      return matchesSearch && matchesStatus && matchesHealth;
     });
+  }
+
+  hasProjectFilters(): boolean {
+    return Boolean(this.projectSearch.trim() || this.projectStatusFilter || this.projectHealthFilter);
+  }
+
+  clearProjectFilters(): void {
+    this.projectSearch = '';
+    this.projectStatusFilter = '';
+    this.projectHealthFilter = '';
   }
 
   teamUnits(): OrganizationalUnit[] {

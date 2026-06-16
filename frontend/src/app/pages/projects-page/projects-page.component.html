@@ -107,29 +107,40 @@
       <button type="button" class="ghost compact" (click)="refreshProjects.emit()">Refresh</button>
     </div>
 
-    <div class="project-overview-metrics">
-      <article>
-        <span>Total active</span>
-        <strong>{{ projects.length }}</strong>
-      </article>
-      <article>
-        <span>With teams</span>
-        <strong>{{ ownedProjectCount() }}</strong>
-      </article>
-      <article>
-        <span>In delivery</span>
-        <strong>{{ activeDeliveryCount() }}</strong>
-      </article>
-    </div>
+    <form class="browse-filter-row">
+      <label class="browse-control">
+        Browse projects
+        <input
+          type="search"
+          name="projectBrowse"
+          [(ngModel)]="projectSearch"
+          placeholder="Search name or team">
+      </label>
 
-    <label class="browse-control">
-      Browse projects
-      <input
-        type="search"
-        name="projectBrowse"
-        [(ngModel)]="projectSearch"
-        placeholder="Search name, team, status, or health">
-    </label>
+      <label>
+        Status
+        <select name="projectStatusBrowse" [(ngModel)]="projectStatusFilter">
+          <option value="">All statuses</option>
+          <option *ngFor="let status of projectLifecycleStatuses" [ngValue]="status">{{ formatProjectStatus(status) }}</option>
+        </select>
+      </label>
+
+      <label>
+        Health
+        <select name="projectHealthBrowse" [(ngModel)]="projectHealthFilter">
+          <option value="">All health states</option>
+          <option *ngFor="let health of projectHealthFilters" [ngValue]="health">{{ formatProjectHealth(health) }}</option>
+        </select>
+      </label>
+
+      <button type="button" class="ghost compact" (click)="clearProjectFilters()" [disabled]="!hasProjectFilters()">
+        Clear
+      </button>
+    </form>
+
+    <p class="muted filter-summary">
+      Showing {{ filteredProjects().length }} of {{ projects.length }} projects.
+    </p>
 
     <div class="empty-state" *ngIf="projects.length === 0">
       <strong>No projects yet</strong>
@@ -209,14 +220,10 @@
 
     <p class="muted project-briefing-copy">{{ selectedProjectSummary() }}</p>
 
-    <div class="project-briefing-grid">
+    <div class="project-briefing-grid compact-briefing-grid">
       <article>
         <span>Assigned teams</span>
         <strong>{{ projectTeamSummary(selectedProject) }}</strong>
-      </article>
-      <article>
-        <span>Team count</span>
-        <strong>{{ selectedProjectTeamCount() }}</strong>
       </article>
       <article>
         <span>Timeline</span>

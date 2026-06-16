@@ -5,22 +5,10 @@
         <p class="eyebrow">Portfolio Overview</p>
         <h2>Delivery Command View</h2>
       </div>
-      <span class="status-pill">{{ authenticated ? 'Business View' : 'Sign In Required' }}</span>
+      <span class="status-pill">{{ authenticated ? projectCount + ' projects / ' + unitCount + ' teams' : 'Sign In Required' }}</span>
     </div>
 
     <div class="executive-grid">
-      <article class="executive-stat">
-        <span>Projects</span>
-        <strong>{{ projectCount }}</strong>
-        <p class="muted">Active delivery workspaces under the current portfolio scope.</p>
-      </article>
-
-      <article class="executive-stat">
-        <span>Teams</span>
-        <strong>{{ unitCount }}</strong>
-        <p class="muted">Delivery teams currently available for project alignment and reporting.</p>
-      </article>
-
       <article class="executive-stat">
         <span>Due Soon</span>
         <strong>{{ dueSoonProjectCount }}</strong>
@@ -70,11 +58,6 @@
         <article>
           <span>Timeline</span>
           <strong>{{ selectedProjectTimeline() }}</strong>
-        </article>
-
-        <article>
-          <span>Loaded members</span>
-          <strong>{{ memberCount }}</strong>
         </article>
       </div>
     </ng-container>

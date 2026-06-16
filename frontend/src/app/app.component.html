@@ -237,14 +237,28 @@
       </div>
 
       <ng-container *ngIf="selectedProjectId()">
-        <label class="browse-control">
-          Browse members
-          <input
-            type="search"
-            name="memberBrowse"
-            [(ngModel)]="memberSearch"
-            placeholder="Search name, email, or role">
-        </label>
+        <form class="browse-filter-row member-browse-row">
+          <label class="browse-control">
+            Browse members
+            <input
+              type="search"
+              name="memberBrowse"
+              [(ngModel)]="memberSearch"
+              placeholder="Search name or email">
+          </label>
+
+          <label>
+            Role
+            <select name="memberRoleBrowse" [(ngModel)]="memberRoleFilter">
+              <option value="">Any role</option>
+              <option *ngFor="let role of projectRoles" [ngValue]="role">{{ role }}</option>
+            </select>
+          </label>
+        </form>
+
+        <p class="muted filter-summary">
+          Showing {{ filteredProjectMembers().length }} of {{ projectMembers().length }} members.
+        </p>
 
         <div class="member-list" *ngIf="filteredProjectMembers().length > 0; else noMembers">
           <article class="member-card" *ngFor="let member of filteredProjectMembers()">
@@ -353,14 +367,36 @@
       </div>
 
       <ng-container *ngIf="selectedProjectId()">
-        <label class="browse-control">
-          Browse sprints
-          <input
-            type="search"
-            name="sprintBrowse"
-            [(ngModel)]="sprintSearch"
-            placeholder="Search sprint, goal, status, or priority">
-        </label>
+        <form class="browse-filter-row sprint-browse-row">
+          <label class="browse-control">
+            Browse sprints
+            <input
+              type="search"
+              name="sprintBrowse"
+              [(ngModel)]="sprintSearch"
+              placeholder="Search sprint or goal">
+          </label>
+
+          <label>
+            Status
+            <select name="sprintStatusBrowse" [(ngModel)]="sprintStatusFilter">
+              <option value="">All statuses</option>
+              <option *ngFor="let status of sprintStatuses" [ngValue]="status">{{ formatStatus(status) }}</option>
+            </select>
+          </label>
+
+          <label>
+            Priority
+            <select name="sprintPriorityBrowse" [(ngModel)]="sprintPriorityFilter">
+              <option value="">All priorities</option>
+              <option *ngFor="let priority of sprintPriorities" [ngValue]="priority">{{ sprintPriorityLabel(priority) }}</option>
+            </select>
+          </label>
+        </form>
+
+        <p class="muted filter-summary">
+          Showing {{ filteredSprints().length }} of {{ sprints().length }} sprints.
+        </p>
 
         <div class="sprint-list" *ngIf="filteredSprints().length > 0; else noSprints">
           <article

@@ -152,7 +152,10 @@ export class AppComponent implements OnInit {
     sprintId: 'ALL' as SprintScope
   };
   memberSearch = '';
+  memberRoleFilter: ProjectRole | '' = '';
   sprintSearch = '';
+  sprintStatusFilter: SprintStatus | '' = '';
+  sprintPriorityFilter: SprintPriority | '' = '';
   editTask = {
     title: '',
     description: '',
@@ -1004,28 +1007,24 @@ export class AppComponent implements OnInit {
 
   filteredProjectMembers(): ProjectMember[] {
     const search = this.memberSearch.trim().toLowerCase();
-    if (!search) {
-      return this.projectMembers();
-    }
 
     return this.projectMembers().filter((member) => (
-      member.fullName.toLowerCase().includes(search)
-      || member.email.toLowerCase().includes(search)
-      || member.projectRole.toLowerCase().includes(search)
+      (!search
+        || member.fullName.toLowerCase().includes(search)
+        || member.email.toLowerCase().includes(search))
+      && (!this.memberRoleFilter || member.projectRole === this.memberRoleFilter)
     ));
   }
 
   filteredSprints(): Sprint[] {
     const search = this.sprintSearch.trim().toLowerCase();
-    if (!search) {
-      return this.sprints();
-    }
 
     return this.sprints().filter((sprint) => (
-      sprint.name.toLowerCase().includes(search)
-      || (sprint.goal ?? '').toLowerCase().includes(search)
-      || sprint.status.toLowerCase().includes(search)
-      || sprint.priority.toLowerCase().includes(search)
+      (!search
+        || sprint.name.toLowerCase().includes(search)
+        || (sprint.goal ?? '').toLowerCase().includes(search))
+      && (!this.sprintStatusFilter || sprint.status === this.sprintStatusFilter)
+      && (!this.sprintPriorityFilter || sprint.priority === this.sprintPriorityFilter)
     ));
   }
 

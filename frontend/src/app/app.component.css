@@ -1111,6 +1111,38 @@ label {
   margin-bottom: 0.9rem;
 }
 
+.browse-filter-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) repeat(2, minmax(140px, 0.42fr)) auto;
+  gap: 0.75rem;
+  align-items: end;
+  margin-bottom: 0.65rem;
+}
+
+.browse-filter-row .browse-control {
+  margin-bottom: 0;
+}
+
+.team-browse-row,
+.member-browse-row {
+  grid-template-columns: minmax(180px, 1fr) minmax(140px, 0.36fr);
+}
+
+.sprint-browse-row {
+  grid-template-columns: minmax(180px, 1fr) repeat(2, minmax(140px, 0.42fr));
+}
+
+.member-picker-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 0.42fr);
+  gap: 0.65rem;
+  align-items: end;
+}
+
+.member-picker-filters .member-search-control {
+  margin-bottom: 0;
+}
+
 .browse-control input,
 .member-search-control input {
   min-height: 2.35rem;
@@ -2340,6 +2372,8 @@ dd {
   .profile-detail-grid,
   .profile-summary-list,
   .project-command-strip,
+  .browse-filter-row,
+  .member-picker-filters,
   .summary-metric-strip,
   .sprint-workspace,
   .team-grid,
