@@ -36,6 +36,7 @@ export class ProjectsPageComponent {
   @Output() selectProject = new EventEmitter<Project>();
   @Output() updateProject = new EventEmitter<void>();
   @Output() archiveProject = new EventEmitter<void>();
+  @Output() manageProjectTeams = new EventEmitter<void>();
 
   formatUnitType(type: string | null | undefined): string {
     if (!type) {
@@ -150,6 +151,26 @@ export class ProjectsPageComponent {
     return this.organizationalUnits.filter((unit) => unit.type === 'TEAM');
   }
 
+  toggleNewProjectTeam(teamId: number): void {
+    this.newProject.teamIds = this.toggleTeamSelection(this.newProject.teamIds ?? [], teamId);
+  }
+
+  toggleEditProjectTeam(teamId: number): void {
+    this.editProject.teamIds = this.toggleTeamSelection(this.editProject.teamIds ?? [], teamId);
+  }
+
+  isNewProjectTeamSelected(teamId: number): boolean {
+    return this.isTeamSelected(this.newProject.teamIds ?? [], teamId);
+  }
+
+  isEditProjectTeamSelected(teamId: number): boolean {
+    return this.isTeamSelected(this.editProject.teamIds ?? [], teamId);
+  }
+
+  newProjectTeamCount(): number {
+    return this.newProject.teamIds?.length ?? 0;
+  }
+
   projectTeamSummary(project: Project | undefined): string {
     if (!project || !project.teams || project.teams.length === 0) {
       return 'No teams assigned';
@@ -158,8 +179,47 @@ export class ProjectsPageComponent {
     return project.teams.map((team) => team.name).join(', ');
   }
 
+  newProjectTeamSummary(): string {
+    const selectedTeams = this.selectedTeamNames(this.newProject.teamIds ?? []);
+
+    if (selectedTeams.length === 0) {
+      return 'Select the COOP delivery teams that should collaborate on this project.';
+    }
+
+    return selectedTeams.join(', ');
+  }
+
+  editProjectTeamSummary(): string {
+    const selectedTeams = this.selectedTeamNames(this.editProject.teamIds ?? []);
+
+    if (selectedTeams.length === 0) {
+      return 'No delivery teams assigned';
+    }
+
+    return selectedTeams.join(', ');
+  }
+
   selectedProjectTeamCount(): number {
     return this.selectedProject?.teams?.length ?? 0;
+  }
+
+  private toggleTeamSelection(selectedTeamIds: number[], teamId: number): number[] {
+    if (this.isTeamSelected(selectedTeamIds, teamId)) {
+      return selectedTeamIds.filter((selectedTeamId) => selectedTeamId !== teamId);
+    }
+
+    return [...selectedTeamIds, teamId];
+  }
+
+  private isTeamSelected(selectedTeamIds: number[], teamId: number): boolean {
+    return selectedTeamIds.includes(teamId);
+  }
+
+  private selectedTeamNames(selectedTeamIds: number[]): string[] {
+    const selectedTeamIdSet = new Set(selectedTeamIds);
+    return this.teamUnits()
+      .filter((team) => selectedTeamIdSet.has(team.id))
+      .map((team) => team.name);
   }
 
   private formatLabel(value: string): string {

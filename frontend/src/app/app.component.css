@@ -572,6 +572,145 @@ button:disabled {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.lifecycle-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.project-intake-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.project-intake-summary article,
+.project-team-callout {
+  min-width: 0;
+  border: 1px solid rgba(153, 223, 243, 0.82);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(241, 251, 255, 0.94)),
+    radial-gradient(circle at right top, rgba(0, 174, 233, 0.12), transparent 9rem);
+}
+
+.project-intake-summary article {
+  padding: 0.85rem;
+}
+
+.project-intake-summary span,
+.project-team-callout span,
+.team-assignment-picker legend {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.project-intake-summary strong,
+.project-team-callout strong {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--primary-dark);
+  font-size: 1.06rem;
+  overflow-wrap: anywhere;
+}
+
+.team-assignment-picker {
+  min-width: 0;
+  margin: 0;
+  padding: 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.team-assignment-picker legend {
+  padding: 0 0.35rem;
+}
+
+.team-option-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.65rem;
+}
+
+.team-option-card {
+  align-items: flex-start;
+  min-width: 0;
+  min-height: 4.35rem;
+  border-color: var(--border);
+  border-radius: 14px;
+  padding: 0.72rem;
+  background:
+    linear-gradient(135deg, #ffffff, #f7fcff),
+    radial-gradient(circle at right top, rgba(0, 174, 233, 0.08), transparent 7rem);
+  color: var(--text);
+  text-align: left;
+}
+
+.team-option-card:hover:not(:disabled) {
+  border-color: rgba(0, 174, 233, 0.42);
+  box-shadow: 0 10px 22px rgba(0, 119, 168, 0.1);
+}
+
+.team-option-card.selected {
+  border-color: rgba(0, 174, 233, 0.72);
+  background:
+    linear-gradient(135deg, rgba(227, 248, 255, 0.96), rgba(255, 255, 255, 0.98)),
+    radial-gradient(circle at right top, rgba(0, 174, 233, 0.18), transparent 7rem);
+  box-shadow: inset 4px 0 0 var(--primary);
+}
+
+.team-option-card span,
+.team-option-card small {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.team-option-card span {
+  color: var(--primary-dark);
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+.team-option-card small {
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.team-selection-summary {
+  margin: 0.8rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.compact-empty {
+  padding: 0.85rem;
+}
+
+.project-team-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.9rem;
+}
+
+.project-team-callout button {
+  flex: 0 0 auto;
+}
+
+.settings-team-picker {
+  background: rgba(248, 253, 255, 0.84);
+}
+
 .project-overview-metrics,
 .project-briefing-grid,
 .task-command-metrics {

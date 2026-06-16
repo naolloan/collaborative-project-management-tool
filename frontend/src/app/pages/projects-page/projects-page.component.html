@@ -28,30 +28,52 @@
           placeholder="Summarize the delivery goal, expected outcomes, and unit stakeholders."></textarea>
       </label>
 
-      <div class="project-form-grid">
-        <label>
-          Collaborating teams
-          <select name="projectTeams" multiple [(ngModel)]="newProject.teamIds">
-            <option *ngFor="let unit of teamUnits()" [ngValue]="unit.id">
-              {{ unit.name }} - {{ formatUnitType(unit.type) }}
-            </option>
-          </select>
-        </label>
+      <div class="project-intake-summary">
+        <article>
+          <span>Assigned teams</span>
+          <strong>{{ newProjectTeamCount() }}</strong>
+        </article>
+        <article>
+          <span>Delivery model</span>
+          <strong>Project teams</strong>
+        </article>
+      </div>
 
+      <fieldset class="team-assignment-picker">
+        <legend>Collaborating delivery teams</legend>
+        <div class="empty-state compact-empty" *ngIf="teamUnits().length === 0">
+          <strong>No delivery teams available</strong>
+          <p class="muted">Create teams from the Teams workspace before assigning them to a project.</p>
+        </div>
+        <div class="team-option-grid" *ngIf="teamUnits().length > 0">
+          <button
+            type="button"
+            class="team-option-card"
+            *ngFor="let unit of teamUnits()"
+            [class.selected]="isNewProjectTeamSelected(unit.id)"
+            (click)="toggleNewProjectTeam(unit.id)">
+            <span>{{ unit.name }}</span>
+            <small>{{ formatUnitType(unit.type) }}</small>
+          </button>
+        </div>
+        <p class="team-selection-summary">{{ newProjectTeamSummary() }}</p>
+      </fieldset>
+
+      <div class="project-form-grid lifecycle-grid">
         <label>
           Lifecycle status
           <select name="projectStatus" [(ngModel)]="newProject.status">
             <option *ngFor="let status of projectLifecycleStatuses" [ngValue]="status">{{ formatProjectStatus(status) }}</option>
           </select>
         </label>
+
+        <label>
+          Delivery model
+          <input type="text" value="Multi-team delivery" readonly>
+        </label>
       </div>
 
       <div class="project-form-grid project-governance-grid">
-        <label>
-          Team collaboration mode
-          <input type="text" value="Multi-team delivery" readonly>
-        </label>
-
         <label>
           Delivery posture
           <input type="text" [value]="projectPhase(newProject.status)" readonly>
@@ -163,6 +185,14 @@
       </div>
     </div>
 
+    <div class="project-team-callout">
+      <div>
+        <span>Project team workspace</span>
+        <strong>{{ selectedProjectTeamCount() }} team{{ selectedProjectTeamCount() === 1 ? '' : 's' }} assigned</strong>
+      </div>
+      <button type="button" class="ghost compact" (click)="manageProjectTeams.emit()">Manage Teams</button>
+    </div>
+
     <p class="muted project-briefing-copy">{{ selectedProjectSummary() }}</p>
 
     <div class="project-briefing-grid">
@@ -220,14 +250,25 @@
           rows="3"></textarea>
       </label>
 
-      <label>
-        Collaborating teams
-        <select name="editProjectTeams" multiple [(ngModel)]="editProject.teamIds">
-          <option *ngFor="let unit of teamUnits()" [ngValue]="unit.id">
-            {{ unit.name }} - {{ formatUnitType(unit.type) }}
-          </option>
-        </select>
-      </label>
+      <fieldset class="team-assignment-picker settings-team-picker">
+        <legend>Collaborating delivery teams</legend>
+        <div class="empty-state compact-empty" *ngIf="teamUnits().length === 0">
+          <strong>No delivery teams available</strong>
+          <p class="muted">Create teams from the Teams workspace before assigning them to this project.</p>
+        </div>
+        <div class="team-option-grid" *ngIf="teamUnits().length > 0">
+          <button
+            type="button"
+            class="team-option-card"
+            *ngFor="let unit of teamUnits()"
+            [class.selected]="isEditProjectTeamSelected(unit.id)"
+            (click)="toggleEditProjectTeam(unit.id)">
+            <span>{{ unit.name }}</span>
+            <small>{{ formatUnitType(unit.type) }}</small>
+          </button>
+        </div>
+        <p class="team-selection-summary">{{ editProjectTeamSummary() }}</p>
+      </fieldset>
 
       <div class="project-form-grid project-governance-grid">
         <label>
