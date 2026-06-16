@@ -75,7 +75,8 @@
   z-index: 1;
   display: grid;
   gap: 0.8rem;
-  min-width: min(18rem, 100%);
+  justify-items: end;
+  min-width: 0;
 }
 
 .panel {
@@ -152,9 +153,10 @@ button:disabled {
 .actions {
   position: relative;
   z-index: 1;
+  width: max-content;
   display: flex;
   gap: 0.75rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
   padding: 0.4rem;
   border: 1px solid rgba(153, 223, 243, 0.72);
@@ -2137,6 +2139,11 @@ select:focus {
   margin-top: 1rem;
 }
 
+.activity-workspace {
+  display: grid;
+  margin-top: 1rem;
+}
+
 .detail-panel h3 {
   margin: 0 0 0.75rem;
 }
@@ -2391,6 +2398,7 @@ dd {
 
   .actions {
     justify-content: stretch;
+    width: 100%;
   }
 
   .actions button {

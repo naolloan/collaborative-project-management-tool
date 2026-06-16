@@ -79,6 +79,11 @@
           <h2>Task Board</h2>
           <p class="muted">Create sprint-scoped work, move tasks through workflow, and audit delivery progress for the selected project.</p>
         </div>
+        <div *ngSwitchCase="'activity'">
+          <p class="eyebrow">Audit Trail</p>
+          <h2>Activity</h2>
+          <p class="muted">Review project, sprint, task, comment, team, and membership changes from one timeline.</p>
+        </div>
         <div *ngSwitchCase="'profile'">
           <p class="eyebrow">Account</p>
           <h2>Profile</h2>
@@ -761,11 +766,14 @@
     </article>
   </section>
 
-  <section class="detail-workspace" *ngIf="authenticated() && activeWorkspace() === 'tasks'">
+  <section class="activity-workspace" *ngIf="authenticated() && activeWorkspace() === 'activity'">
     <article class="panel project-activity-panel">
       <div class="panel-heading">
-        <h2>Project Activity</h2>
-        <span class="muted">{{ projectActivityStatus() }}</span>
+        <div>
+          <p class="eyebrow">Project Activity</p>
+          <h2>{{ selectedProject()?.name || 'Select a project' }}</h2>
+        </div>
+        <span class="status-pill">{{ projectActivityStatus() }}</span>
       </div>
 
       <div class="board-empty" *ngIf="!selectedProjectId()">
@@ -796,7 +804,9 @@
         </ng-template>
       </ng-container>
     </article>
+  </section>
 
+  <section class="detail-workspace" *ngIf="authenticated() && activeWorkspace() === 'tasks'">
     <article class="panel detail-panel">
       <div class="panel-heading">
         <h2>Task Details</h2>

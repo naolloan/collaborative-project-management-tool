@@ -18,7 +18,7 @@ import { ProjectsPageComponent } from './pages/projects-page/projects-page.compo
 import { TeamsPageComponent } from './pages/units-page/units-page.component';
 import { ProfilePageComponent } from './pages/profile-page/profile-page.component';
 
-type WorkspaceView = 'dashboard' | 'projects' | 'teams' | 'members' | 'tasks' | 'profile';
+type WorkspaceView = 'dashboard' | 'projects' | 'teams' | 'members' | 'tasks' | 'activity' | 'profile';
 type SprintScope = 'ALL' | 'BACKLOG' | number;
 
 @Component({
@@ -87,6 +87,7 @@ export class AppComponent implements OnInit {
     { view: 'teams', label: 'Teams', helper: 'Delivery squads' },
     { view: 'members', label: 'Members', helper: 'Access' },
     { view: 'tasks', label: 'Task Board', helper: 'Delivery' },
+    { view: 'activity', label: 'Activity', helper: 'Audit trail' },
     { view: 'profile', label: 'Profile', helper: 'Account' }
   ];
   newProject: CreateProjectRequest = {
