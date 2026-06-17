@@ -58,6 +58,12 @@
   text-align: left;
 }
 
+.brand-copy {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
 .coop-logo {
   width: clamp(10.25rem, 18vw, 13.25rem);
   max-width: 100%;
@@ -2161,6 +2167,18 @@ select:focus {
   gap: 0.85rem;
 }
 
+.task-detail-sprint-field,
+.task-detail-meta-grid {
+  min-width: 0;
+}
+
+.task-detail-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
 .form-actions {
   display: flex;
   gap: 0.75rem;
@@ -2397,6 +2415,10 @@ dd {
     text-align: left;
   }
 
+  .brand-copy {
+    text-align: left;
+  }
+
   .coop-logo {
     width: min(12.5rem, 100%);
   }
@@ -2444,6 +2466,7 @@ dd {
   .task-intake-grid,
   .task-workspace,
   .detail-workspace,
+  .task-detail-meta-grid,
   .detail-list,
   .date-row {
     grid-template-columns: 1fr;

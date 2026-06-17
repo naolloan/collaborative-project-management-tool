@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, ViewEncapsulation, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { KeycloakProfile } from 'keycloak-js';
 import { AuthService } from './auth/auth.service';
 import { ApiService } from './core/api.service';
@@ -494,6 +495,7 @@ export class AppComponent implements OnInit {
 
   removeProjectMember(member: ProjectMember): void {
     const projectId = this.selectedProjectId();
+    const removedCurrentUser = member.userId === this.currentUser()?.id;
 
     if (!this.canManageProjectMembers()) {
       this.error.set('Only project managers or administrators can remove members.');
@@ -511,13 +513,28 @@ export class AppComponent implements OnInit {
     this.apiService.removeProjectMember(projectId, member.id).subscribe({
       next: () => {
         this.removingMember.set(null);
+        this.loadTasks(projectId);
         this.loadProjectMembers(projectId);
         this.loadProjectTeams(projectId);
         this.loadProjectActivities(projectId);
+        this.refreshProjectSnapshot(projectId);
+        if (removedCurrentUser) {
+          this.selectedTaskId.set(undefined);
+          this.comments.set([]);
+          this.activities.set([]);
+          this.commentStatus.set('No task selected');
+          this.activityStatus.set('No task selected');
+          this.activeWorkspace.set('dashboard');
+        } else if (this.selectedTaskId()) {
+          const selectedTask = this.selectedTask();
+          if (selectedTask && selectedTask.assigneeId === member.userId) {
+            this.loadSelectedProjectTasks();
+          }
+        }
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
         this.removingMember.set(null);
-        this.error.set('Could not remove member from the project.');
+        this.error.set(error.error?.message || 'Could not remove member from the project.');
       }
     });
   }

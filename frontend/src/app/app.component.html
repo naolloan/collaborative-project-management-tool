@@ -2,7 +2,7 @@
   <header class="topbar">
     <div class="brand-lockup">
       <img class="coop-logo" src="brand/coop-logo.svg" alt="Cooperative Bank of Oromia logo">
-      <div>
+      <div class="brand-copy">
         <p class="eyebrow">Cooperative Bank of Oromia Internal Delivery Platform</p>
         <h1>{{ projectName }}</h1>
         <p class="hero-copy">A portfolio-grade command center for bank programs, delivery teams, and execution visibility.</p>
@@ -847,31 +847,31 @@
               rows="4"></textarea>
           </label>
 
-          <div class="date-row">
+          <label class="task-detail-sprint-field">
+            Sprint
+            <input
+              type="search"
+              name="editTaskSprintBrowse"
+              class="select-browse-input"
+              [(ngModel)]="editTaskSprintSearch"
+              placeholder="Browse sprint name, goal, status, or priority">
+            <select name="editTaskSprint" [(ngModel)]="editTask.sprintId">
+              <option [ngValue]="null">Backlog / No sprint</option>
+              <option *ngFor="let sprint of filteredTaskSprintOptions('edit')" [ngValue]="sprint.id">
+                {{ sprint.name }} - {{ sprint.status }}
+              </option>
+            </select>
+            <small class="field-hint" *ngIf="sprints().length > 0">
+              Showing {{ filteredTaskSprintOptions('edit').length }} of {{ sprints().length }} sprints
+            </small>
+          </label>
+
+          <div class="task-detail-meta-grid">
             <label>
               Priority
               <select name="editTaskPriority" [(ngModel)]="editTask.priority">
                 <option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</option>
               </select>
-            </label>
-
-            <label>
-              Sprint
-              <input
-                type="search"
-                name="editTaskSprintBrowse"
-                class="select-browse-input"
-                [(ngModel)]="editTaskSprintSearch"
-                placeholder="Browse sprint name, goal, status, or priority">
-              <select name="editTaskSprint" [(ngModel)]="editTask.sprintId">
-                <option [ngValue]="null">Backlog / No sprint</option>
-                <option *ngFor="let sprint of filteredTaskSprintOptions('edit')" [ngValue]="sprint.id">
-                  {{ sprint.name }} - {{ sprint.status }}
-                </option>
-              </select>
-              <small class="field-hint" *ngIf="sprints().length > 0">
-                Showing {{ filteredTaskSprintOptions('edit').length }} of {{ sprints().length }} sprints
-              </small>
             </label>
 
             <label>
