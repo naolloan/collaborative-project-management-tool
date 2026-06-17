@@ -196,49 +196,138 @@
         <div class="panel-heading chart-heading">
           <div>
             <p class="eyebrow">Project Status</p>
-            <h2>{{ projectCount }} project{{ projectCount === 1 ? '' : 's' }}</h2>
+            <h2>{{ selectedProjectChartTitle() }}</h2>
           </div>
-          <span class="status-pill">{{ selectedProjectStatusLabel() }}</span>
+          <label class="chart-select-control">
+            <span class="sr-only">Select project status scope</span>
+            <select [(ngModel)]="selectedProjectChartId">
+              <option *ngFor="let option of projectChartOptions()" [ngValue]="option.id">{{ option.label }}</option>
+            </select>
+          </label>
         </div>
 
         <div class="chart-layout">
-          <div class="donut-chart small-donut" [style.background]="projectStatusConic()" aria-hidden="true">
-            <span>{{ projectCount }}</span>
+          <div class="donut-chart small-donut" [style.background]="projectStatusConicForSelection()" aria-hidden="true">
+            <span>{{ projectStatusTotalForSelection() }}</span>
           </div>
           <div class="chart-legend">
-            <article *ngFor="let status of projectStatusChart()">
+            <article *ngFor="let status of projectStatusChartForSelection()">
               <span class="legend-dot" [ngClass]="chartToneClass(status.tone)"></span>
               <div>
                 <strong>{{ status.label }}</strong>
-                <p class="muted">{{ status.value }} project{{ status.value === 1 ? '' : 's' }} · {{ status.percent }}%</p>
+                <p class="muted">
+                  <ng-container *ngIf="selectedProjectChartId === 'ALL'; else selectedProjectMetric">
+                    {{ status.value }} project{{ status.value === 1 ? '' : 's' }} · {{ status.percent }}%
+                  </ng-container>
+                  <ng-template #selectedProjectMetric>{{ status.value }} · {{ status.percent }}%</ng-template>
+                </p>
               </div>
             </article>
           </div>
+        </div>
+
+        <div class="selected-status-metrics" *ngIf="selectedProjectStatusMetrics().length > 0">
+          <article *ngFor="let metric of selectedProjectStatusMetrics()">
+            <span>{{ metric.label }}</span>
+            <strong [ngClass]="'metric-' + metric.tone">{{ metric.value }}</strong>
+          </article>
         </div>
       </article>
 
       <article class="chart-card">
         <div class="panel-heading chart-heading">
           <div>
-            <p class="eyebrow">Task Status</p>
-            <h2>{{ totalTasks }} task{{ totalTasks === 1 ? '' : 's' }}</h2>
+            <p class="eyebrow">Sprint and Task Status</p>
+            <h2>{{ selectedSprintChartTitle() }}</h2>
           </div>
-          <span class="status-pill">{{ activeSprintLabel() }}</span>
+          <div class="chart-heading-controls">
+            <label class="chart-select-control">
+              <span class="sr-only">Select sprint status scope</span>
+              <select [(ngModel)]="selectedSprintChartId" (ngModelChange)="onSprintChartSelectionChange()">
+                <option *ngFor="let option of sprintChartOptions()" [ngValue]="option.id">{{ option.label }}</option>
+              </select>
+            </label>
+            <label class="chart-select-control">
+              <span class="sr-only">Select task status scope</span>
+              <select [(ngModel)]="selectedTaskChartId">
+                <option *ngFor="let option of taskChartOptions()" [ngValue]="option.id">{{ option.label }}</option>
+              </select>
+            </label>
+          </div>
         </div>
 
-        <div class="chart-layout">
-          <div class="donut-chart small-donut" [style.background]="taskStatusConic()" aria-hidden="true">
-            <span>{{ completionPercentage }}%</span>
-          </div>
-          <div class="chart-legend">
-            <article *ngFor="let status of taskStatusChart()">
-              <span class="legend-dot" [ngClass]="chartToneClass(status.tone)"></span>
+        <div class="stacked-status-charts">
+          <section class="stacked-status-section">
+            <div class="stacked-status-heading">
               <div>
-                <strong>{{ status.label }}</strong>
-                <p class="muted">{{ status.value }} task{{ status.value === 1 ? '' : 's' }} · {{ status.percent }}%</p>
+                <p class="eyebrow">Sprint Status</p>
+                <h3>{{ selectedSprintChartTitle() }}</h3>
               </div>
-            </article>
-          </div>
+            </div>
+
+            <div class="chart-layout">
+              <div class="donut-chart small-donut" [style.background]="sprintStatusConicForSelection()" aria-hidden="true">
+                <span>{{ sprintStatusTotalForSelection() }}</span>
+              </div>
+              <div class="chart-legend">
+                <article *ngFor="let status of sprintStatusChartForSelection()">
+                  <span class="legend-dot" [ngClass]="chartToneClass(status.tone)"></span>
+                  <div>
+                    <strong>{{ status.label }}</strong>
+                    <p class="muted">
+                      <ng-container *ngIf="selectedSprintChartId === 'ALL'; else selectedSprintMetric">
+                        {{ status.value }} sprint{{ status.value === 1 ? '' : 's' }} · {{ status.percent }}%
+                      </ng-container>
+                      <ng-template #selectedSprintMetric>{{ status.value }} · {{ status.percent }}%</ng-template>
+                    </p>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <div class="selected-status-metrics" *ngIf="selectedSprintStatusMetrics().length > 0">
+              <article *ngFor="let metric of selectedSprintStatusMetrics()">
+                <span>{{ metric.label }}</span>
+                <strong [ngClass]="'metric-' + metric.tone">{{ metric.value }}</strong>
+              </article>
+            </div>
+          </section>
+
+          <section class="stacked-status-section">
+            <div class="stacked-status-heading">
+              <div>
+                <p class="eyebrow">Task Status</p>
+                <h3>{{ selectedTaskChartTitle() }}</h3>
+              </div>
+            </div>
+
+            <div class="chart-layout">
+              <div class="donut-chart small-donut" [style.background]="taskStatusConicForSelection()" aria-hidden="true">
+                <span>{{ taskStatusTotalForSelection() }}</span>
+              </div>
+              <div class="chart-legend">
+                <article *ngFor="let status of taskStatusChartForSelection()">
+                  <span class="legend-dot" [ngClass]="chartToneClass(status.tone)"></span>
+                  <div>
+                    <strong>{{ status.label }}</strong>
+                    <p class="muted">
+                      <ng-container *ngIf="selectedTaskChartId === 'ALL'; else selectedTaskMetric">
+                        {{ status.value }} task{{ status.value === 1 ? '' : 's' }} · {{ status.percent }}%
+                      </ng-container>
+                      <ng-template #selectedTaskMetric>{{ status.value }} · {{ status.percent }}%</ng-template>
+                    </p>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <div class="selected-status-metrics" *ngIf="selectedTaskStatusMetrics().length > 0">
+              <article *ngFor="let metric of selectedTaskStatusMetrics()">
+                <span>{{ metric.label }}</span>
+                <strong [ngClass]="'metric-' + metric.tone">{{ metric.value }}</strong>
+              </article>
+            </div>
+          </section>
         </div>
       </article>
 
@@ -268,86 +357,6 @@
         </div>
       </article>
 
-      <article class="chart-card" *ngIf="selectedProjectStatusMetrics().length > 0">
-        <div class="panel-heading chart-heading">
-          <div>
-            <p class="eyebrow">Selected Project</p>
-            <h2>{{ selectedProjectName }}</h2>
-          </div>
-          <span class="status-pill">{{ selectedProjectStatusLabel() }}</span>
-        </div>
-
-        <div class="pressure-bars selected-status-bars">
-          <article *ngFor="let item of selectedProjectStatusMetrics(); let index = index">
-            <div class="graph-row-meta">
-              <span>{{ item.label }}</span>
-              <strong>{{ item.value }}</strong>
-            </div>
-            <div class="progress-track graph-track" aria-hidden="true">
-              <span
-                [style.width.%]="selectedStatusTrackWidth(index)"
-                [class.chart-good]="item.tone === 'good'"
-                [class.chart-warning]="item.tone === 'warning'"
-                [class.chart-danger]="item.tone === 'danger'"
-                [class.chart-neutral]="item.tone === 'neutral'"></span>
-            </div>
-          </article>
-        </div>
-      </article>
-
-      <article class="chart-card" *ngIf="selectedSprintStatusMetrics().length > 0">
-        <div class="panel-heading chart-heading">
-          <div>
-            <p class="eyebrow">Selected Sprint</p>
-            <h2>{{ selectedSprint()?.name }}</h2>
-          </div>
-          <span class="status-pill">{{ selectedSprint()?.status | titlecase }}</span>
-        </div>
-
-        <div class="pressure-bars selected-status-bars">
-          <article *ngFor="let item of selectedSprintStatusMetrics(); let index = index">
-            <div class="graph-row-meta">
-              <span>{{ item.label }}</span>
-              <strong>{{ item.value }}</strong>
-            </div>
-            <div class="progress-track graph-track" aria-hidden="true">
-              <span
-                [style.width.%]="selectedStatusTrackWidth(index)"
-                [class.chart-good]="item.tone === 'good'"
-                [class.chart-warning]="item.tone === 'warning'"
-                [class.chart-danger]="item.tone === 'danger'"
-                [class.chart-neutral]="item.tone === 'neutral'"></span>
-            </div>
-          </article>
-        </div>
-      </article>
-
-      <article class="chart-card" *ngIf="selectedTaskStatusMetrics().length > 0">
-        <div class="panel-heading chart-heading">
-          <div>
-            <p class="eyebrow">Selected Task</p>
-            <h2>{{ selectedTask()?.title }}</h2>
-          </div>
-          <span class="status-pill">{{ selectedTask()?.status | titlecase }}</span>
-        </div>
-
-        <div class="pressure-bars selected-status-bars">
-          <article *ngFor="let item of selectedTaskStatusMetrics(); let index = index">
-            <div class="graph-row-meta">
-              <span>{{ item.label }}</span>
-              <strong>{{ item.value }}</strong>
-            </div>
-            <div class="progress-track graph-track" aria-hidden="true">
-              <span
-                [style.width.%]="selectedStatusTrackWidth(index)"
-                [class.chart-good]="item.tone === 'good'"
-                [class.chart-warning]="item.tone === 'warning'"
-                [class.chart-danger]="item.tone === 'danger'"
-                [class.chart-neutral]="item.tone === 'neutral'"></span>
-            </div>
-          </article>
-        </div>
-      </article>
     </div>
   </article>
 

@@ -1870,6 +1870,93 @@ select:focus {
   margin-bottom: 1rem;
 }
 
+.chart-heading-controls {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.chart-select-control {
+  min-width: 0;
+}
+
+.chart-select-control select {
+  min-width: 10rem;
+  padding: 0.55rem 0.8rem;
+}
+
+.stacked-status-charts {
+  display: grid;
+  gap: 1rem;
+}
+
+.stacked-status-section + .stacked-status-section {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.stacked-status-heading {
+  margin-bottom: 0.85rem;
+}
+
+.stacked-status-heading .eyebrow {
+  margin-bottom: 0.3rem;
+}
+
+.stacked-status-heading h3 {
+  margin: 0;
+  color: var(--primary-dark);
+  font-size: 1rem;
+}
+
+.selected-status-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.selected-status-metrics article {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.selected-status-metrics span {
+  color: var(--muted);
+  font-size: 0.73rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.selected-status-metrics strong {
+  min-width: 0;
+  color: var(--primary-dark);
+  font-size: 0.92rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.metric-good {
+  color: var(--success);
+}
+
+.metric-warning {
+  color: #9a6700;
+}
+
+.metric-danger {
+  color: var(--danger);
+}
+
+.metric-neutral {
+  color: var(--primary-deep);
+}
+
 .pressure-bars {
   display: grid;
   gap: 0.85rem;
@@ -2249,6 +2336,7 @@ select:focus {
   grid-template-columns: minmax(300px, 1fr) minmax(280px, 0.9fr) minmax(420px, 1.25fr);
   gap: 1rem;
   margin-top: 1rem;
+  align-items: stretch;
 }
 
 .activity-workspace {
@@ -2342,9 +2430,19 @@ select:focus {
   margin-top: 1rem;
 }
 
+.activity-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 100%;
+  align-self: stretch;
+}
+
 .activity-list {
   display: grid;
   gap: 0.75rem;
+  align-self: stretch;
+  align-content: start;
+  min-height: 100%;
   max-height: 22rem;
   overflow: auto;
   padding-right: 0.25rem;

@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { OrganizationalUnit } from '../../core/dto/organizational-unit';
 import { Project } from '../../core/dto/project';
 import { Sprint } from '../../core/dto/sprint';
@@ -47,13 +48,14 @@ interface SelectedStatusMetric {
 @Component({
   selector: 'app-dashboard-page',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './dashboard-page.component.html'
 })
 export class DashboardPageComponent implements OnChanges {
   @Input() authenticated = false;
   @Input() selectedProjectName: string | null | undefined;
   @Input() selectedProjectId: number | undefined;
+  @Input() selectedSprintId: number | undefined;
   @Input() selectedTaskId: number | undefined;
   @Input() totalTasks = 0;
   @Input() toDoTasks = 0;
@@ -86,9 +88,16 @@ export class DashboardPageComponent implements OnChanges {
   portfolioAlignmentRate = 0;
   portfolioWatchlist: PortfolioWatchItem[] = [];
   unitCoverage: UnitCoverageItem[] = [];
+  selectedProjectChartId: number | 'ALL' = 'ALL';
+  selectedSprintChartId: number | 'ALL' = 'ALL';
+  selectedTaskChartId: number | 'ALL' = 'ALL';
+  private lastFocusProjectId: number | undefined;
+  private lastFocusSprintId: number | undefined;
+  private lastFocusTaskId: number | undefined;
 
   ngOnChanges(): void {
     this.rebuildPortfolioView();
+    this.syncDashboardSelections();
   }
 
   formatStatus(status: TaskStatus | string): string {
@@ -118,11 +127,6 @@ export class DashboardPageComponent implements OnChanges {
     return project ? this.projectHealthLabel(project) : 'Select a project to load delivery context';
   }
 
-  selectedProjectStatusLabel(): string {
-    const project = this.selectedProject();
-    return project ? this.formatStatus(project.status) : 'No project selected';
-  }
-
   selectedSprint(): Sprint | undefined {
     if (this.sprints.length === 0) {
       return undefined;
@@ -136,43 +140,46 @@ export class DashboardPageComponent implements OnChanges {
   }
 
   selectedProjectStatusMetrics(): SelectedStatusMetric[] {
-    const project = this.selectedProject();
+    const project = this.selectedProjectChart();
     if (!project) {
       return [];
     }
 
     return [
-      { label: 'Lifecycle', value: this.formatStatus(project.status), tone: this.projectStatusTone(project.status) },
       { label: 'Health', value: this.projectHealthLabel(project), tone: this.projectHealthTone(project) },
-      { label: 'Teams', value: String(project.teams?.length ?? 0), tone: project.teams?.length ? 'good' : 'warning' }
+      { label: 'Teams', value: String(project.teams?.length ?? 0), tone: project.teams?.length ? 'good' : 'warning' },
+      { label: 'Timeline', value: this.projectTimeline(project), tone: 'neutral' }
     ];
   }
 
   selectedSprintStatusMetrics(): SelectedStatusMetric[] {
-    const sprint = this.selectedSprint();
+    const sprint = this.selectedSprintChart();
     if (!sprint) {
       return [];
     }
 
     return [
-      { label: 'Status', value: this.formatStatus(sprint.status), tone: this.sprintStatusTone(sprint.status) },
       { label: 'Priority', value: this.formatStatus(sprint.priority), tone: this.sprintPriorityTone(sprint.priority) },
       {
         label: 'Completion',
         value: `${sprint.totalTaskCount === 0 ? 0 : Math.round((sprint.completedTaskCount / sprint.totalTaskCount) * 100)}%`,
         tone: sprint.completedTaskCount === sprint.totalTaskCount && sprint.totalTaskCount > 0 ? 'good' : 'warning'
+      },
+      {
+        label: 'Tasks',
+        value: `${sprint.completedTaskCount}/${sprint.totalTaskCount}`,
+        tone: sprint.totalTaskCount > 0 ? 'good' : 'neutral'
       }
     ];
   }
 
   selectedTaskStatusMetrics(): SelectedStatusMetric[] {
-    const task = this.selectedTask();
+    const task = this.selectedTaskChart();
     if (!task) {
       return [];
     }
 
     return [
-      { label: 'Status', value: this.formatStatus(task.status), tone: this.taskStatusTone(task.status) },
       { label: 'Priority', value: this.formatStatus(task.priority), tone: this.taskPriorityTone(task.priority) },
       { label: 'Assignee', value: task.assigneeName || 'Unassigned', tone: task.assigneeName ? 'good' : 'warning' }
     ];
@@ -191,11 +198,6 @@ export class DashboardPageComponent implements OnChanges {
       completedTaskCount: sprint.completedTaskCount,
       totalTaskCount: sprint.totalTaskCount
     }));
-  }
-
-  activeSprintLabel(): string {
-    const activeSprint = this.sprints.find((sprint) => sprint.status === 'ACTIVE') ?? this.sprints[0];
-    return activeSprint ? activeSprint.name : 'No sprint in motion';
   }
 
   backlogTaskCount(): number {
@@ -228,14 +230,6 @@ export class DashboardPageComponent implements OnChanges {
 
   portfolioReadinessConic(): string {
     return this.conicGradient(this.portfolioReadinessChart());
-  }
-
-  taskStatusConic(): string {
-    return this.conicGradient(this.taskStatusChart());
-  }
-
-  projectStatusConic(): string {
-    return this.conicGradient(this.projectStatusChart());
   }
 
   projectPressureChart(): ChartLegendItem[] {
@@ -271,6 +265,19 @@ export class DashboardPageComponent implements OnChanges {
     ];
   }
 
+  sprintStatusChart(): ChartLegendItem[] {
+    const statuses: { label: string; value: number; tone: ChartTone }[] = [
+      { label: 'Planned', value: this.sprintStatusCount('PLANNED'), tone: 'neutral' },
+      { label: 'Active', value: this.sprintStatusCount('ACTIVE'), tone: 'good' },
+      { label: 'Completed', value: this.sprintStatusCount('COMPLETED'), tone: 'good' }
+    ];
+
+    return statuses.map((status) => ({
+      ...status,
+      percent: this.sprintPercent(status.value)
+    }));
+  }
+
   projectStatusChart(): ChartLegendItem[] {
     const statuses: { label: string; value: number; tone: ChartTone }[] = [
       { label: 'Planned', value: this.projectStatusCount('PLANNED'), tone: 'neutral' },
@@ -290,8 +297,141 @@ export class DashboardPageComponent implements OnChanges {
     return `chart-${tone}`;
   }
 
-  selectedStatusTrackWidth(index: number): number {
-    return Math.max(30, 100 - (index * 18));
+  projectChartOptions(): { id: number | 'ALL'; label: string }[] {
+    return [
+      { id: 'ALL', label: 'All projects' },
+      ...this.projects.map((project) => ({ id: project.id, label: project.name }))
+    ];
+  }
+
+  sprintChartOptions(): { id: number | 'ALL'; label: string }[] {
+    return [
+      { id: 'ALL', label: 'All sprints' },
+      ...this.sprints.map((sprint) => ({ id: sprint.id, label: sprint.name }))
+    ];
+  }
+
+  taskChartOptions(): { id: number | 'ALL'; label: string }[] {
+    return [
+      { id: 'ALL', label: this.selectedSprintChart() ? 'All tasks in sprint' : 'All tasks' },
+      ...this.taskScopeTasks().map((task) => ({ id: task.id, label: task.title }))
+    ];
+  }
+
+  selectedProjectChartTitle(): string {
+    if (this.selectedProjectChartId === 'ALL') {
+      return 'All projects';
+    }
+
+    return this.selectedProjectChart()?.name || 'Selected project';
+  }
+
+  selectedSprintChartTitle(): string {
+    if (this.selectedSprintChartId === 'ALL') {
+      return 'All sprints';
+    }
+
+    return this.selectedSprintChart()?.name || 'Selected sprint';
+  }
+
+  selectedTaskChartTitle(): string {
+    if (this.selectedTaskChartId === 'ALL') {
+      const sprint = this.selectedSprintChart();
+      return sprint ? `${sprint.name} tasks` : 'All tasks';
+    }
+
+    return this.selectedTaskChart()?.title || 'Selected task';
+  }
+
+  projectStatusTotalForSelection(): number {
+    return this.selectedProjectChart() ? 1 : this.projectCount;
+  }
+
+  sprintStatusTotalForSelection(): number {
+    return this.selectedSprintChart() ? 1 : this.sprints.length;
+  }
+
+  taskStatusTotalForSelection(): number {
+    return this.selectedTaskChart() ? 1 : this.taskScopeTasks().length;
+  }
+
+  projectStatusChartForSelection(): ChartLegendItem[] {
+    const project = this.selectedProjectChart();
+    if (!project) {
+      return this.projectStatusChart();
+    }
+
+    return [
+      { label: 'Planned', value: project.status === 'PLANNED' ? 1 : 0, percent: project.status === 'PLANNED' ? 100 : 0, tone: 'neutral' },
+      { label: 'Active', value: project.status === 'ACTIVE' ? 1 : 0, percent: project.status === 'ACTIVE' ? 100 : 0, tone: 'good' },
+      { label: 'On hold', value: project.status === 'ON_HOLD' ? 1 : 0, percent: project.status === 'ON_HOLD' ? 100 : 0, tone: 'warning' },
+      { label: 'Completed', value: project.status === 'COMPLETED' ? 1 : 0, percent: project.status === 'COMPLETED' ? 100 : 0, tone: 'good' },
+      { label: 'Archived', value: project.status === 'ARCHIVED' ? 1 : 0, percent: project.status === 'ARCHIVED' ? 100 : 0, tone: 'neutral' }
+    ];
+  }
+
+  projectStatusConicForSelection(): string {
+    return this.conicGradient(this.projectStatusChartForSelection());
+  }
+
+  sprintStatusChartForSelection(): ChartLegendItem[] {
+    const sprint = this.selectedSprintChart();
+    if (!sprint) {
+      return this.sprintStatusChart();
+    }
+
+    return [
+      { label: 'Planned', value: sprint.status === 'PLANNED' ? 1 : 0, percent: sprint.status === 'PLANNED' ? 100 : 0, tone: 'neutral' },
+      { label: 'Active', value: sprint.status === 'ACTIVE' ? 1 : 0, percent: sprint.status === 'ACTIVE' ? 100 : 0, tone: 'good' },
+      { label: 'Completed', value: sprint.status === 'COMPLETED' ? 1 : 0, percent: sprint.status === 'COMPLETED' ? 100 : 0, tone: 'good' }
+    ];
+  }
+
+  sprintStatusConicForSelection(): string {
+    return this.conicGradient(this.sprintStatusChartForSelection());
+  }
+
+  taskStatusChartForSelection(): ChartLegendItem[] {
+    const task = this.selectedTaskChart();
+
+    if (task) {
+      return this.taskStatusChartFromTasks([task]);
+    }
+
+    return this.taskStatusChartFromTasks(this.taskScopeTasks());
+  }
+
+  taskStatusConicForSelection(): string {
+    return this.conicGradient(this.taskStatusChartForSelection());
+  }
+
+  selectedProjectChart(): Project | undefined {
+    return this.selectedProjectChartId === 'ALL'
+      ? undefined
+      : this.projects.find((project) => project.id === this.selectedProjectChartId);
+  }
+
+  selectedSprintChart(): Sprint | undefined {
+    return this.selectedSprintChartId === 'ALL'
+      ? undefined
+      : this.sprints.find((sprint) => sprint.id === this.selectedSprintChartId);
+  }
+
+  selectedTaskChart(): Task | undefined {
+    return this.selectedTaskChartId === 'ALL'
+      ? undefined
+      : this.taskScopeTasks().find((task) => task.id === this.selectedTaskChartId);
+  }
+
+  onSprintChartSelectionChange(): void {
+    const scopeTasks = this.taskScopeTasks();
+    if (this.selectedTaskChartId === 'ALL') {
+      return;
+    }
+
+    if (!scopeTasks.some((task) => task.id === this.selectedTaskChartId)) {
+      this.selectedTaskChartId = 'ALL';
+    }
   }
 
   private taskStatusPercent(value: number): number {
@@ -302,8 +442,77 @@ export class DashboardPageComponent implements OnChanges {
     return this.projectCount === 0 ? 0 : Math.round((value / this.projectCount) * 100);
   }
 
+  private sprintPercent(value: number): number {
+    return this.sprints.length === 0 ? 0 : Math.round((value / this.sprints.length) * 100);
+  }
+
   private projectStatusCount(status: Project['status']): number {
     return this.projects.filter((project) => project.status === status).length;
+  }
+
+  private sprintStatusCount(status: Sprint['status']): number {
+    return this.sprints.filter((sprint) => sprint.status === status).length;
+  }
+
+  private syncDashboardSelections(): void {
+    const focusProjectId = this.selectedProjectId && this.projects.some((project) => project.id === this.selectedProjectId)
+      ? this.selectedProjectId
+      : undefined;
+    if (focusProjectId !== this.lastFocusProjectId) {
+      this.selectedProjectChartId = focusProjectId ?? 'ALL';
+    } else if (this.selectedProjectChartId !== 'ALL' && !this.projects.some((project) => project.id === this.selectedProjectChartId)) {
+      this.selectedProjectChartId = focusProjectId ?? 'ALL';
+    }
+    this.lastFocusProjectId = focusProjectId;
+
+    const focusSprintId = this.resolveFocusSprintId();
+    if (focusSprintId !== this.lastFocusSprintId) {
+      this.selectedSprintChartId = focusSprintId ?? 'ALL';
+    } else if (this.selectedSprintChartId !== 'ALL' && !this.sprints.some((sprint) => sprint.id === this.selectedSprintChartId)) {
+      this.selectedSprintChartId = focusSprintId ?? 'ALL';
+    }
+    this.lastFocusSprintId = focusSprintId;
+
+    const scopeTasks = this.taskScopeTasks();
+    const focusTaskId = this.selectedTaskId && scopeTasks.some((task) => task.id === this.selectedTaskId)
+      ? this.selectedTaskId
+      : undefined;
+    if (focusTaskId !== this.lastFocusTaskId) {
+      this.selectedTaskChartId = focusTaskId ?? 'ALL';
+    } else if (this.selectedTaskChartId !== 'ALL' && !scopeTasks.some((task) => task.id === this.selectedTaskChartId)) {
+      this.selectedTaskChartId = focusTaskId ?? 'ALL';
+    }
+    this.lastFocusTaskId = focusTaskId;
+  }
+
+  private taskStatusChartFromTasks(tasks: Task[]): ChartLegendItem[] {
+    const total = tasks.length;
+    const count = (status: TaskStatus) => tasks.filter((task) => task.status === status).length;
+    const percent = (value: number) => total === 0 ? 0 : Math.round((value / total) * 100);
+
+    return [
+      { label: 'To do', value: count('TO_DO'), percent: percent(count('TO_DO')), tone: 'neutral' },
+      { label: 'In progress', value: count('IN_PROGRESS'), percent: percent(count('IN_PROGRESS')), tone: 'warning' },
+      { label: 'Review', value: count('REVIEW'), percent: percent(count('REVIEW')), tone: 'warning' },
+      { label: 'Done', value: count('DONE'), percent: percent(count('DONE')), tone: 'good' }
+    ];
+  }
+
+  private taskScopeTasks(): Task[] {
+    const sprint = this.selectedSprintChart();
+    if (!sprint) {
+      return this.tasks;
+    }
+
+    return this.tasks.filter((task) => task.sprintId === sprint.id);
+  }
+
+  private resolveFocusSprintId(): number | undefined {
+    if (this.selectedSprintId && this.sprints.some((sprint) => sprint.id === this.selectedSprintId)) {
+      return this.selectedSprintId;
+    }
+
+    return this.sprints.find((sprint) => sprint.status === 'ACTIVE')?.id ?? this.sprints[0]?.id;
   }
 
   private projectStatusTone(status: Project['status']): ChartTone {

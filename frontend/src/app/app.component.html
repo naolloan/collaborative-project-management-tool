@@ -104,6 +104,7 @@
     [authenticated]="authenticated()"
     [selectedProjectName]="selectedProject()?.name"
     [selectedProjectId]="selectedProjectId()"
+    [selectedSprintId]="editSprint.id || undefined"
     [selectedTaskId]="selectedTaskId()"
     [totalTasks]="tasks().length"
     [toDoTasks]="taskCountByStatus('TO_DO')"
