@@ -267,6 +267,87 @@
           </article>
         </div>
       </article>
+
+      <article class="chart-card" *ngIf="selectedProjectStatusMetrics().length > 0">
+        <div class="panel-heading chart-heading">
+          <div>
+            <p class="eyebrow">Selected Project</p>
+            <h2>{{ selectedProjectName }}</h2>
+          </div>
+          <span class="status-pill">{{ selectedProjectStatusLabel() }}</span>
+        </div>
+
+        <div class="pressure-bars selected-status-bars">
+          <article *ngFor="let item of selectedProjectStatusMetrics(); let index = index">
+            <div class="graph-row-meta">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+            </div>
+            <div class="progress-track graph-track" aria-hidden="true">
+              <span
+                [style.width.%]="selectedStatusTrackWidth(index)"
+                [class.chart-good]="item.tone === 'good'"
+                [class.chart-warning]="item.tone === 'warning'"
+                [class.chart-danger]="item.tone === 'danger'"
+                [class.chart-neutral]="item.tone === 'neutral'"></span>
+            </div>
+          </article>
+        </div>
+      </article>
+
+      <article class="chart-card" *ngIf="selectedSprintStatusMetrics().length > 0">
+        <div class="panel-heading chart-heading">
+          <div>
+            <p class="eyebrow">Selected Sprint</p>
+            <h2>{{ selectedSprint()?.name }}</h2>
+          </div>
+          <span class="status-pill">{{ selectedSprint()?.status | titlecase }}</span>
+        </div>
+
+        <div class="pressure-bars selected-status-bars">
+          <article *ngFor="let item of selectedSprintStatusMetrics(); let index = index">
+            <div class="graph-row-meta">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+            </div>
+            <div class="progress-track graph-track" aria-hidden="true">
+              <span
+                [style.width.%]="selectedStatusTrackWidth(index)"
+                [class.chart-good]="item.tone === 'good'"
+                [class.chart-warning]="item.tone === 'warning'"
+                [class.chart-danger]="item.tone === 'danger'"
+                [class.chart-neutral]="item.tone === 'neutral'"></span>
+            </div>
+          </article>
+        </div>
+      </article>
+
+      <article class="chart-card" *ngIf="selectedTaskStatusMetrics().length > 0">
+        <div class="panel-heading chart-heading">
+          <div>
+            <p class="eyebrow">Selected Task</p>
+            <h2>{{ selectedTask()?.title }}</h2>
+          </div>
+          <span class="status-pill">{{ selectedTask()?.status | titlecase }}</span>
+        </div>
+
+        <div class="pressure-bars selected-status-bars">
+          <article *ngFor="let item of selectedTaskStatusMetrics(); let index = index">
+            <div class="graph-row-meta">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+            </div>
+            <div class="progress-track graph-track" aria-hidden="true">
+              <span
+                [style.width.%]="selectedStatusTrackWidth(index)"
+                [class.chart-good]="item.tone === 'good'"
+                [class.chart-warning]="item.tone === 'warning'"
+                [class.chart-danger]="item.tone === 'danger'"
+                [class.chart-neutral]="item.tone === 'neutral'"></span>
+            </div>
+          </article>
+        </div>
+      </article>
     </div>
   </article>
 

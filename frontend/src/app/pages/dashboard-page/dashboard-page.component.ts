@@ -38,6 +38,12 @@ interface ChartLegendItem {
   tone: ChartTone;
 }
 
+interface SelectedStatusMetric {
+  label: string;
+  value: string;
+  tone: ChartTone;
+}
+
 @Component({
   selector: 'app-dashboard-page',
   standalone: true,
@@ -57,6 +63,7 @@ export class DashboardPageComponent implements OnChanges {
   @Input() highPriorityTasks = 0;
   @Input() overdueTasks = 0;
   @Input() completionPercentage = 0;
+  @Input() tasks: Task[] = [];
   @Input() assignedTasks: Task[] = [];
   @Input() assignedToDoTasks = 0;
   @Input() assignedInProgressTasks = 0;
@@ -114,6 +121,61 @@ export class DashboardPageComponent implements OnChanges {
   selectedProjectStatusLabel(): string {
     const project = this.selectedProject();
     return project ? this.formatStatus(project.status) : 'No project selected';
+  }
+
+  selectedSprint(): Sprint | undefined {
+    if (this.sprints.length === 0) {
+      return undefined;
+    }
+
+    return this.sprints.find((sprint) => sprint.status === 'ACTIVE') ?? this.sprints[0];
+  }
+
+  selectedTask(): Task | undefined {
+    return this.tasks.find((task) => task.id === this.selectedTaskId);
+  }
+
+  selectedProjectStatusMetrics(): SelectedStatusMetric[] {
+    const project = this.selectedProject();
+    if (!project) {
+      return [];
+    }
+
+    return [
+      { label: 'Lifecycle', value: this.formatStatus(project.status), tone: this.projectStatusTone(project.status) },
+      { label: 'Health', value: this.projectHealthLabel(project), tone: this.projectHealthTone(project) },
+      { label: 'Teams', value: String(project.teams?.length ?? 0), tone: project.teams?.length ? 'good' : 'warning' }
+    ];
+  }
+
+  selectedSprintStatusMetrics(): SelectedStatusMetric[] {
+    const sprint = this.selectedSprint();
+    if (!sprint) {
+      return [];
+    }
+
+    return [
+      { label: 'Status', value: this.formatStatus(sprint.status), tone: this.sprintStatusTone(sprint.status) },
+      { label: 'Priority', value: this.formatStatus(sprint.priority), tone: this.sprintPriorityTone(sprint.priority) },
+      {
+        label: 'Completion',
+        value: `${sprint.totalTaskCount === 0 ? 0 : Math.round((sprint.completedTaskCount / sprint.totalTaskCount) * 100)}%`,
+        tone: sprint.completedTaskCount === sprint.totalTaskCount && sprint.totalTaskCount > 0 ? 'good' : 'warning'
+      }
+    ];
+  }
+
+  selectedTaskStatusMetrics(): SelectedStatusMetric[] {
+    const task = this.selectedTask();
+    if (!task) {
+      return [];
+    }
+
+    return [
+      { label: 'Status', value: this.formatStatus(task.status), tone: this.taskStatusTone(task.status) },
+      { label: 'Priority', value: this.formatStatus(task.priority), tone: this.taskPriorityTone(task.priority) },
+      { label: 'Assignee', value: task.assigneeName || 'Unassigned', tone: task.assigneeName ? 'good' : 'warning' }
+    ];
   }
 
   sprintProgressTrend(): SprintTrendItem[] {
@@ -228,6 +290,10 @@ export class DashboardPageComponent implements OnChanges {
     return `chart-${tone}`;
   }
 
+  selectedStatusTrackWidth(index: number): number {
+    return Math.max(30, 100 - (index * 18));
+  }
+
   private taskStatusPercent(value: number): number {
     return this.totalTasks === 0 ? 0 : Math.round((value / this.totalTasks) * 100);
   }
@@ -238,6 +304,63 @@ export class DashboardPageComponent implements OnChanges {
 
   private projectStatusCount(status: Project['status']): number {
     return this.projects.filter((project) => project.status === status).length;
+  }
+
+  private projectStatusTone(status: Project['status']): ChartTone {
+    switch (status) {
+      case 'ACTIVE':
+      case 'COMPLETED':
+        return 'good';
+      case 'ON_HOLD':
+        return 'warning';
+      default:
+        return 'neutral';
+    }
+  }
+
+  private sprintStatusTone(status: Sprint['status']): ChartTone {
+    switch (status) {
+      case 'ACTIVE':
+      case 'COMPLETED':
+        return 'good';
+      default:
+        return 'warning';
+    }
+  }
+
+  private sprintPriorityTone(priority: Sprint['priority']): ChartTone {
+    switch (priority) {
+      case 'CRITICAL':
+      case 'HIGH':
+        return 'danger';
+      case 'MEDIUM':
+        return 'warning';
+      default:
+        return 'good';
+    }
+  }
+
+  private taskStatusTone(status: Task['status']): ChartTone {
+    switch (status) {
+      case 'DONE':
+        return 'good';
+      case 'IN_PROGRESS':
+      case 'REVIEW':
+        return 'warning';
+      default:
+        return 'neutral';
+    }
+  }
+
+  private taskPriorityTone(priority: Task['priority']): ChartTone {
+    switch (priority) {
+      case 'HIGH':
+        return 'danger';
+      case 'MEDIUM':
+        return 'warning';
+      default:
+        return 'good';
+    }
   }
 
   private conicGradient(items: ChartLegendItem[]): string {

@@ -33,6 +33,10 @@ type SprintScope = 'ALL' | 'BACKLOG' | number;
 })
 export class AppComponent implements OnInit {
   private static readonly WORKSPACE_STORAGE_KEY = 'collabPm.activeWorkspace';
+  private static readonly PROJECT_STORAGE_KEY = 'collabPm.selectedProjectId';
+  private static readonly TASK_STORAGE_KEY = 'collabPm.selectedTaskId';
+  private static readonly SPRINT_STORAGE_KEY = 'collabPm.selectedSprintId';
+  private static readonly TASK_FILTERS_STORAGE_KEY = 'collabPm.taskFilters';
   projectName = 'COOP WorkFlow';
   authenticated = signal(false);
   initializing = signal(true);
@@ -190,6 +194,7 @@ export class AppComponent implements OnInit {
 
       if (authenticated) {
         this.restoreWorkspace();
+        this.restorePersistedContext();
         this.profile.set(await this.authService.loadProfile());
         this.loadCurrentUser();
         this.loadEmployees();
@@ -255,7 +260,15 @@ export class AppComponent implements OnInit {
       next: (projects) => {
         this.projects.set(projects);
         this.projectStatus.set(`${projects.length} active project${projects.length === 1 ? '' : 's'}`);
-        if (!this.selectedProjectId() && projects.length > 0) {
+        const persistedProjectId = this.selectedProjectId();
+        if (persistedProjectId) {
+          const persistedProject = projects.find((project) => project.id === persistedProjectId);
+          if (persistedProject) {
+            this.selectProject(persistedProject);
+            return;
+          }
+        }
+        if (projects.length > 0) {
           this.selectProject(projects[0]);
         }
       },
@@ -327,8 +340,10 @@ export class AppComponent implements OnInit {
 
   selectProject(project: Project): void {
     this.selectedProjectId.set(project.id);
+    this.persistNumber(AppComponent.PROJECT_STORAGE_KEY, project.id);
     this.prepareProjectEdit(project);
     this.selectedTaskId.set(undefined);
+    this.clearPersistedNumber(AppComponent.TASK_STORAGE_KEY);
     this.projectTeams.set([]);
     this.projectMembers.set([]);
     this.sprints.set([]);
@@ -671,6 +686,13 @@ export class AppComponent implements OnInit {
       next: (sprints) => {
         this.sprints.set(sprints);
         this.sprintStatus.set(`${sprints.length} sprint${sprints.length === 1 ? '' : 's'}`);
+        const persistedSprintId = this.readStoredNumber(AppComponent.SPRINT_STORAGE_KEY);
+        if (persistedSprintId !== null) {
+          const persistedSprint = sprints.find((sprint) => sprint.id === persistedSprintId);
+          if (persistedSprint) {
+            this.editSelectedSprint(persistedSprint);
+          }
+        }
         if (this.newTask.sprintId === null) {
           const activeSprint = sprints.find((sprint) => sprint.status === 'ACTIVE') ?? sprints[0];
           this.newTask.sprintId = activeSprint?.id ?? null;
@@ -741,6 +763,7 @@ export class AppComponent implements OnInit {
       status: sprint.status,
       priority: sprint.priority
     };
+    this.persistNumber(AppComponent.SPRINT_STORAGE_KEY, sprint.id);
   }
 
   updateSelectedSprint(): void {
@@ -868,6 +891,7 @@ export class AppComponent implements OnInit {
 
   selectTask(task: Task): void {
     this.selectedTaskId.set(task.id);
+    this.persistNumber(AppComponent.TASK_STORAGE_KEY, task.id);
     this.prepareTaskEdit(task);
     this.loadComments(task.id);
     this.loadActivities(task.id);
@@ -1036,6 +1060,7 @@ export class AppComponent implements OnInit {
   }
 
   filteredTasks(): Task[] {
+    this.persistTaskFilters();
     const search = this.taskFilters.search.trim().toLowerCase();
     const priority = this.taskFilters.priority;
     const assigneeId = this.taskFilters.assigneeId;
@@ -1070,6 +1095,7 @@ export class AppComponent implements OnInit {
       assigneeId: null,
       sprintId: 'ALL'
     };
+    this.persistTaskFilters();
   }
 
   taskCountByStatus(status: TaskStatus): number {
@@ -1271,6 +1297,67 @@ export class AppComponent implements OnInit {
 
   private persistWorkspace(view: WorkspaceView): void {
     window.sessionStorage.setItem(AppComponent.WORKSPACE_STORAGE_KEY, view);
+  }
+
+  private restorePersistedContext(): void {
+    const projectId = this.readStoredNumber(AppComponent.PROJECT_STORAGE_KEY);
+    if (projectId !== null) {
+      this.selectedProjectId.set(projectId);
+    }
+
+    const taskId = this.readStoredNumber(AppComponent.TASK_STORAGE_KEY);
+    if (taskId !== null) {
+      this.selectedTaskId.set(taskId);
+    }
+
+    const sprintId = this.readStoredNumber(AppComponent.SPRINT_STORAGE_KEY);
+    if (sprintId !== null) {
+      this.editSprint.id = sprintId;
+    }
+
+    const storedTaskFilters = window.sessionStorage.getItem(AppComponent.TASK_FILTERS_STORAGE_KEY);
+    if (!storedTaskFilters) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(storedTaskFilters) as typeof this.taskFilters;
+      this.taskFilters = {
+        search: parsed.search ?? '',
+        priority: parsed.priority ?? '',
+        assigneeId: parsed.assigneeId ?? null,
+        sprintId: parsed.sprintId ?? 'ALL'
+      };
+    } catch {
+      window.sessionStorage.removeItem(AppComponent.TASK_FILTERS_STORAGE_KEY);
+    }
+  }
+
+  private persistTaskFilters(): void {
+    window.sessionStorage.setItem(AppComponent.TASK_FILTERS_STORAGE_KEY, JSON.stringify(this.taskFilters));
+  }
+
+  private persistNumber(key: string, value: number | null | undefined): void {
+    if (value === null || value === undefined) {
+      window.sessionStorage.removeItem(key);
+      return;
+    }
+
+    window.sessionStorage.setItem(key, String(value));
+  }
+
+  private clearPersistedNumber(key: string): void {
+    window.sessionStorage.removeItem(key);
+  }
+
+  private readStoredNumber(key: string): number | null {
+    const stored = window.sessionStorage.getItem(key);
+    if (stored === null) {
+      return null;
+    }
+
+    const parsed = Number(stored);
+    return Number.isFinite(parsed) ? parsed : null;
   }
 
   formatUnitType(type: string | null | undefined): string {
