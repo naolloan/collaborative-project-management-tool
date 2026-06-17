@@ -21,8 +21,8 @@
 .topbar {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
-  align-items: start;
+  grid-template-columns: minmax(160px, 0.45fr) minmax(0, 1fr) minmax(220px, 0.45fr);
+  align-items: center;
   gap: 1.25rem;
   overflow: hidden;
   margin-bottom: 1rem;
@@ -47,19 +47,26 @@
   content: "";
 }
 
+.topbar-brand {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
 .brand-lockup {
   position: relative;
   z-index: 1;
   display: flex;
   align-items: center;
-  gap: 1.15rem;
-  flex: 1;
-  justify-content: flex-start;
-  text-align: left;
+  justify-content: center;
+  min-width: 0;
+  text-align: center;
 }
 
 .brand-copy {
-  flex: 1;
   min-width: 0;
   text-align: center;
 }
@@ -2409,14 +2416,18 @@ dd {
     border-radius: 22px;
   }
 
+  .topbar-brand {
+    width: 100%;
+  }
+
   .brand-lockup {
-    align-items: flex-start;
+    align-items: center;
     flex-direction: column;
-    text-align: left;
+    text-align: center;
   }
 
   .brand-copy {
-    text-align: left;
+    text-align: center;
   }
 
   .coop-logo {
