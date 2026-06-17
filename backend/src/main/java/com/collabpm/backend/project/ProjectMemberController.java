@@ -1,6 +1,7 @@
 package com.collabpm.backend.project;
 
 import com.collabpm.backend.project.dto.AddProjectMemberRequest;
+import com.collabpm.backend.project.dto.AddProjectMembersRequest;
 import com.collabpm.backend.project.dto.ProjectMemberResponse;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -38,6 +39,16 @@ public class ProjectMemberController {
         Authentication authentication
     ) {
         return projectMemberService.addProjectMember(projectId, request, authentication);
+    }
+
+    @PostMapping("/batch")
+    @ResponseStatus(HttpStatus.CREATED)
+    public List<ProjectMemberResponse> addProjectMembers(
+        @PathVariable Long projectId,
+        @Valid @RequestBody AddProjectMembersRequest request,
+        Authentication authentication
+    ) {
+        return projectMemberService.addProjectMembers(projectId, request, authentication);
     }
 
     @DeleteMapping("/{memberId}")

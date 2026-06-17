@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.collabpm.backend.config.SecurityConfig;
 import com.collabpm.backend.project.dto.AddProjectMemberRequest;
+import com.collabpm.backend.project.dto.AddProjectMembersRequest;
 import com.collabpm.backend.project.dto.ProjectMemberResponse;
 import com.collabpm.backend.project.model.ProjectRole;
 import java.time.Instant;
@@ -77,6 +78,28 @@ class ProjectMemberControllerTest {
             .andExpect(jsonPath("$.userId").value(21))
             .andExpect(jsonPath("$.email").value("member@example.com"))
             .andExpect(jsonPath("$.projectRole").value("MEMBER"));
+    }
+
+    @Test
+    void addsProjectMembersInBatchForAuthenticatedUsers() throws Exception {
+        AddProjectMembersRequest request = new AddProjectMembersRequest(List.of(21L, 22L), ProjectRole.MEMBER);
+        given(projectMemberService.addProjectMembers(eq(1L), eq(request), any(Authentication.class))).willReturn(List.of(
+            new ProjectMemberResponse(101L, 21L, "Team Member One", "member1@example.com", "MEMBER", Instant.parse("2026-06-09T14:10:00Z")),
+            new ProjectMemberResponse(102L, 22L, "Team Member Two", "member2@example.com", "MEMBER", Instant.parse("2026-06-09T14:11:00Z"))));
+
+        mockMvc.perform(post("/api/projects/1/members/batch")
+                .with(jwt())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "userIds": [21, 22],
+                      "projectRole": "MEMBER"
+                    }
+                    """))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$", hasSize(2)))
+            .andExpect(jsonPath("$[0].userId").value(21))
+            .andExpect(jsonPath("$[1].userId").value(22));
     }
 
     @Test

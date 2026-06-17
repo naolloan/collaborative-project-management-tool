@@ -13,3 +13,8 @@ export interface AddProjectMemberRequest {
   email: string;
   projectRole: ProjectRole;
 }
+
+export interface AddProjectMembersBatchRequest {
+  userIds: number[];
+  projectRole: ProjectRole;
+}

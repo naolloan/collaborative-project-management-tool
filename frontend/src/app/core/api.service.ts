@@ -4,8 +4,9 @@ import { Observable } from 'rxjs';
 import { Activity } from './dto/activity';
 import { Comment, CreateCommentRequest } from './dto/comment';
 import { CurrentUser } from './dto/current-user';
+import { EmployeeDirectoryEntry } from './dto/employee-directory-entry';
 import { OrganizationalUnit, OrganizationalUnitRequest } from './dto/organizational-unit';
-import { AddProjectMemberRequest, ProjectMember } from './dto/project-member';
+import { AddProjectMemberRequest, AddProjectMembersBatchRequest, ProjectMember } from './dto/project-member';
 import { ProjectTeam, ProjectTeamRequest } from './dto/project-team';
 import { CreateProjectRequest, Project, UpdateProjectRequest } from './dto/project';
 import { CreateSprintRequest, Sprint, UpdateSprintRequest } from './dto/sprint';
@@ -20,6 +21,10 @@ export class ApiService {
 
   getCurrentUser(): Observable<CurrentUser> {
     return this.http.get<CurrentUser>(`${this.apiBaseUrl}/me`);
+  }
+
+  listEmployees(): Observable<EmployeeDirectoryEntry[]> {
+    return this.http.get<EmployeeDirectoryEntry[]>(`${this.apiBaseUrl}/employees`);
   }
 
   listProjects(): Observable<Project[]> {
@@ -60,6 +65,10 @@ export class ApiService {
 
   addProjectMember(projectId: number, request: AddProjectMemberRequest): Observable<ProjectMember> {
     return this.http.post<ProjectMember>(`${this.apiBaseUrl}/projects/${projectId}/members`, request);
+  }
+
+  addProjectMembers(projectId: number, request: AddProjectMembersBatchRequest): Observable<ProjectMember[]> {
+    return this.http.post<ProjectMember[]>(`${this.apiBaseUrl}/projects/${projectId}/members/batch`, request);
   }
 
   removeProjectMember(projectId: number, memberId: number): Observable<void> {

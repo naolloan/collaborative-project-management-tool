@@ -8,6 +8,7 @@ import { ApiService } from './core/api.service';
 import { Activity } from './core/dto/activity';
 import { Comment } from './core/dto/comment';
 import { CurrentUser } from './core/dto/current-user';
+import { EmployeeDirectoryEntry } from './core/dto/employee-directory-entry';
 import { OrganizationalUnit, OrganizationalUnitType } from './core/dto/organizational-unit';
 import { ProjectMember, ProjectRole } from './core/dto/project-member';
 import { ProjectTeam } from './core/dto/project-team';
@@ -36,6 +37,7 @@ export class AppComponent implements OnInit {
   initializing = signal(true);
   profile = signal<KeycloakProfile | undefined>(undefined);
   currentUser = signal<CurrentUser | undefined>(undefined);
+  employees = signal<EmployeeDirectoryEntry[]>([]);
   projects = signal<Project[]>([]);
   organizationalUnits = signal<OrganizationalUnit[]>([]);
   projectTeams = signal<ProjectTeam[]>([]);
@@ -146,8 +148,8 @@ export class AppComponent implements OnInit {
     dueDate: ''
   };
   newMember = {
-    email: '',
-    projectRole: 'MEMBER' as ProjectRole
+    projectRole: 'MEMBER' as ProjectRole,
+    selectedUserIds: [] as number[]
   };
   taskFilters = {
     search: '',
@@ -159,6 +161,8 @@ export class AppComponent implements OnInit {
   editTaskSprintSearch = '';
   memberSearch = '';
   memberRoleFilter: ProjectRole | '' = '';
+  employeeSearch = '';
+  employeeRoleFilter = '';
   sprintSearch = '';
   sprintStatusFilter: SprintStatus | '' = '';
   sprintPriorityFilter: SprintPriority | '' = '';
@@ -186,6 +190,7 @@ export class AppComponent implements OnInit {
       if (authenticated) {
         this.profile.set(await this.authService.loadProfile());
         this.loadCurrentUser();
+        this.loadEmployees();
         this.loadOrganizationalUnits();
         this.loadProjects();
       }
@@ -221,6 +226,16 @@ export class AppComponent implements OnInit {
         this.currentUser.set(undefined);
         this.apiStatus.set('Backend check failed');
         this.error.set('The frontend could not call /api/me. Confirm the backend is running on port 8080 and CORS is enabled.');
+      }
+    });
+  }
+
+  loadEmployees(): void {
+    this.apiService.listEmployees().subscribe({
+      next: (employees) => this.employees.set(employees),
+      error: () => {
+        this.employees.set([]);
+        this.error.set('Could not load the employee directory.');
       }
     });
   }
@@ -437,6 +452,7 @@ export class AppComponent implements OnInit {
       next: (members) => {
         this.projectMembers.set(members);
         this.memberStatus.set(`${members.length} member${members.length === 1 ? '' : 's'}`);
+        this.newMember.selectedUserIds = this.newMember.selectedUserIds.filter((userId) => !members.some((member) => member.userId === userId));
         this.newTeam.memberUserIds = this.newTeam.memberUserIds.filter((userId) => members.some((member) => member.userId === userId));
         this.editTeam.memberUserIds = this.editTeam.memberUserIds.filter((userId) => members.some((member) => member.userId === userId));
         if (!this.newTask.assigneeId && members.length > 0) {
@@ -453,7 +469,7 @@ export class AppComponent implements OnInit {
 
   addProjectMember(): void {
     const projectId = this.selectedProjectId();
-    const email = this.newMember.email.trim();
+    const selectedEmployeeIds = [...this.newMember.selectedUserIds];
 
     if (!this.canManageProjectMembers()) {
       this.error.set('Only project managers or administrators can add members.');
@@ -465,22 +481,22 @@ export class AppComponent implements OnInit {
       return;
     }
 
-    if (!email) {
-      this.error.set('Member email is required.');
+    if (selectedEmployeeIds.length === 0) {
+      this.error.set('Select at least one employee to add to the project.');
       return;
     }
 
     this.addingMember.set(true);
     this.error.set(undefined);
 
-    this.apiService.addProjectMember(projectId, {
-      email,
+    this.apiService.addProjectMembers(projectId, {
+      userIds: selectedEmployeeIds,
       projectRole: this.newMember.projectRole
     }).subscribe({
       next: () => {
         this.newMember = {
-          email: '',
-          projectRole: 'MEMBER'
+          projectRole: 'MEMBER',
+          selectedUserIds: []
         };
         this.addingMember.set(false);
         this.loadProjectMembers(projectId);
@@ -488,7 +504,7 @@ export class AppComponent implements OnInit {
       },
       error: () => {
         this.addingMember.set(false);
-        this.error.set('Could not add member. The user must log in once before they can be added by email.');
+        this.error.set('Could not add the selected employees. Ask them to log in once before being added to a project.');
       }
     });
   }
@@ -1068,6 +1084,37 @@ export class AppComponent implements OnInit {
     ));
   }
 
+  filteredEmployeeDirectory(): EmployeeDirectoryEntry[] {
+    const search = this.employeeSearch.trim().toLowerCase();
+    const selectedProjectMemberIds = new Set(this.projectMembers().map((member) => member.userId));
+
+    return this.employees().filter((employee) => {
+      if (selectedProjectMemberIds.has(employee.id)) {
+        return false;
+      }
+
+      const matchesSearch = !search
+        || employee.fullName.toLowerCase().includes(search)
+        || employee.email.toLowerCase().includes(search);
+      const matchesRole = !this.employeeRoleFilter || employee.systemRole === this.employeeRoleFilter;
+
+      return matchesSearch && matchesRole;
+    });
+  }
+
+  toggleEmployeeSelection(userId: number): void {
+    this.newMember.selectedUserIds = this.toggleSelectedId(this.newMember.selectedUserIds, userId);
+  }
+
+  removeSelectedEmployee(userId: number): void {
+    this.newMember.selectedUserIds = this.newMember.selectedUserIds.filter((id) => id !== userId);
+  }
+
+  selectedEmployeeDirectoryEntries(): EmployeeDirectoryEntry[] {
+    const selectedIds = new Set(this.newMember.selectedUserIds);
+    return this.employees().filter((employee) => selectedIds.has(employee.id));
+  }
+
   filteredSprints(): Sprint[] {
     const search = this.sprintSearch.trim().toLowerCase();
 
@@ -1200,6 +1247,14 @@ export class AppComponent implements OnInit {
 
   formatStatus(status: TaskStatus | string): string {
     return status.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
+  }
+
+  private toggleSelectedId(selectedIds: number[], targetId: number): number[] {
+    if (selectedIds.includes(targetId)) {
+      return selectedIds.filter((id) => id !== targetId);
+    }
+
+    return [...selectedIds, targetId];
   }
 
   formatUnitType(type: string | null | undefined): string {

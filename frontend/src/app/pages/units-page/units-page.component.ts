@@ -86,6 +86,37 @@ export class TeamsPageComponent {
     ));
   }
 
+  availableProjectMembers(scope: 'create' | 'edit'): ProjectMember[] {
+    return this.filteredProjectMembers(scope).filter((member) => !this.isMemberSelectedForScope(scope, member.userId));
+  }
+
+  selectedProjectMembers(scope: 'create' | 'edit'): ProjectMember[] {
+    const selectedIds = new Set(scope === 'create' ? this.newTeam.memberUserIds : this.editTeam.memberUserIds);
+    return this.projectMembers.filter((member) => selectedIds.has(member.userId));
+  }
+
+  isMemberSelectedForScope(scope: 'create' | 'edit', userId: number): boolean {
+    return this.isMemberSelected(scope === 'create' ? this.newTeam.memberUserIds : this.editTeam.memberUserIds, userId);
+  }
+
+  toggleMemberSelection(scope: 'create' | 'edit', userId: number): void {
+    if (scope === 'create') {
+      this.newTeam.memberUserIds = this.toggleSelectedId(this.newTeam.memberUserIds, userId);
+      return;
+    }
+
+    this.editTeam.memberUserIds = this.toggleSelectedId(this.editTeam.memberUserIds, userId);
+  }
+
+  removeSelectedMember(scope: 'create' | 'edit', userId: number): void {
+    if (scope === 'create') {
+      this.newTeam.memberUserIds = this.newTeam.memberUserIds.filter((memberId) => memberId !== userId);
+      return;
+    }
+
+    this.editTeam.memberUserIds = this.editTeam.memberUserIds.filter((memberId) => memberId !== userId);
+  }
+
   isMemberSelected(memberUserIds: number[], userId: number): boolean {
     return memberUserIds.includes(userId);
   }
@@ -111,5 +142,13 @@ export class TeamsPageComponent {
     }
 
     return `${team.memberCount} member${team.memberCount === 1 ? '' : 's'} with ${team.managerCount} manager${team.managerCount === 1 ? '' : 's'} in the team.`;
+  }
+
+  private toggleSelectedId(selectedIds: number[], targetId: number): number[] {
+    if (selectedIds.includes(targetId)) {
+      return selectedIds.filter((id) => id !== targetId);
+    }
+
+    return [...selectedIds, targetId];
   }
 }

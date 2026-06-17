@@ -983,6 +983,89 @@ button:disabled {
   font-weight: 800;
 }
 
+.member-directory-picker {
+  grid-column: 1 / -1;
+}
+
+.selected-member-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+}
+
+.selected-member-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: min(100%, 15rem);
+  padding: 0.7rem 0.85rem;
+  border: 1px solid rgba(0, 174, 233, 0.22);
+  border-radius: 14px;
+  background: rgba(227, 247, 255, 0.92);
+  color: var(--text);
+  text-align: left;
+}
+
+.selected-member-chip span {
+  display: grid;
+  min-width: 0;
+}
+
+.selected-member-chip strong,
+.selected-member-chip small {
+  overflow-wrap: anywhere;
+}
+
+.selected-member-chip small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.member-option-list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.member-option-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #ffffff;
+  color: var(--text);
+  text-align: left;
+}
+
+.member-option-card span {
+  display: grid;
+  min-width: 0;
+}
+
+.member-option-card strong,
+.member-option-card small {
+  overflow-wrap: anywhere;
+}
+
+.member-option-card > small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.member-option-card:hover,
+.selected-member-chip:hover {
+  border-color: rgba(0, 174, 233, 0.42);
+  box-shadow: 0 10px 18px rgba(0, 78, 112, 0.08);
+}
+
 .member-toggle {
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
@@ -1071,6 +1154,10 @@ label {
   grid-template-columns: minmax(0, 1fr) minmax(120px, 0.42fr);
   gap: 0.65rem;
   align-items: end;
+}
+
+.member-directory-filters {
+  margin-bottom: 0.75rem;
 }
 
 .member-picker-filters .member-search-control {
@@ -1948,10 +2035,14 @@ select:focus {
 
 .member-form {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(160px, 0.35fr) auto;
+  grid-template-columns: minmax(160px, 0.35fr) minmax(0, 1fr);
   gap: 0.75rem;
-  align-items: end;
+  align-items: start;
   margin-top: 1rem;
+}
+
+.member-form-actions {
+  justify-content: flex-end;
 }
 
 .locked-note {

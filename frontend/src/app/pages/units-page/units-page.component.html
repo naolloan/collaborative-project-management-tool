@@ -93,6 +93,19 @@
 
             <fieldset class="member-picker">
               <legend>Initial team members</legend>
+              <div class="selected-member-strip" *ngIf="selectedProjectMembers('create').length > 0">
+                <button
+                  type="button"
+                  class="selected-member-chip"
+                  *ngFor="let member of selectedProjectMembers('create')"
+                  (click)="removeSelectedMember('create', member.userId)">
+                  <span>
+                    <strong>{{ member.fullName }}</strong>
+                    <small>{{ formatRole(member.projectRole) }}</small>
+                  </span>
+                  <span aria-hidden="true">Remove</span>
+                </button>
+              </div>
               <div class="member-picker-filters">
                 <label class="member-search-control">
                   <input
@@ -110,17 +123,20 @@
                   </select>
                 </label>
               </div>
-              <label *ngFor="let member of filteredProjectMembers('create')" class="member-toggle">
-                <input
-                  type="checkbox"
-                  [checked]="isMemberSelected(newTeam.memberUserIds, member.userId)"
-                  (change)="toggleMember(newTeam, member.userId, $any($event.target).checked)">
-                <span>
-                  <strong>{{ member.fullName }}</strong>
+              <div class="member-option-list" *ngIf="availableProjectMembers('create').length > 0">
+                <button
+                  type="button"
+                  class="member-option-card"
+                  *ngFor="let member of availableProjectMembers('create')"
+                  (click)="toggleMemberSelection('create', member.userId)">
+                  <span>
+                    <strong>{{ member.fullName }}</strong>
+                    <small>{{ member.email }}</small>
+                  </span>
                   <small>{{ formatRole(member.projectRole) }}</small>
-                </span>
-              </label>
-              <p class="muted member-picker-empty" *ngIf="projectMembers.length > 0 && filteredProjectMembers('create').length === 0">
+                </button>
+              </div>
+              <p class="muted member-picker-empty" *ngIf="projectMembers.length > 0 && availableProjectMembers('create').length === 0">
                 No matching project members.
               </p>
             </fieldset>
@@ -155,6 +171,19 @@
 
             <fieldset class="member-picker">
               <legend>Team members</legend>
+              <div class="selected-member-strip" *ngIf="selectedProjectMembers('edit').length > 0">
+                <button
+                  type="button"
+                  class="selected-member-chip"
+                  *ngFor="let member of selectedProjectMembers('edit')"
+                  (click)="removeSelectedMember('edit', member.userId)">
+                  <span>
+                    <strong>{{ member.fullName }}</strong>
+                    <small>{{ formatRole(member.projectRole) }}</small>
+                  </span>
+                  <span aria-hidden="true">Remove</span>
+                </button>
+              </div>
               <div class="member-picker-filters">
                 <label class="member-search-control">
                   <input
@@ -172,17 +201,20 @@
                   </select>
                 </label>
               </div>
-              <label *ngFor="let member of filteredProjectMembers('edit')" class="member-toggle">
-                <input
-                  type="checkbox"
-                  [checked]="isMemberSelected(editTeam.memberUserIds, member.userId)"
-                  (change)="toggleMember(editTeam, member.userId, $any($event.target).checked)">
-                <span>
-                  <strong>{{ member.fullName }}</strong>
+              <div class="member-option-list" *ngIf="availableProjectMembers('edit').length > 0">
+                <button
+                  type="button"
+                  class="member-option-card"
+                  *ngFor="let member of availableProjectMembers('edit')"
+                  (click)="toggleMemberSelection('edit', member.userId)">
+                  <span>
+                    <strong>{{ member.fullName }}</strong>
+                    <small>{{ member.email }}</small>
+                  </span>
                   <small>{{ formatRole(member.projectRole) }}</small>
-                </span>
-              </label>
-              <p class="muted member-picker-empty" *ngIf="projectMembers.length > 0 && filteredProjectMembers('edit').length === 0">
+                </button>
+              </div>
+              <p class="muted member-picker-empty" *ngIf="projectMembers.length > 0 && availableProjectMembers('edit').length === 0">
                 No matching project members.
               </p>
             </fieldset>

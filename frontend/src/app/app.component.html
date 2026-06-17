@@ -253,24 +253,71 @@
 
         <form class="member-form" *ngIf="canManageProjectMembers(); else memberManagementLocked" (ngSubmit)="addProjectMember()">
           <label>
-            Member email
-            <input
-              type="email"
-              name="memberEmail"
-              [(ngModel)]="newMember.email"
-              placeholder="teammate@example.com">
-          </label>
-
-          <label>
             Role
             <select name="memberRole" [(ngModel)]="newMember.projectRole">
               <option *ngFor="let role of projectRoles" [value]="role">{{ role }}</option>
             </select>
           </label>
 
-          <button type="submit" class="primary" [disabled]="addingMember()">
-            {{ addingMember() ? 'Adding...' : 'Add Member' }}
-          </button>
+          <fieldset class="member-picker member-directory-picker">
+            <legend>Select employees</legend>
+            <div class="selected-member-strip" *ngIf="selectedEmployeeDirectoryEntries().length > 0">
+              <button
+                type="button"
+                class="selected-member-chip"
+                *ngFor="let employee of selectedEmployeeDirectoryEntries()"
+                (click)="removeSelectedEmployee(employee.id)">
+                <span>
+                  <strong>{{ employee.fullName }}</strong>
+                  <small>{{ formatStatus(employee.systemRole) }}</small>
+                </span>
+                <span aria-hidden="true">Remove</span>
+              </button>
+            </div>
+
+            <div class="member-picker-filters member-directory-filters">
+              <label class="member-search-control">
+                <input
+                  type="search"
+                  name="employeeBrowse"
+                  [(ngModel)]="employeeSearch"
+                  placeholder="Browse employees by name or email">
+              </label>
+              <label>
+                Access
+                <select name="employeeRoleBrowse" [(ngModel)]="employeeRoleFilter">
+                  <option value="">Any access</option>
+                  <option value="ADMINISTRATOR">Administrator</option>
+                  <option value="PROJECT_MANAGER">Project Manager</option>
+                  <option value="TEAM_MEMBER">Team Member</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="member-option-list" *ngIf="filteredEmployeeDirectory().length > 0">
+              <button
+                type="button"
+                class="member-option-card"
+                *ngFor="let employee of filteredEmployeeDirectory()"
+                (click)="toggleEmployeeSelection(employee.id)">
+                <span>
+                  <strong>{{ employee.fullName }}</strong>
+                  <small>{{ employee.email }}</small>
+                </span>
+                <small>{{ formatStatus(employee.systemRole) }}</small>
+              </button>
+            </div>
+
+            <p class="muted member-picker-empty" *ngIf="employees().length > 0 && filteredEmployeeDirectory().length === 0">
+              No matching employees available for this project.
+            </p>
+          </fieldset>
+
+          <div class="form-actions member-form-actions">
+            <button type="submit" class="primary" [disabled]="addingMember()">
+              {{ addingMember() ? 'Adding...' : 'Add Selected Members' }}
+            </button>
+          </div>
         </form>
 
         <ng-template #memberManagementLocked>

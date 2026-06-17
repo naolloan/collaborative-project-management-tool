@@ -2,6 +2,7 @@ package com.collabpm.backend.project;
 
 import com.collabpm.backend.activity.ActivityService;
 import com.collabpm.backend.project.dto.AddProjectMemberRequest;
+import com.collabpm.backend.project.dto.AddProjectMembersRequest;
 import com.collabpm.backend.project.dto.ProjectMemberResponse;
 import com.collabpm.backend.project.model.Project;
 import com.collabpm.backend.project.model.ProjectMember;
@@ -15,7 +16,11 @@ import com.collabpm.backend.user.SystemRole;
 import com.collabpm.backend.user.User;
 import com.collabpm.backend.user.repository.UserRepository;
 import java.time.Instant;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -92,6 +97,31 @@ public class ProjectMemberService {
     }
 
     @Transactional
+    public List<ProjectMemberResponse> addProjectMembers(
+        Long projectId,
+        AddProjectMembersRequest request,
+        Authentication authentication
+    ) {
+        Project project = ensureProjectExists(projectId);
+        User currentUser = currentUserService.getOrCreateCurrentUser(authentication);
+        ensureCanManageProjectMembers(projectId, currentUser);
+
+        Set<Long> requestedUserIds = new LinkedHashSet<>(request.userIds());
+        Map<Long, User> usersById = userRepository.findAllById(requestedUserIds).stream()
+            .collect(java.util.stream.Collectors.toMap(User::getId, Function.identity()));
+        if (usersById.size() != requestedUserIds.size()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "One or more selected employees could not be found.");
+        }
+
+        ProjectRole role = request.projectRole() == null ? ProjectRole.MEMBER : request.projectRole();
+        return requestedUserIds.stream()
+            .map(usersById::get)
+            .map(user -> addOrReuseProjectMember(project, projectId, user, role, currentUser))
+            .map(this::toResponse)
+            .toList();
+    }
+
+    @Transactional
     public void removeProjectMember(Long projectId, Long memberId, Authentication authentication) {
         ensureProjectExists(projectId);
         User currentUser = currentUserService.getOrCreateCurrentUser(authentication);
@@ -124,6 +154,24 @@ public class ProjectMemberService {
     private Project ensureProjectExists(Long projectId) {
         return projectRepository.findById(projectId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
+    }
+
+    private ProjectMember addOrReuseProjectMember(
+        Project project,
+        Long projectId,
+        User user,
+        ProjectRole role,
+        User currentUser
+    ) {
+        ProjectMember existingMember = projectMemberRepository.findByProjectIdAndUserId(projectId, user.getId())
+            .orElse(null);
+        if (existingMember != null) {
+            return existingMember;
+        }
+
+        ProjectMember savedMember = projectMemberRepository.save(new ProjectMember(project, user, role, Instant.now()));
+        activityService.recordProjectMemberAdded(savedMember, currentUser);
+        return savedMember;
     }
 
     private ProjectMemberResponse toResponse(ProjectMember member) {
