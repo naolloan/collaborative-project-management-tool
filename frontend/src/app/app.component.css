@@ -21,7 +21,7 @@
 .topbar {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(340px, 0.9fr);
+  grid-template-columns: minmax(11rem, 0.34fr) minmax(0, 1fr) minmax(11rem, 0.34fr);
   align-items: start;
   gap: 1.25rem;
   overflow: hidden;
@@ -50,6 +50,7 @@
 .brand-lockup {
   position: relative;
   z-index: 1;
+  grid-column: 2;
   display: flex;
   align-items: center;
   gap: 1.15rem;
@@ -76,6 +77,7 @@
 .topbar-side {
   position: relative;
   z-index: 1;
+  grid-column: 3;
   display: grid;
   gap: 0.8rem;
   justify-items: end;
@@ -784,12 +786,13 @@ button:disabled {
 
 .task-intake-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.35fr) repeat(3, minmax(150px, 0.55fr));
   gap: 0.75rem;
+  align-items: start;
 }
 
 .task-sprint-field {
-  grid-column: 1 / -1;
+  grid-column: auto;
 }
 
 .board-column header small {
@@ -2390,9 +2393,9 @@ dd {
   }
 
   .brand-lockup {
-    align-items: flex-start;
+    align-items: center;
     flex-direction: column;
-    text-align: left;
+    text-align: center;
   }
 
   .coop-logo {
@@ -2402,6 +2405,7 @@ dd {
   .topbar-side {
     grid-template-columns: 1fr;
     min-width: 0;
+    justify-items: stretch;
   }
 
   .actions {
@@ -2411,6 +2415,7 @@ dd {
 
   .actions button {
     flex: 1;
+    min-width: 0;
   }
 
   .workspace-focus,
@@ -2437,6 +2442,7 @@ dd {
   .project-settings-grid,
   .member-form,
   .task-filters,
+  .task-intake-grid,
   .task-workspace,
   .detail-workspace,
   .detail-list,
@@ -2464,7 +2470,8 @@ dd {
   }
 
   .member-form,
-  .task-filters {
+  .task-filters,
+  .task-intake-grid {
     align-items: stretch;
   }
 

@@ -180,6 +180,8 @@ public class ActivityService {
             case PROJECT_ARCHIVED -> actorName + " archived project " + quote(activityLog.getSubjectName());
             case PROJECT_MEMBER_ADDED -> actorName + " added " + quote(activityLog.getSubjectName())
                 + " to the project as " + formatValue(activityLog.getNewValue());
+            case PROJECT_MEMBER_REMOVED -> actorName + " removed " + quote(activityLog.getSubjectName())
+                + " from the project";
             case SPRINT_CREATED -> actorName + " created sprint " + quote(activityLog.getSubjectName());
             case SPRINT_UPDATED -> actorName + " updated sprint " + quote(activityLog.getSubjectName());
             case SPRINT_STATUS_CHANGED -> actorName + " changed sprint " + quote(activityLog.getSubjectName()) + " from "

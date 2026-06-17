@@ -90,4 +90,30 @@ class ProjectMemberServiceTest {
 
         verify(projectMemberRepository).save(org.mockito.ArgumentMatchers.any(ProjectMember.class));
     }
+
+    @Test
+    void removesProjectMemberAndTeamAssignmentsWhenManagerDeletesMember() {
+        Authentication authentication = mock(Authentication.class);
+        Project project = mock(Project.class);
+        User currentUser = mock(User.class);
+        User removedUser = mock(User.class);
+        ProjectMember memberToRemove = new ProjectMember(project, removedUser, ProjectRole.MEMBER, Instant.now());
+
+        given(projectRepository.findById(1L)).willReturn(Optional.of(project));
+        given(project.getId()).willReturn(1L);
+        given(currentUserService.getOrCreateCurrentUser(authentication)).willReturn(currentUser);
+        given(currentUser.getId()).willReturn(20L);
+        given(currentUser.getSystemRole()).willReturn(SystemRole.TEAM_MEMBER);
+        given(projectMemberRepository.findByProjectIdAndUserId(1L, 20L))
+            .willReturn(Optional.of(new ProjectMember(project, currentUser, ProjectRole.MANAGER, Instant.now())));
+        given(projectMemberRepository.findById(30L)).willReturn(Optional.of(memberToRemove));
+        given(removedUser.getId()).willReturn(21L);
+        given(removedUser.getFullName()).willReturn("Team Member");
+
+        projectMemberService.removeProjectMember(1L, 30L, authentication);
+
+        verify(projectTeamMemberRepository).deleteByProjectIdAndUserId(1L, 21L);
+        verify(activityService).recordProjectMemberRemoved(memberToRemove, currentUser);
+        verify(projectMemberRepository).delete(memberToRemove);
+    }
 }
