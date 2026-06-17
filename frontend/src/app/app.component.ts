@@ -32,6 +32,7 @@ type SprintScope = 'ALL' | 'BACKLOG' | number;
   encapsulation: ViewEncapsulation.None
 })
 export class AppComponent implements OnInit {
+  private static readonly WORKSPACE_STORAGE_KEY = 'collabPm.activeWorkspace';
   projectName = 'COOP WorkFlow';
   authenticated = signal(false);
   initializing = signal(true);
@@ -188,6 +189,7 @@ export class AppComponent implements OnInit {
       this.authenticated.set(authenticated);
 
       if (authenticated) {
+        this.restoreWorkspace();
         this.profile.set(await this.authService.loadProfile());
         this.loadCurrentUser();
         this.loadEmployees();
@@ -211,6 +213,7 @@ export class AppComponent implements OnInit {
 
   setWorkspace(view: WorkspaceView): void {
     this.activeWorkspace.set(view);
+    this.persistWorkspace(view);
   }
 
   loadCurrentUser(): void {
@@ -1255,6 +1258,19 @@ export class AppComponent implements OnInit {
     }
 
     return [...selectedIds, targetId];
+  }
+
+  private restoreWorkspace(): void {
+    const storedWorkspace = window.sessionStorage.getItem(AppComponent.WORKSPACE_STORAGE_KEY) as WorkspaceView | null;
+    if (!storedWorkspace || !this.workspaceNavItems.some((item) => item.view === storedWorkspace)) {
+      return;
+    }
+
+    this.activeWorkspace.set(storedWorkspace);
+  }
+
+  private persistWorkspace(view: WorkspaceView): void {
+    window.sessionStorage.setItem(AppComponent.WORKSPACE_STORAGE_KEY, view);
   }
 
   formatUnitType(type: string | null | undefined): string {

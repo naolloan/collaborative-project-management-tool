@@ -2246,7 +2246,7 @@ select:focus {
 
 .detail-workspace {
   display: grid;
-  grid-template-columns: minmax(300px, 1.05fr) minmax(280px, 0.95fr) minmax(260px, 0.85fr);
+  grid-template-columns: minmax(300px, 1fr) minmax(280px, 0.95fr) minmax(340px, 1.1fr);
   gap: 1rem;
   margin-top: 1rem;
 }
@@ -2359,6 +2359,10 @@ select:focus {
   border: 1px solid var(--border);
   border-radius: 18px;
   background: #fff;
+}
+
+.activity-card-body {
+  min-width: 0;
 }
 
 .activity-card:not(:last-child)::after {

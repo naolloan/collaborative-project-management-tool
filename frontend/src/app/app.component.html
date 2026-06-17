@@ -1029,7 +1029,7 @@
         <div class="activity-list" *ngIf="activities().length > 0; else noActivities">
           <article class="activity-card" *ngFor="let activity of activities()">
             <span class="activity-dot"></span>
-            <div>
+            <div class="activity-card-body">
               <strong>{{ activity.message }}</strong>
               <p class="muted">{{ activity.createdAt | date:'medium' }}</p>
             </div>

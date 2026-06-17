@@ -111,6 +111,11 @@ export class DashboardPageComponent implements OnChanges {
     return project ? this.projectHealthLabel(project) : 'Select a project to load delivery context';
   }
 
+  selectedProjectStatusLabel(): string {
+    const project = this.selectedProject();
+    return project ? this.formatStatus(project.status) : 'No project selected';
+  }
+
   sprintProgressTrend(): SprintTrendItem[] {
     if (this.sprints.length === 0) {
       return [];
@@ -167,6 +172,10 @@ export class DashboardPageComponent implements OnChanges {
     return this.conicGradient(this.taskStatusChart());
   }
 
+  projectStatusConic(): string {
+    return this.conicGradient(this.projectStatusChart());
+  }
+
   projectPressureChart(): ChartLegendItem[] {
     const totalTasks = Math.max(this.totalTasks, 1);
     return [
@@ -200,6 +209,21 @@ export class DashboardPageComponent implements OnChanges {
     ];
   }
 
+  projectStatusChart(): ChartLegendItem[] {
+    const statuses: { label: string; value: number; tone: ChartTone }[] = [
+      { label: 'Planned', value: this.projectStatusCount('PLANNED'), tone: 'neutral' },
+      { label: 'Active', value: this.projectStatusCount('ACTIVE'), tone: 'good' },
+      { label: 'On hold', value: this.projectStatusCount('ON_HOLD'), tone: 'warning' },
+      { label: 'Completed', value: this.projectStatusCount('COMPLETED'), tone: 'good' },
+      { label: 'Archived', value: this.projectStatusCount('ARCHIVED'), tone: 'neutral' }
+    ];
+
+    return statuses.map((status) => ({
+      ...status,
+      percent: this.projectPercent(status.value)
+    }));
+  }
+
   chartToneClass(tone: ChartTone): string {
     return `chart-${tone}`;
   }
@@ -210,6 +234,10 @@ export class DashboardPageComponent implements OnChanges {
 
   private projectPercent(value: number): number {
     return this.projectCount === 0 ? 0 : Math.round((value / this.projectCount) * 100);
+  }
+
+  private projectStatusCount(status: Project['status']): number {
+    return this.projects.filter((project) => project.status === status).length;
   }
 
   private conicGradient(items: ChartLegendItem[]): string {

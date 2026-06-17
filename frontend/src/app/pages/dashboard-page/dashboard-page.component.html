@@ -195,6 +195,31 @@
       <article class="chart-card">
         <div class="panel-heading chart-heading">
           <div>
+            <p class="eyebrow">Project Status</p>
+            <h2>{{ projectCount }} project{{ projectCount === 1 ? '' : 's' }}</h2>
+          </div>
+          <span class="status-pill">{{ selectedProjectStatusLabel() }}</span>
+        </div>
+
+        <div class="chart-layout">
+          <div class="donut-chart small-donut" [style.background]="projectStatusConic()" aria-hidden="true">
+            <span>{{ projectCount }}</span>
+          </div>
+          <div class="chart-legend">
+            <article *ngFor="let status of projectStatusChart()">
+              <span class="legend-dot" [ngClass]="chartToneClass(status.tone)"></span>
+              <div>
+                <strong>{{ status.label }}</strong>
+                <p class="muted">{{ status.value }} project{{ status.value === 1 ? '' : 's' }} · {{ status.percent }}%</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </article>
+
+      <article class="chart-card">
+        <div class="panel-heading chart-heading">
+          <div>
             <p class="eyebrow">Task Status</p>
             <h2>{{ totalTasks }} task{{ totalTasks === 1 ? '' : 's' }}</h2>
           </div>
