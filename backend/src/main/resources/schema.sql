@@ -20,6 +20,7 @@ alter table if exists activity_logs
         'PROJECT_UPDATED',
         'PROJECT_ARCHIVED',
         'PROJECT_MEMBER_ADDED',
+        'PROJECT_MEMBER_REMOVED',
         'SPRINT_CREATED',
         'SPRINT_UPDATED',
         'SPRINT_STATUS_CHANGED',
