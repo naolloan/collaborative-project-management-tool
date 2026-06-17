@@ -9,6 +9,7 @@ import com.collabpm.backend.project.model.ProjectRole;
 import com.collabpm.backend.project.repository.ProjectMemberRepository;
 import com.collabpm.backend.project.repository.ProjectRepository;
 import com.collabpm.backend.project.repository.ProjectTeamMemberRepository;
+import com.collabpm.backend.task.repository.TaskRepository;
 import com.collabpm.backend.user.CurrentUserService;
 import com.collabpm.backend.user.SystemRole;
 import com.collabpm.backend.user.User;
@@ -31,6 +32,7 @@ public class ProjectMemberService {
     private final ProjectAccessService projectAccessService;
     private final ActivityService activityService;
     private final ProjectTeamMemberRepository projectTeamMemberRepository;
+    private final TaskRepository taskRepository;
 
     public ProjectMemberService(
         ProjectRepository projectRepository,
@@ -39,7 +41,8 @@ public class ProjectMemberService {
         CurrentUserService currentUserService,
         ProjectAccessService projectAccessService,
         ActivityService activityService,
-        ProjectTeamMemberRepository projectTeamMemberRepository
+        ProjectTeamMemberRepository projectTeamMemberRepository,
+        TaskRepository taskRepository
     ) {
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
@@ -48,6 +51,7 @@ public class ProjectMemberService {
         this.projectAccessService = projectAccessService;
         this.activityService = activityService;
         this.projectTeamMemberRepository = projectTeamMemberRepository;
+        this.taskRepository = taskRepository;
     }
 
     @Transactional(readOnly = true)
@@ -97,9 +101,11 @@ public class ProjectMemberService {
             .filter(candidate -> candidate.getProject().getId().equals(projectId))
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project member not found"));
 
-        projectTeamMemberRepository.deleteByProjectIdAndUserId(projectId, member.getUser().getId());
+        Long removedUserId = member.getUser().getId();
+        projectTeamMemberRepository.deleteByProjectIdAndUserId(projectId, removedUserId);
+        taskRepository.clearAssigneeForProjectMember(projectId, removedUserId);
         activityService.recordProjectMemberRemoved(member, currentUser);
-        projectMemberRepository.delete(member);
+        projectMemberRepository.deleteByProjectIdAndMemberId(projectId, memberId);
     }
 
     private void ensureCanManageProjectMembers(Long projectId, User currentUser) {

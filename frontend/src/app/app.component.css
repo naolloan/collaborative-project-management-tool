@@ -21,7 +21,7 @@
 .topbar {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(11rem, 0.34fr) minmax(0, 1fr) minmax(11rem, 0.34fr);
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
   align-items: start;
   gap: 1.25rem;
   overflow: hidden;
@@ -50,17 +50,16 @@
 .brand-lockup {
   position: relative;
   z-index: 1;
-  grid-column: 2;
   display: flex;
   align-items: center;
   gap: 1.15rem;
   flex: 1;
-  justify-content: center;
-  text-align: center;
+  justify-content: flex-start;
+  text-align: left;
 }
 
 .coop-logo {
-  width: clamp(11rem, 20vw, 14rem);
+  width: clamp(10.25rem, 18vw, 13.25rem);
   max-width: 100%;
   height: auto;
   flex: 0 0 auto;
@@ -77,7 +76,6 @@
 .topbar-side {
   position: relative;
   z-index: 1;
-  grid-column: 3;
   display: grid;
   gap: 0.8rem;
   justify-items: end;
@@ -786,9 +784,9 @@ button:disabled {
 
 .task-intake-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) repeat(3, minmax(150px, 0.55fr));
+  grid-template-columns: 1fr;
   gap: 0.75rem;
-  align-items: start;
+  align-items: stretch;
 }
 
 .task-sprint-field {
@@ -2286,6 +2284,7 @@ select:focus {
 
 .sprint-progress-panel {
   min-height: 100%;
+  min-width: 0;
 }
 
 .sprint-progress-chart {
@@ -2393,13 +2392,13 @@ dd {
   }
 
   .brand-lockup {
-    align-items: center;
+    align-items: flex-start;
     flex-direction: column;
-    text-align: center;
+    text-align: left;
   }
 
   .coop-logo {
-    width: min(13rem, 100%);
+    width: min(12.5rem, 100%);
   }
 
   .topbar-side {
@@ -2493,5 +2492,36 @@ dd {
 
   .focus-panel {
     grid-column: auto;
+  }
+
+  .summary-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .summary-workspace > .panel,
+  .summary-panel,
+  .sprint-progress-panel,
+  .chart-card {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .panel-heading,
+  .sprint-progress-meta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .completion-badge,
+  .sprint-progress-meta span {
+    white-space: normal;
+  }
+
+  .donut-chart,
+  .small-donut {
+    width: min(11rem, 68vw);
   }
 }

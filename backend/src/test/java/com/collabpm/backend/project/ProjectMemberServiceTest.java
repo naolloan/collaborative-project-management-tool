@@ -13,6 +13,7 @@ import com.collabpm.backend.project.model.ProjectRole;
 import com.collabpm.backend.project.repository.ProjectMemberRepository;
 import com.collabpm.backend.project.repository.ProjectRepository;
 import com.collabpm.backend.project.repository.ProjectTeamMemberRepository;
+import com.collabpm.backend.task.repository.TaskRepository;
 import com.collabpm.backend.user.CurrentUserService;
 import com.collabpm.backend.user.SystemRole;
 import com.collabpm.backend.user.User;
@@ -32,6 +33,7 @@ class ProjectMemberServiceTest {
     private final ProjectAccessService projectAccessService = mock(ProjectAccessService.class);
     private final ActivityService activityService = mock(ActivityService.class);
     private final ProjectTeamMemberRepository projectTeamMemberRepository = mock(ProjectTeamMemberRepository.class);
+    private final TaskRepository taskRepository = mock(TaskRepository.class);
     private final ProjectMemberService projectMemberService = new ProjectMemberService(
         projectRepository,
         projectMemberRepository,
@@ -39,7 +41,8 @@ class ProjectMemberServiceTest {
         currentUserService,
         projectAccessService,
         activityService,
-        projectTeamMemberRepository);
+        projectTeamMemberRepository,
+        taskRepository);
 
     @Test
     void rejectsProjectMembersWhoTryToManageMembers() {
@@ -113,7 +116,8 @@ class ProjectMemberServiceTest {
         projectMemberService.removeProjectMember(1L, 30L, authentication);
 
         verify(projectTeamMemberRepository).deleteByProjectIdAndUserId(1L, 21L);
+        verify(taskRepository).clearAssigneeForProjectMember(1L, 21L);
         verify(activityService).recordProjectMemberRemoved(memberToRemove, currentUser);
-        verify(projectMemberRepository).delete(memberToRemove);
+        verify(projectMemberRepository).deleteByProjectIdAndMemberId(1L, 30L);
     }
 }
