@@ -1,5 +1,17 @@
+declare global {
+  interface Window {
+    __collabPmConfig?: {
+      keycloakUrl?: string;
+      keycloakRealm?: string;
+      keycloakClientId?: string;
+    };
+  }
+}
+
+const runtimeConfig = window.__collabPmConfig;
+
 export const authConfig = {
-  url: 'http://localhost:8081',
-  realm: 'collab-pm',
-  clientId: 'collab-pm-frontend'
+  url: runtimeConfig?.keycloakUrl || 'http://localhost:8081',
+  realm: runtimeConfig?.keycloakRealm || 'collab-pm',
+  clientId: runtimeConfig?.keycloakClientId || 'collab-pm-frontend'
 };

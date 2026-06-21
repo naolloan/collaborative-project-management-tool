@@ -7,7 +7,7 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:collab_pm_password}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     open-in-view: false
     properties:
       hibernate:
@@ -16,7 +16,7 @@ spring:
           time_zone: UTC
   sql:
     init:
-      mode: always
+      mode: ${SPRING_SQL_INIT_MODE:always}
   security:
     oauth2:
       resourceserver:

@@ -8,22 +8,63 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-collab_pm_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-collab_pm_password}
     ports:
-      - "5433:5432"
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
   keycloak:
-    image: quay.io/keycloak/keycloak:latest
+    image: quay.io/keycloak/keycloak:26.2.5
     container_name: collab-pm-keycloak
     restart: unless-stopped
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
-    command: start-dev --http-port=8081
+      KC_HTTP_PORT: 8081
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:-http://localhost:8081}
+      KC_HOSTNAME_STRICT: "false"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: "true"
+    command: start-dev --import-realm
     ports:
-      - "8081:8081"
+      - "${KEYCLOAK_HOST_PORT:-8081}:8081"
+    volumes:
+      - ./keycloak/realm-import:/opt/keycloak/data/import:ro
     depends_on:
       - postgres
+
+  backend:
+    build:
+      context: ../backend
+    container_name: collab-pm-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-staging}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-collab_pm}?options=-c%20TimeZone=UTC
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-collab_pm_user}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-collab_pm_password}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO:-validate}
+      SPRING_SQL_INIT_MODE: ${SPRING_SQL_INIT_MODE:-never}
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI:-http://localhost:8081/realms/collab-pm}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${KEYCLOAK_JWK_SET_URI:-http://keycloak:8081/realms/collab-pm/protocol/openid-connect/certs}
+    ports:
+      - "${BACKEND_HOST_PORT:-18080}:8080"
+    depends_on:
+      - postgres
+      - keycloak
+
+  frontend:
+    build:
+      context: ../frontend
+    container_name: collab-pm-frontend
+    restart: unless-stopped
+    environment:
+      KEYCLOAK_URL: ${FRONTEND_KEYCLOAK_URL:-http://localhost:8081}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-collab-pm}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-collab-pm-frontend}
+    ports:
+      - "${FRONTEND_HOST_PORT:-8088}:80"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
