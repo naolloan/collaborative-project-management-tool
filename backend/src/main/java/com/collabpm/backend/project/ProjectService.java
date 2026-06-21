@@ -12,6 +12,12 @@ import com.collabpm.backend.project.model.Project;
 import com.collabpm.backend.project.model.ProjectRole;
 import com.collabpm.backend.project.model.ProjectStatus;
 import com.collabpm.backend.project.repository.ProjectRepository;
+import com.collabpm.backend.sprint.model.Sprint;
+import com.collabpm.backend.sprint.model.SprintPriority;
+import com.collabpm.backend.sprint.repository.SprintRepository;
+import com.collabpm.backend.task.model.Task;
+import com.collabpm.backend.task.model.TaskPriority;
+import com.collabpm.backend.task.repository.TaskRepository;
 import com.collabpm.backend.user.CurrentUserService;
 import com.collabpm.backend.user.SystemRole;
 import com.collabpm.backend.user.User;
@@ -19,6 +25,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -30,6 +38,8 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final OrganizationalUnitRepository organizationalUnitRepository;
+    private final SprintRepository sprintRepository;
+    private final TaskRepository taskRepository;
     private final CurrentUserService currentUserService;
     private final ProjectAccessService projectAccessService;
     private final ProjectHealthService projectHealthService;
@@ -38,6 +48,8 @@ public class ProjectService {
     public ProjectService(
         ProjectRepository projectRepository,
         OrganizationalUnitRepository organizationalUnitRepository,
+        SprintRepository sprintRepository,
+        TaskRepository taskRepository,
         CurrentUserService currentUserService,
         ProjectAccessService projectAccessService,
         ProjectHealthService projectHealthService,
@@ -45,6 +57,8 @@ public class ProjectService {
     ) {
         this.projectRepository = projectRepository;
         this.organizationalUnitRepository = organizationalUnitRepository;
+        this.sprintRepository = sprintRepository;
+        this.taskRepository = taskRepository;
         this.currentUserService = currentUserService;
         this.projectAccessService = projectAccessService;
         this.projectHealthService = projectHealthService;
@@ -58,8 +72,10 @@ public class ProjectService {
             ? projectRepository.findAllByStatusNotOrderByCreatedAtDesc(ProjectStatus.ARCHIVED)
             : projectRepository.findDistinctByMembersUserIdAndStatusNotOrderByCreatedAtDesc(currentUser.getId(), ProjectStatus.ARCHIVED);
 
+        Map<Long, Integer> progressByProjectId = computeProgressByProjectId(projects);
+
         return projects.stream()
-            .map(this::toResponse)
+            .map((project) -> toResponse(project, progressByProjectId.getOrDefault(project.getId(), 0)))
             .toList();
     }
 
@@ -84,7 +100,7 @@ public class ProjectService {
         Project savedProject = projectRepository.save(project);
         savedProject.setHealth(projectHealthService.computeHealth(savedProject));
         activityService.recordProjectCreated(savedProject, creator);
-        return toResponse(savedProject);
+        return toResponse(savedProject, computeProjectProgress(savedProject));
     }
 
     @Transactional
@@ -106,7 +122,7 @@ public class ProjectService {
         User actor = projectAccessService.currentUser(authentication);
         activityService.recordProjectUpdated(project, actor);
 
-        return toResponse(project);
+        return toResponse(project, computeProjectProgress(project));
     }
 
     @Transactional
@@ -119,7 +135,7 @@ public class ProjectService {
         User actor = projectAccessService.currentUser(authentication);
         activityService.recordProjectArchived(project, actor);
 
-        return toResponse(project);
+        return toResponse(project, computeProjectProgress(project));
     }
 
     private void validateDates(CreateProjectRequest request) {
@@ -181,7 +197,7 @@ public class ProjectService {
         return teams.get(0);
     }
 
-    private ProjectResponse toResponse(Project project) {
+    private ProjectResponse toResponse(Project project, int progressPercentage) {
         OrganizationalUnit unit = project.getOrganizationalUnit();
         String computedHealth = projectHealthService.computeHealth(project);
         project.setHealth(computedHealth);
@@ -201,6 +217,112 @@ public class ProjectService {
             project.getStartDate(),
             project.getDueDate(),
             project.getStatus().name(),
-            computedHealth);
+            computedHealth,
+            progressPercentage);
+    }
+
+    private Map<Long, Integer> computeProgressByProjectId(List<Project> projects) {
+        if (projects.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, List<Sprint>> sprintsByProjectId = projects.stream()
+            .collect(Collectors.toMap(
+                Project::getId,
+                (project) -> sprintRepository.findByProjectIdOrderByStartDateAscCreatedAtAsc(project.getId())
+            ));
+
+        Map<Long, List<Task>> tasksByProjectId = projects.stream()
+            .collect(Collectors.toMap(
+                Project::getId,
+                (project) -> taskRepository.findByProjectId(project.getId())
+            ));
+
+        return projects.stream()
+            .collect(Collectors.toMap(
+                Project::getId,
+                (project) -> computeProjectProgress(project, sprintsByProjectId.get(project.getId()), tasksByProjectId.get(project.getId()))
+            ));
+    }
+
+    private int computeProjectProgress(Project project) {
+        List<Sprint> sprints = sprintRepository.findByProjectIdOrderByStartDateAscCreatedAtAsc(project.getId());
+        List<Task> tasks = taskRepository.findByProjectId(project.getId());
+        return computeProjectProgress(project, sprints, tasks);
+    }
+
+    private int computeProjectProgress(Project project, List<Sprint> sprints, List<Task> tasks) {
+        List<Sprint> safeSprints = sprints == null ? List.of() : sprints;
+        List<Task> safeTasks = tasks == null ? List.of() : tasks;
+
+        if (project.getStatus() == ProjectStatus.COMPLETED || project.getStatus() == ProjectStatus.ARCHIVED) {
+            return 100;
+        }
+
+        if (safeSprints.isEmpty()) {
+            return 0;
+        }
+
+        double weightedCompleted = 0;
+        double weightedTotal = 0;
+        Map<Long, List<Task>> tasksBySprintId = safeTasks.stream()
+            .filter((task) -> task.getSprint() != null && task.getSprint().getId() != null)
+            .collect(Collectors.groupingBy((task) -> task.getSprint().getId()));
+
+        for (Sprint sprint : safeSprints) {
+            List<Task> sprintTasks = tasksBySprintId.getOrDefault(sprint.getId(), List.of());
+            int sprintTaskWeight = totalTaskWeight(sprintTasks);
+            if (sprintTaskWeight == 0) {
+                continue;
+            }
+
+            int sprintPriorityWeight = sprintPriorityWeight(sprint.getPriority());
+            weightedCompleted += completedTaskWeight(sprintTasks) * sprintPriorityWeight;
+            weightedTotal += sprintTaskWeight * sprintPriorityWeight;
+        }
+
+        if (weightedTotal == 0) {
+            return 0;
+        }
+
+        return (int) Math.round((weightedCompleted / weightedTotal) * 100.0);
+    }
+
+    private int completedTaskWeight(List<Task> tasks) {
+        return tasks.stream()
+            .filter((task) -> task.getStatus() == com.collabpm.backend.task.model.TaskStatus.DONE)
+            .mapToInt((task) -> taskPriorityWeight(task.getPriority()))
+            .sum();
+    }
+
+    private int totalTaskWeight(List<Task> tasks) {
+        return tasks.stream()
+            .mapToInt((task) -> taskPriorityWeight(task.getPriority()))
+            .sum();
+    }
+
+    private int taskPriorityWeight(TaskPriority priority) {
+        if (priority == null) {
+            return 2;
+        }
+
+        return switch (priority) {
+            case LOW -> 1;
+            case MEDIUM -> 2;
+            case HIGH -> 3;
+        };
+    }
+
+    private int sprintPriorityWeight(SprintPriority priority) {
+        if (priority == null) {
+            return 2;
+        }
+
+        return switch (priority) {
+            case LOW -> 1;
+            case MEDIUM -> 2;
+            case HIGH -> 3;
+            case CRITICAL -> 4;
+        };
     }
 }

@@ -47,14 +47,16 @@ class ProjectControllerTest {
             LocalDate.of(2026, 6, 9),
             null,
             "ACTIVE",
-            "ON_TRACK")));
+            "ON_TRACK",
+            42)));
 
         mockMvc.perform(get("/api/projects").with(jwt()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$", hasSize(1)))
             .andExpect(jsonPath("$[0].name").value("Internship Board"))
             .andExpect(jsonPath("$[0].status").value("ACTIVE"))
-            .andExpect(jsonPath("$[0].health").value("ON_TRACK"));
+            .andExpect(jsonPath("$[0].health").value("ON_TRACK"))
+            .andExpect(jsonPath("$[0].progressPercentage").value(42));
     }
 
     @Test
@@ -77,7 +79,8 @@ class ProjectControllerTest {
             request.startDate(),
             request.dueDate(),
             request.status(),
-            "ON_TRACK"));
+            "ON_TRACK",
+            0));
 
         mockMvc.perform(post("/api/projects")
                 .with(jwt())
@@ -97,7 +100,8 @@ class ProjectControllerTest {
             .andExpect(jsonPath("$.name").value("Internship Board"))
             .andExpect(jsonPath("$.status").value("PLANNED"))
             .andExpect(jsonPath("$.teams", hasSize(2)))
-            .andExpect(jsonPath("$.health").value("ON_TRACK"));
+            .andExpect(jsonPath("$.health").value("ON_TRACK"))
+            .andExpect(jsonPath("$.progressPercentage").value(0));
     }
 
     @Test
@@ -117,7 +121,8 @@ class ProjectControllerTest {
             request.startDate(),
             request.dueDate(),
             request.status(),
-            "AT_RISK"));
+            "AT_RISK",
+            57));
 
         mockMvc.perform(patch("/api/projects/1")
                 .with(jwt())
@@ -136,7 +141,8 @@ class ProjectControllerTest {
             .andExpect(jsonPath("$.id").value(1))
             .andExpect(jsonPath("$.name").value("Updated Internship Board"))
             .andExpect(jsonPath("$.teams", hasSize(1)))
-            .andExpect(jsonPath("$.health").value("AT_RISK"));
+            .andExpect(jsonPath("$.health").value("AT_RISK"))
+            .andExpect(jsonPath("$.progressPercentage").value(57));
     }
 
     @Test
@@ -149,7 +155,8 @@ class ProjectControllerTest {
             LocalDate.of(2026, 6, 9),
             null,
             "ARCHIVED",
-            "ON_TRACK"));
+            "ON_TRACK",
+            100));
 
         mockMvc.perform(patch("/api/projects/1/archive").with(jwt()))
             .andExpect(status().isOk())

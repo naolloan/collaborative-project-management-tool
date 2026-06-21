@@ -146,9 +146,14 @@ export class DashboardPageComponent implements OnChanges {
     }
 
     return [
+      { label: 'Progress', value: `${this.projectProgressValue(project)}%`, tone: this.progressMetricTone(this.projectProgressValue(project)) },
       { label: 'Health', value: this.projectHealthLabel(project), tone: this.projectHealthTone(project) },
-      { label: 'Teams', value: String(project.teams?.length ?? 0), tone: project.teams?.length ? 'good' : 'warning' },
-      { label: 'Timeline', value: this.projectTimeline(project), tone: 'neutral' }
+      {
+        label: 'Teams',
+        value: project.teams?.length ? `${project.teams.length} assigned` : 'Missing team coverage',
+        tone: project.teams?.length ? 'good' : 'danger'
+      },
+      { label: 'Schedule', value: this.projectScheduleLabel(project), tone: this.projectScheduleTone(project) }
     ];
   }
 
@@ -158,17 +163,19 @@ export class DashboardPageComponent implements OnChanges {
       return [];
     }
 
+    const completion = this.sprintProgressPercentage(sprint);
+
     return [
-      { label: 'Priority', value: this.formatStatus(sprint.priority), tone: this.sprintPriorityTone(sprint.priority) },
+      { label: 'Health', value: this.sprintDeliveryLabel(sprint), tone: this.sprintDeliveryTone(sprint) },
       {
         label: 'Completion',
-        value: `${sprint.totalTaskCount === 0 ? 0 : Math.round((sprint.completedTaskCount / sprint.totalTaskCount) * 100)}%`,
-        tone: sprint.completedTaskCount === sprint.totalTaskCount && sprint.totalTaskCount > 0 ? 'good' : 'warning'
+        value: `${completion}%`,
+        tone: completion >= 100 ? 'good' : completion >= 50 ? 'warning' : 'danger'
       },
       {
-        label: 'Tasks',
-        value: `${sprint.completedTaskCount}/${sprint.totalTaskCount}`,
-        tone: sprint.totalTaskCount > 0 ? 'good' : 'neutral'
+        label: 'Priority',
+        value: this.formatStatus(sprint.priority),
+        tone: this.sprintPriorityTone(sprint.priority)
       }
     ];
   }
@@ -180,6 +187,7 @@ export class DashboardPageComponent implements OnChanges {
     }
 
     return [
+      { label: 'Delivery', value: this.taskDeliveryLabel(task), tone: this.taskDeliveryTone(task) },
       { label: 'Priority', value: this.formatStatus(task.priority), tone: this.taskPriorityTone(task.priority) },
       { label: 'Assignee', value: task.assigneeName || 'Unassigned', tone: task.assigneeName ? 'good' : 'warning' }
     ];
@@ -257,40 +265,15 @@ export class DashboardPageComponent implements OnChanges {
   }
 
   taskStatusChart(): ChartLegendItem[] {
-    return [
-      { label: 'To do', value: this.toDoTasks, percent: this.taskStatusPercent(this.toDoTasks), tone: 'neutral' },
-      { label: 'In progress', value: this.inProgressTasks, percent: this.taskStatusPercent(this.inProgressTasks), tone: 'warning' },
-      { label: 'Review', value: this.reviewTasks, percent: this.taskStatusPercent(this.reviewTasks), tone: 'warning' },
-      { label: 'Done', value: this.completedTasks, percent: this.taskStatusPercent(this.completedTasks), tone: 'good' }
-    ];
+    return this.taskStatusChartFromTasks(this.tasks);
   }
 
   sprintStatusChart(): ChartLegendItem[] {
-    const statuses: { label: string; value: number; tone: ChartTone }[] = [
-      { label: 'Planned', value: this.sprintStatusCount('PLANNED'), tone: 'neutral' },
-      { label: 'Active', value: this.sprintStatusCount('ACTIVE'), tone: 'good' },
-      { label: 'Completed', value: this.sprintStatusCount('COMPLETED'), tone: 'good' }
-    ];
-
-    return statuses.map((status) => ({
-      ...status,
-      percent: this.sprintPercent(status.value)
-    }));
+    return this.sprintProgressChartFromSprints(this.sprints);
   }
 
   projectStatusChart(): ChartLegendItem[] {
-    const statuses: { label: string; value: number; tone: ChartTone }[] = [
-      { label: 'Planned', value: this.projectStatusCount('PLANNED'), tone: 'neutral' },
-      { label: 'Active', value: this.projectStatusCount('ACTIVE'), tone: 'good' },
-      { label: 'On hold', value: this.projectStatusCount('ON_HOLD'), tone: 'warning' },
-      { label: 'Completed', value: this.projectStatusCount('COMPLETED'), tone: 'good' },
-      { label: 'Archived', value: this.projectStatusCount('ARCHIVED'), tone: 'neutral' }
-    ];
-
-    return statuses.map((status) => ({
-      ...status,
-      percent: this.projectPercent(status.value)
-    }));
+    return this.projectProgressChartFromProjects(this.projects);
   }
 
   chartToneClass(tone: ChartTone): string {
@@ -355,19 +338,23 @@ export class DashboardPageComponent implements OnChanges {
     return this.selectedTaskChart() ? 1 : this.taskScopeTasks().length;
   }
 
+  projectStatusCenterLabel(): string {
+    const project = this.selectedProjectChart();
+    return project ? `${this.projectProgressValue(project)}%` : String(this.projectCount);
+  }
+
+  sprintStatusCenterLabel(): string {
+    const sprint = this.selectedSprintChart();
+    return sprint ? `${this.sprintProgressPercentage(sprint)}%` : String(this.sprints.length);
+  }
+
   projectStatusChartForSelection(): ChartLegendItem[] {
     const project = this.selectedProjectChart();
     if (!project) {
       return this.projectStatusChart();
     }
 
-    return [
-      { label: 'Planned', value: project.status === 'PLANNED' ? 1 : 0, percent: project.status === 'PLANNED' ? 100 : 0, tone: 'neutral' },
-      { label: 'Active', value: project.status === 'ACTIVE' ? 1 : 0, percent: project.status === 'ACTIVE' ? 100 : 0, tone: 'good' },
-      { label: 'On hold', value: project.status === 'ON_HOLD' ? 1 : 0, percent: project.status === 'ON_HOLD' ? 100 : 0, tone: 'warning' },
-      { label: 'Completed', value: project.status === 'COMPLETED' ? 1 : 0, percent: project.status === 'COMPLETED' ? 100 : 0, tone: 'good' },
-      { label: 'Archived', value: project.status === 'ARCHIVED' ? 1 : 0, percent: project.status === 'ARCHIVED' ? 100 : 0, tone: 'neutral' }
-    ];
+    return this.projectProgressChartForProject(project);
   }
 
   projectStatusConicForSelection(): string {
@@ -380,11 +367,7 @@ export class DashboardPageComponent implements OnChanges {
       return this.sprintStatusChart();
     }
 
-    return [
-      { label: 'Planned', value: sprint.status === 'PLANNED' ? 1 : 0, percent: sprint.status === 'PLANNED' ? 100 : 0, tone: 'neutral' },
-      { label: 'Active', value: sprint.status === 'ACTIVE' ? 1 : 0, percent: sprint.status === 'ACTIVE' ? 100 : 0, tone: 'good' },
-      { label: 'Completed', value: sprint.status === 'COMPLETED' ? 1 : 0, percent: sprint.status === 'COMPLETED' ? 100 : 0, tone: 'good' }
-    ];
+    return this.sprintProgressChartForSprint(sprint);
   }
 
   sprintStatusConicForSelection(): string {
@@ -487,14 +470,63 @@ export class DashboardPageComponent implements OnChanges {
 
   private taskStatusChartFromTasks(tasks: Task[]): ChartLegendItem[] {
     const total = tasks.length;
-    const count = (status: TaskStatus) => tasks.filter((task) => task.status === status).length;
+    const count = (label: string) => tasks.filter((task) => this.taskDeliveryLabel(task) === label).length;
     const percent = (value: number) => total === 0 ? 0 : Math.round((value / total) * 100);
 
     return [
-      { label: 'To do', value: count('TO_DO'), percent: percent(count('TO_DO')), tone: 'neutral' },
-      { label: 'In progress', value: count('IN_PROGRESS'), percent: percent(count('IN_PROGRESS')), tone: 'warning' },
-      { label: 'Review', value: count('REVIEW'), percent: percent(count('REVIEW')), tone: 'warning' },
-      { label: 'Done', value: count('DONE'), percent: percent(count('DONE')), tone: 'good' }
+      { label: 'Completed', value: count('Completed'), percent: percent(count('Completed')), tone: 'good' },
+      { label: 'In execution', value: count('In execution'), percent: percent(count('In execution')), tone: 'warning' },
+      { label: 'Overdue', value: count('Overdue'), percent: percent(count('Overdue')), tone: 'danger' },
+      { label: 'Unassigned', value: count('Unassigned'), percent: percent(count('Unassigned')), tone: 'warning' },
+      { label: 'Ready to start', value: count('Ready to start'), percent: percent(count('Ready to start')), tone: 'neutral' }
+    ];
+  }
+
+  private projectProgressChartFromProjects(projects: Project[]): ChartLegendItem[] {
+    const total = projects.length;
+    const count = (label: string) => projects.filter((project) => this.projectProgressBandLabel(project) === label).length;
+    const percent = (value: number) => total === 0 ? 0 : Math.round((value / total) * 100);
+
+    return [
+      { label: 'Not started', value: count('Not started'), percent: percent(count('Not started')), tone: 'neutral' },
+      { label: 'Early', value: count('Early'), percent: percent(count('Early')), tone: 'warning' },
+      { label: 'Midway', value: count('Midway'), percent: percent(count('Midway')), tone: 'warning' },
+      { label: 'Near completion', value: count('Near completion'), percent: percent(count('Near completion')), tone: 'good' },
+      { label: 'Delivered', value: count('Delivered'), percent: percent(count('Delivered')), tone: 'good' }
+    ];
+  }
+
+  private projectProgressChartForProject(project: Project): ChartLegendItem[] {
+    const completed = this.projectProgressValue(project);
+    const remaining = Math.max(100 - completed, 0);
+
+    return [
+      { label: 'Completed sprint scope', value: completed, percent: completed, tone: 'good' },
+      { label: 'Remaining sprint scope', value: remaining, percent: remaining, tone: remaining > 0 ? 'warning' : 'neutral' }
+    ];
+  }
+
+  private sprintProgressChartFromSprints(sprints: Sprint[]): ChartLegendItem[] {
+    const total = sprints.length;
+    const count = (label: string) => sprints.filter((sprint) => this.sprintProgressBandLabel(sprint) === label).length;
+    const percent = (value: number) => total === 0 ? 0 : Math.round((value / total) * 100);
+
+    return [
+      { label: 'Not started', value: count('Not started'), percent: percent(count('Not started')), tone: 'neutral' },
+      { label: 'Early', value: count('Early'), percent: percent(count('Early')), tone: 'warning' },
+      { label: 'Midway', value: count('Midway'), percent: percent(count('Midway')), tone: 'warning' },
+      { label: 'Near completion', value: count('Near completion'), percent: percent(count('Near completion')), tone: 'good' },
+      { label: 'Delivered', value: count('Delivered'), percent: percent(count('Delivered')), tone: 'good' }
+    ];
+  }
+
+  private sprintProgressChartForSprint(sprint: Sprint): ChartLegendItem[] {
+    const completed = this.sprintProgressPercentage(sprint);
+    const remaining = Math.max(100 - completed, 0);
+
+    return [
+      { label: 'Completed task scope', value: completed, percent: completed, tone: 'good' },
+      { label: 'Remaining task scope', value: remaining, percent: remaining, tone: remaining > 0 ? 'warning' : 'neutral' }
     ];
   }
 
@@ -515,25 +547,154 @@ export class DashboardPageComponent implements OnChanges {
     return this.sprints.find((sprint) => sprint.status === 'ACTIVE')?.id ?? this.sprints[0]?.id;
   }
 
-  private projectStatusTone(status: Project['status']): ChartTone {
-    switch (status) {
-      case 'ACTIVE':
-      case 'COMPLETED':
+  private projectDeliveryLabel(project: Project): string {
+    if (this.isClosedProject(project)) {
+      return 'Closed out';
+    }
+
+    if (!this.hasOwningUnit(project)) {
+      return 'Missing teams';
+    }
+
+    if (!project.startDate || !project.dueDate) {
+      return 'Planning window';
+    }
+
+    if (this.needsAttention(project)) {
+      return 'Needs support';
+    }
+
+    return 'On track';
+  }
+
+  private projectProgressValue(project: Project): number {
+    if (project.progressPercentage == null) {
+      return this.isClosedProject(project) ? 100 : 0;
+    }
+
+    return Math.max(0, Math.min(100, Math.round(project.progressPercentage)));
+  }
+
+  private projectProgressBandLabel(project: Project): string {
+    const progress = this.projectProgressValue(project);
+    if (progress >= 100) {
+      return 'Delivered';
+    }
+    if (progress >= 75) {
+      return 'Near completion';
+    }
+    if (progress >= 35) {
+      return 'Midway';
+    }
+    if (progress > 0) {
+      return 'Early';
+    }
+
+    return 'Not started';
+  }
+
+  private progressMetricTone(progress: number): ChartTone {
+    if (progress >= 100) {
+      return 'good';
+    }
+
+    if (progress > 0) {
+      return 'warning';
+    }
+
+    return 'neutral';
+  }
+
+  private projectScheduleLabel(project: Project): string {
+    if (this.isClosedProject(project)) {
+      return 'Closed delivery';
+    }
+
+    const remainingDays = this.daysUntil(project.dueDate);
+    if (remainingDays !== null && remainingDays < 0) {
+      return `Overdue by ${Math.abs(remainingDays)} day${Math.abs(remainingDays) === 1 ? '' : 's'}`;
+    }
+
+    if (remainingDays !== null && remainingDays <= 14) {
+      return `Due in ${remainingDays} day${remainingDays === 1 ? '' : 's'}`;
+    }
+
+    return this.projectTimeline(project);
+  }
+
+  private projectScheduleTone(project: Project): ChartTone {
+    if (this.isClosedProject(project)) {
+      return 'good';
+    }
+
+    if (this.isOverdue(project)) {
+      return 'danger';
+    }
+
+    if (this.isDueSoon(project) || !project.startDate || !project.dueDate) {
+      return 'warning';
+    }
+
+    return 'neutral';
+  }
+
+  private sprintDeliveryLabel(sprint: Sprint): string {
+    if (this.isSprintDelivered(sprint)) {
+      return 'Delivered';
+    }
+
+    if (sprint.totalTaskCount === 0) {
+      return 'Empty scope';
+    }
+
+    if (sprint.status === 'PLANNED' || !sprint.startDate || !sprint.endDate) {
+      return 'Setup needed';
+    }
+
+    if (this.isSprintHighPressure(sprint)) {
+      return 'High pressure';
+    }
+
+    return 'In delivery';
+  }
+
+  private sprintProgressPercentage(sprint: Sprint): number {
+    if (sprint.totalTaskCount <= 0) {
+      return sprint.status === 'COMPLETED' ? 100 : 0;
+    }
+
+    return Math.round((sprint.completedTaskCount / sprint.totalTaskCount) * 100);
+  }
+
+  private sprintProgressBandLabel(sprint: Sprint): string {
+    const progress = this.sprintProgressPercentage(sprint);
+    if (progress >= 100) {
+      return 'Delivered';
+    }
+    if (progress >= 75) {
+      return 'Near completion';
+    }
+    if (progress >= 35) {
+      return 'Midway';
+    }
+    if (progress > 0) {
+      return 'Early';
+    }
+
+    return 'Not started';
+  }
+
+  private sprintDeliveryTone(sprint: Sprint): ChartTone {
+    switch (this.sprintDeliveryLabel(sprint)) {
+      case 'Delivered':
+      case 'In delivery':
         return 'good';
-      case 'ON_HOLD':
+      case 'High pressure':
+        return 'danger';
+      case 'Setup needed':
         return 'warning';
       default:
         return 'neutral';
-    }
-  }
-
-  private sprintStatusTone(status: Sprint['status']): ChartTone {
-    switch (status) {
-      case 'ACTIVE':
-      case 'COMPLETED':
-        return 'good';
-      default:
-        return 'warning';
     }
   }
 
@@ -549,12 +710,58 @@ export class DashboardPageComponent implements OnChanges {
     }
   }
 
-  private taskStatusTone(status: Task['status']): ChartTone {
-    switch (status) {
-      case 'DONE':
+  private isSprintDelivered(sprint: Sprint): boolean {
+    return sprint.status === 'COMPLETED' || (sprint.totalTaskCount > 0 && sprint.completedTaskCount >= sprint.totalTaskCount);
+  }
+
+  private isSprintHighPressure(sprint: Sprint): boolean {
+    if (this.isSprintDelivered(sprint)) {
+      return false;
+    }
+
+    const completion = sprint.totalTaskCount === 0 ? 0 : Math.round((sprint.completedTaskCount / sprint.totalTaskCount) * 100);
+    const remainingDays = this.daysUntil(sprint.endDate);
+    const elevatedPriority = sprint.priority === 'HIGH' || sprint.priority === 'CRITICAL';
+
+    if (remainingDays !== null && remainingDays < 0) {
+      return true;
+    }
+
+    if (remainingDays !== null && remainingDays <= 3 && completion < 75) {
+      return true;
+    }
+
+    return elevatedPriority && completion < 60;
+  }
+
+  private taskDeliveryLabel(task: Task): string {
+    if (task.status === 'DONE') {
+      return 'Completed';
+    }
+
+    if (this.isTaskOverdue(task)) {
+      return 'Overdue';
+    }
+
+    if (!this.isTaskAssigned(task)) {
+      return 'Unassigned';
+    }
+
+    if (task.status === 'IN_PROGRESS' || task.status === 'REVIEW') {
+      return 'In execution';
+    }
+
+    return 'Ready to start';
+  }
+
+  private taskDeliveryTone(task: Task): ChartTone {
+    switch (this.taskDeliveryLabel(task)) {
+      case 'Completed':
         return 'good';
-      case 'IN_PROGRESS':
-      case 'REVIEW':
+      case 'Overdue':
+        return 'danger';
+      case 'Unassigned':
+      case 'In execution':
         return 'warning';
       default:
         return 'neutral';
@@ -570,6 +777,15 @@ export class DashboardPageComponent implements OnChanges {
       default:
         return 'good';
     }
+  }
+
+  private isTaskAssigned(task: Task): boolean {
+    return Boolean(task.assigneeId || task.assigneeName);
+  }
+
+  private isTaskOverdue(task: Task): boolean {
+    const remainingDays = this.daysUntil(task.dueDate);
+    return task.status !== 'DONE' && remainingDays !== null && remainingDays < 0;
   }
 
   private conicGradient(items: ChartLegendItem[]): string {

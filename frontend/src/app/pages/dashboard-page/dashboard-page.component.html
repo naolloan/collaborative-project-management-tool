@@ -195,7 +195,7 @@
       <article class="chart-card">
         <div class="panel-heading chart-heading">
           <div>
-            <p class="eyebrow">Project Status</p>
+            <p class="eyebrow">Project Progress</p>
             <h2>{{ selectedProjectChartTitle() }}</h2>
           </div>
           <label class="chart-select-control">
@@ -208,7 +208,7 @@
 
         <div class="chart-layout">
           <div class="donut-chart small-donut" [style.background]="projectStatusConicForSelection()" aria-hidden="true">
-            <span>{{ projectStatusTotalForSelection() }}</span>
+            <span>{{ projectStatusCenterLabel() }}</span>
           </div>
           <div class="chart-legend">
             <article *ngFor="let status of projectStatusChartForSelection()">
@@ -237,7 +237,7 @@
       <article class="chart-card">
         <div class="panel-heading chart-heading">
           <div>
-            <p class="eyebrow">Sprint and Task Status</p>
+            <p class="eyebrow">Sprint and Task Progress</p>
             <h2>{{ selectedSprintChartTitle() }}</h2>
           </div>
           <div class="chart-heading-controls">
@@ -260,14 +260,14 @@
           <section class="stacked-status-section">
             <div class="stacked-status-heading">
               <div>
-                <p class="eyebrow">Sprint Status</p>
+                <p class="eyebrow">Sprint Progress</p>
                 <h3>{{ selectedSprintChartTitle() }}</h3>
               </div>
             </div>
 
             <div class="chart-layout">
               <div class="donut-chart small-donut" [style.background]="sprintStatusConicForSelection()" aria-hidden="true">
-                <span>{{ sprintStatusTotalForSelection() }}</span>
+                <span>{{ sprintStatusCenterLabel() }}</span>
               </div>
               <div class="chart-legend">
                 <article *ngFor="let status of sprintStatusChartForSelection()">
@@ -296,7 +296,7 @@
           <section class="stacked-status-section">
             <div class="stacked-status-heading">
               <div>
-                <p class="eyebrow">Task Status</p>
+                <p class="eyebrow">Task Delivery</p>
                 <h3>{{ selectedTaskChartTitle() }}</h3>
               </div>
             </div>

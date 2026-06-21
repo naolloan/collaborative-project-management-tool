@@ -16,6 +16,7 @@ export interface Project {
   dueDate?: string | null;
   status: ProjectLifecycleStatus;
   health: ProjectHealth;
+  progressPercentage?: number | null;
 }
 
 export interface CreateProjectRequest {

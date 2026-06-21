@@ -11,6 +11,7 @@ public record ProjectResponse(
     LocalDate startDate,
     LocalDate dueDate,
     String status,
-    String health
+    String health,
+    Integer progressPercentage
 ) {
 }
