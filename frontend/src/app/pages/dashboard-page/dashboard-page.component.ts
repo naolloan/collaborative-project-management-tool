@@ -276,6 +276,34 @@ export class DashboardPageComponent implements OnChanges {
     return this.projectProgressChartFromProjects(this.projects);
   }
 
+  projectLifecycleChart(): ChartLegendItem[] {
+    const statuses: { label: string; value: number; tone: ChartTone }[] = [
+      { label: 'Planned', value: this.projectStatusCount('PLANNED'), tone: 'neutral' },
+      { label: 'Active', value: this.projectStatusCount('ACTIVE'), tone: 'good' },
+      { label: 'On hold', value: this.projectStatusCount('ON_HOLD'), tone: 'warning' },
+      { label: 'Completed', value: this.projectStatusCount('COMPLETED'), tone: 'good' },
+      { label: 'Archived', value: this.projectStatusCount('ARCHIVED'), tone: 'neutral' }
+    ];
+
+    return statuses.map((status) => ({
+      ...status,
+      percent: this.projectPercent(status.value)
+    }));
+  }
+
+  sprintLifecycleChart(): ChartLegendItem[] {
+    const statuses: { label: string; value: number; tone: ChartTone }[] = [
+      { label: 'Planned', value: this.sprintStatusCount('PLANNED'), tone: 'neutral' },
+      { label: 'Active', value: this.sprintStatusCount('ACTIVE'), tone: 'good' },
+      { label: 'Completed', value: this.sprintStatusCount('COMPLETED'), tone: 'good' }
+    ];
+
+    return statuses.map((status) => ({
+      ...status,
+      percent: this.sprintPercent(status.value)
+    }));
+  }
+
   chartToneClass(tone: ChartTone): string {
     return `chart-${tone}`;
   }
@@ -348,6 +376,11 @@ export class DashboardPageComponent implements OnChanges {
     return sprint ? `${this.sprintProgressPercentage(sprint)}%` : String(this.sprints.length);
   }
 
+  taskStatusCenterLabel(): string {
+    const task = this.selectedTaskChart();
+    return task ? this.formatStatus(task.status) : String(this.taskScopeTasks().length);
+  }
+
   projectStatusChartForSelection(): ChartLegendItem[] {
     const project = this.selectedProjectChart();
     if (!project) {
@@ -361,6 +394,25 @@ export class DashboardPageComponent implements OnChanges {
     return this.conicGradient(this.projectStatusChartForSelection());
   }
 
+  projectLifecycleChartForSelection(): ChartLegendItem[] {
+    const project = this.selectedProjectChart();
+    if (!project) {
+      return this.projectLifecycleChart();
+    }
+
+    return [
+      { label: 'Planned', value: project.status === 'PLANNED' ? 1 : 0, percent: project.status === 'PLANNED' ? 100 : 0, tone: 'neutral' },
+      { label: 'Active', value: project.status === 'ACTIVE' ? 1 : 0, percent: project.status === 'ACTIVE' ? 100 : 0, tone: 'good' },
+      { label: 'On hold', value: project.status === 'ON_HOLD' ? 1 : 0, percent: project.status === 'ON_HOLD' ? 100 : 0, tone: 'warning' },
+      { label: 'Completed', value: project.status === 'COMPLETED' ? 1 : 0, percent: project.status === 'COMPLETED' ? 100 : 0, tone: 'good' },
+      { label: 'Archived', value: project.status === 'ARCHIVED' ? 1 : 0, percent: project.status === 'ARCHIVED' ? 100 : 0, tone: 'neutral' }
+    ];
+  }
+
+  projectLifecycleConicForSelection(): string {
+    return this.conicGradient(this.projectLifecycleChartForSelection());
+  }
+
   sprintStatusChartForSelection(): ChartLegendItem[] {
     const sprint = this.selectedSprintChart();
     if (!sprint) {
@@ -372,6 +424,23 @@ export class DashboardPageComponent implements OnChanges {
 
   sprintStatusConicForSelection(): string {
     return this.conicGradient(this.sprintStatusChartForSelection());
+  }
+
+  sprintLifecycleChartForSelection(): ChartLegendItem[] {
+    const sprint = this.selectedSprintChart();
+    if (!sprint) {
+      return this.sprintLifecycleChart();
+    }
+
+    return [
+      { label: 'Planned', value: sprint.status === 'PLANNED' ? 1 : 0, percent: sprint.status === 'PLANNED' ? 100 : 0, tone: 'neutral' },
+      { label: 'Active', value: sprint.status === 'ACTIVE' ? 1 : 0, percent: sprint.status === 'ACTIVE' ? 100 : 0, tone: 'good' },
+      { label: 'Completed', value: sprint.status === 'COMPLETED' ? 1 : 0, percent: sprint.status === 'COMPLETED' ? 100 : 0, tone: 'good' }
+    ];
+  }
+
+  sprintLifecycleConicForSelection(): string {
+    return this.conicGradient(this.sprintLifecycleChartForSelection());
   }
 
   taskStatusChartForSelection(): ChartLegendItem[] {
@@ -568,6 +637,10 @@ export class DashboardPageComponent implements OnChanges {
   }
 
   private projectProgressValue(project: Project): number {
+    if (this.selectedProjectId === project.id) {
+      return Math.max(0, Math.min(100, Math.round(this.projectProgressPercentage)));
+    }
+
     if (project.progressPercentage == null) {
       return this.isClosedProject(project) ? 100 : 0;
     }

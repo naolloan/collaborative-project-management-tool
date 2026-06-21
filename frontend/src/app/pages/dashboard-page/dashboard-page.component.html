@@ -237,97 +237,29 @@
       <article class="chart-card">
         <div class="panel-heading chart-heading">
           <div>
-            <p class="eyebrow">Sprint and Task Progress</p>
-            <h2>{{ selectedSprintChartTitle() }}</h2>
-          </div>
-          <div class="chart-heading-controls">
-            <label class="chart-select-control">
-              <span class="sr-only">Select sprint status scope</span>
-              <select [(ngModel)]="selectedSprintChartId" (ngModelChange)="onSprintChartSelectionChange()">
-                <option *ngFor="let option of sprintChartOptions()" [ngValue]="option.id">{{ option.label }}</option>
-              </select>
-            </label>
-            <label class="chart-select-control">
-              <span class="sr-only">Select task status scope</span>
-              <select [(ngModel)]="selectedTaskChartId">
-                <option *ngFor="let option of taskChartOptions()" [ngValue]="option.id">{{ option.label }}</option>
-              </select>
-            </label>
+            <p class="eyebrow">Project Lifecycle</p>
+            <h2>{{ selectedProjectChartTitle() }}</h2>
           </div>
         </div>
 
-        <div class="stacked-status-charts">
-          <section class="stacked-status-section">
-            <div class="stacked-status-heading">
+        <div class="chart-layout">
+          <div class="donut-chart small-donut" [style.background]="projectLifecycleConicForSelection()" aria-hidden="true">
+            <span>{{ projectStatusTotalForSelection() }}</span>
+          </div>
+          <div class="chart-legend">
+            <article *ngFor="let status of projectLifecycleChartForSelection()">
+              <span class="legend-dot" [ngClass]="chartToneClass(status.tone)"></span>
               <div>
-                <p class="eyebrow">Sprint Progress</p>
-                <h3>{{ selectedSprintChartTitle() }}</h3>
+                <strong>{{ status.label }}</strong>
+                <p class="muted">
+                  <ng-container *ngIf="selectedProjectChartId === 'ALL'; else selectedProjectLifecycleMetric">
+                    {{ status.value }} project{{ status.value === 1 ? '' : 's' }} · {{ status.percent }}%
+                  </ng-container>
+                  <ng-template #selectedProjectLifecycleMetric>{{ status.value }} · {{ status.percent }}%</ng-template>
+                </p>
               </div>
-            </div>
-
-            <div class="chart-layout">
-              <div class="donut-chart small-donut" [style.background]="sprintStatusConicForSelection()" aria-hidden="true">
-                <span>{{ sprintStatusCenterLabel() }}</span>
-              </div>
-              <div class="chart-legend">
-                <article *ngFor="let status of sprintStatusChartForSelection()">
-                  <span class="legend-dot" [ngClass]="chartToneClass(status.tone)"></span>
-                  <div>
-                    <strong>{{ status.label }}</strong>
-                    <p class="muted">
-                      <ng-container *ngIf="selectedSprintChartId === 'ALL'; else selectedSprintMetric">
-                        {{ status.value }} sprint{{ status.value === 1 ? '' : 's' }} · {{ status.percent }}%
-                      </ng-container>
-                      <ng-template #selectedSprintMetric>{{ status.value }} · {{ status.percent }}%</ng-template>
-                    </p>
-                  </div>
-                </article>
-              </div>
-            </div>
-
-            <div class="selected-status-metrics" *ngIf="selectedSprintStatusMetrics().length > 0">
-              <article *ngFor="let metric of selectedSprintStatusMetrics()">
-                <span>{{ metric.label }}</span>
-                <strong [ngClass]="'metric-' + metric.tone">{{ metric.value }}</strong>
-              </article>
-            </div>
-          </section>
-
-          <section class="stacked-status-section">
-            <div class="stacked-status-heading">
-              <div>
-                <p class="eyebrow">Task Delivery</p>
-                <h3>{{ selectedTaskChartTitle() }}</h3>
-              </div>
-            </div>
-
-            <div class="chart-layout">
-              <div class="donut-chart small-donut" [style.background]="taskStatusConicForSelection()" aria-hidden="true">
-                <span>{{ taskStatusTotalForSelection() }}</span>
-              </div>
-              <div class="chart-legend">
-                <article *ngFor="let status of taskStatusChartForSelection()">
-                  <span class="legend-dot" [ngClass]="chartToneClass(status.tone)"></span>
-                  <div>
-                    <strong>{{ status.label }}</strong>
-                    <p class="muted">
-                      <ng-container *ngIf="selectedTaskChartId === 'ALL'; else selectedTaskMetric">
-                        {{ status.value }} task{{ status.value === 1 ? '' : 's' }} · {{ status.percent }}%
-                      </ng-container>
-                      <ng-template #selectedTaskMetric>{{ status.value }} · {{ status.percent }}%</ng-template>
-                    </p>
-                  </div>
-                </article>
-              </div>
-            </div>
-
-            <div class="selected-status-metrics" *ngIf="selectedTaskStatusMetrics().length > 0">
-              <article *ngFor="let metric of selectedTaskStatusMetrics()">
-                <span>{{ metric.label }}</span>
-                <strong [ngClass]="'metric-' + metric.tone">{{ metric.value }}</strong>
-              </article>
-            </div>
-          </section>
+            </article>
+          </div>
         </div>
       </article>
 
@@ -374,20 +306,143 @@
       <p class="muted">Create sprints for this project to turn task execution into a visible delivery graph.</p>
     </div>
 
-    <div class="sprint-progress-chart" *ngIf="sprintProgressTrend().length > 0">
-      <article class="sprint-progress-row" *ngFor="let sprint of sprintProgressTrend()">
-        <div class="sprint-progress-meta">
+    <div class="sprint-progress-layout" *ngIf="sprintProgressTrend().length > 0">
+      <article class="chart-card">
+        <div class="panel-heading chart-heading">
           <div>
-            <strong>{{ sprint.label }}</strong>
-            <p class="muted">{{ sprint.priority }} priority · {{ sprint.status }} · {{ sprint.completedTaskCount }} / {{ sprint.totalTaskCount }} done</p>
+            <p class="eyebrow">Sprint Analytics</p>
+            <h2>{{ selectedSprintChartTitle() }}</h2>
+            <p class="muted chart-context">Task scope: {{ selectedTaskChartTitle() }}</p>
           </div>
-          <span>{{ sprint.value }}%</span>
+          <div class="chart-heading-controls">
+            <label class="chart-select-control">
+              <span class="sr-only">Select sprint progress scope</span>
+              <select [(ngModel)]="selectedSprintChartId" (ngModelChange)="onSprintChartSelectionChange()">
+                <option *ngFor="let option of sprintChartOptions()" [ngValue]="option.id">{{ option.label }}</option>
+              </select>
+            </label>
+            <label class="chart-select-control">
+              <span class="sr-only">Select task delivery scope</span>
+              <select [(ngModel)]="selectedTaskChartId">
+                <option *ngFor="let option of taskChartOptions()" [ngValue]="option.id">{{ option.label }}</option>
+              </select>
+            </label>
+          </div>
         </div>
 
-        <div class="progress-track sprint-chart-track" aria-hidden="true">
-          <span [style.width.%]="sprint.value"></span>
+        <div class="sprint-analytics-grid">
+          <section class="sprint-analytics-tile">
+            <div class="sprint-analytics-heading">
+              <p class="eyebrow">Sprint Progress</p>
+              <h3>Completion Rollup</h3>
+            </div>
+
+            <div class="chart-layout compact-chart-layout">
+              <div class="donut-chart small-donut" [style.background]="sprintStatusConicForSelection()" aria-hidden="true">
+                <span>{{ sprintStatusCenterLabel() }}</span>
+              </div>
+              <div class="chart-legend">
+                <article *ngFor="let status of sprintStatusChartForSelection()">
+                  <span class="legend-dot" [ngClass]="chartToneClass(status.tone)"></span>
+                  <div>
+                    <strong>{{ status.label }}</strong>
+                    <p class="muted">
+                      <ng-container *ngIf="selectedSprintChartId === 'ALL'; else selectedSprintMetric">
+                        {{ status.value }} sprint{{ status.value === 1 ? '' : 's' }} · {{ status.percent }}%
+                      </ng-container>
+                      <ng-template #selectedSprintMetric>{{ status.value }} · {{ status.percent }}%</ng-template>
+                    </p>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <div class="selected-status-metrics" *ngIf="selectedSprintStatusMetrics().length > 0">
+              <article *ngFor="let metric of selectedSprintStatusMetrics()">
+                <span>{{ metric.label }}</span>
+                <strong [ngClass]="'metric-' + metric.tone">{{ metric.value }}</strong>
+              </article>
+            </div>
+          </section>
+
+          <section class="sprint-analytics-tile">
+            <div class="sprint-analytics-heading">
+              <p class="eyebrow">Sprint Lifecycle</p>
+              <h3>Stage Distribution</h3>
+            </div>
+
+            <div class="chart-layout compact-chart-layout">
+              <div class="donut-chart small-donut" [style.background]="sprintLifecycleConicForSelection()" aria-hidden="true">
+                <span>{{ sprintStatusTotalForSelection() }}</span>
+              </div>
+              <div class="chart-legend">
+                <article *ngFor="let status of sprintLifecycleChartForSelection()">
+                  <span class="legend-dot" [ngClass]="chartToneClass(status.tone)"></span>
+                  <div>
+                    <strong>{{ status.label }}</strong>
+                    <p class="muted">
+                      <ng-container *ngIf="selectedSprintChartId === 'ALL'; else selectedSprintLifecycleMetric">
+                        {{ status.value }} sprint{{ status.value === 1 ? '' : 's' }} · {{ status.percent }}%
+                      </ng-container>
+                      <ng-template #selectedSprintLifecycleMetric>{{ status.value }} · {{ status.percent }}%</ng-template>
+                    </p>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <section class="sprint-analytics-tile sprint-analytics-tile-wide">
+            <div class="sprint-analytics-heading">
+              <p class="eyebrow">Task Delivery</p>
+              <h3>{{ selectedTaskChartTitle() }}</h3>
+            </div>
+
+            <div class="chart-layout compact-chart-layout">
+              <div class="donut-chart small-donut" [style.background]="taskStatusConicForSelection()" aria-hidden="true">
+                <span>{{ taskStatusCenterLabel() }}</span>
+              </div>
+              <div class="chart-legend">
+                <article *ngFor="let status of taskStatusChartForSelection()">
+                  <span class="legend-dot" [ngClass]="chartToneClass(status.tone)"></span>
+                  <div>
+                    <strong>{{ status.label }}</strong>
+                    <p class="muted">
+                      <ng-container *ngIf="selectedTaskChartId === 'ALL'; else selectedTaskMetric">
+                        {{ status.value }} task{{ status.value === 1 ? '' : 's' }} · {{ status.percent }}%
+                      </ng-container>
+                      <ng-template #selectedTaskMetric>{{ status.value }} · {{ status.percent }}%</ng-template>
+                    </p>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <div class="selected-status-metrics" *ngIf="selectedTaskStatusMetrics().length > 0">
+              <article *ngFor="let metric of selectedTaskStatusMetrics()">
+                <span>{{ metric.label }}</span>
+                <strong [ngClass]="'metric-' + metric.tone">{{ metric.value }}</strong>
+              </article>
+            </div>
+          </section>
         </div>
       </article>
+
+      <div class="sprint-progress-chart">
+        <article class="sprint-progress-row" *ngFor="let sprint of sprintProgressTrend()">
+          <div class="sprint-progress-meta">
+            <div>
+              <strong>{{ sprint.label }}</strong>
+              <p class="muted">{{ sprint.priority }} priority · {{ sprint.status }} · {{ sprint.completedTaskCount }} / {{ sprint.totalTaskCount }} done</p>
+            </div>
+            <span>{{ sprint.value }}%</span>
+          </div>
+
+          <div class="progress-track sprint-chart-track" aria-hidden="true">
+            <span [style.width.%]="sprint.value"></span>
+          </div>
+        </article>
+      </div>
     </div>
   </article>
 </section>
