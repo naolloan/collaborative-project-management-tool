@@ -63,9 +63,12 @@ If you reuse an existing `postgres_data` volume from an older run, remember that
 
 ## 5. Current deployment gaps
 
-Before calling this production-ready, the following should still be added:
+The hosted deployment path is documented separately in:
 
-- HTTPS and real domain configuration
-- production secrets management
+`docs/deployment-production.md`
+
+Even with that in place, the main production hardening work that still remains is:
+
+- HTTPS and real domain routing in front of the stack
 - production-safe database migration workflow
-- separate production compose or orchestration manifests
+- stronger secret management and server hardening

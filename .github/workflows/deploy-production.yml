@@ -1,0 +1,104 @@
+name: Deploy Production Stack
+
+on:
+  workflow_dispatch:
+    inputs:
+      backend_image:
+        description: Optional backend image override
+        required: false
+        type: string
+      frontend_image:
+        description: Optional frontend image override
+        required: false
+        type: string
+
+jobs:
+  deploy:
+    name: Deploy to server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install SSH key
+        shell: bash
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${{ secrets.DEPLOY_PORT }}" "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Prepare deployment bundle
+        shell: bash
+        run: |
+          mkdir -p deploy-bundle/infra/keycloak/realm-import
+          cp infra/docker-compose.prod.yml deploy-bundle/infra/docker-compose.prod.yml
+          printf '%s\n' "${{ secrets.PROD_ENV_FILE }}" > deploy-bundle/infra/.env.production
+
+          realm="$(grep '^KEYCLOAK_REALM=' deploy-bundle/infra/.env.production | cut -d= -f2-)"
+          client_id="$(grep '^KEYCLOAK_CLIENT_ID=' deploy-bundle/infra/.env.production | cut -d= -f2-)"
+          frontend_base_url="$(grep '^FRONTEND_PUBLIC_URL=' deploy-bundle/infra/.env.production | cut -d= -f2-)"
+
+          cat > deploy-bundle/infra/keycloak/realm-import/collab-pm-realm.json <<EOF
+          {
+            "realm": "${realm}",
+            "enabled": true,
+            "registrationAllowed": false,
+            "loginWithEmailAllowed": true,
+            "duplicateEmailsAllowed": false,
+            "resetPasswordAllowed": true,
+            "clients": [
+              {
+                "clientId": "${client_id}",
+                "name": "${client_id}",
+                "enabled": true,
+                "publicClient": true,
+                "protocol": "openid-connect",
+                "standardFlowEnabled": true,
+                "directAccessGrantsEnabled": false,
+                "implicitFlowEnabled": false,
+                "redirectUris": [
+                  "${frontend_base_url}/*"
+                ],
+                "webOrigins": [
+                  "${frontend_base_url}"
+                ],
+                "attributes": {
+                  "pkce.code.challenge.method": "S256"
+                }
+              }
+            ],
+            "roles": {
+              "realm": [
+                { "name": "ADMINISTRATOR" },
+                { "name": "PROJECT_MANAGER" },
+                { "name": "TEAM_MEMBER" }
+              ]
+            }
+          }
+          EOF
+
+          if [ -n "${{ inputs.backend_image }}" ]; then
+            sed -i "s|^BACKEND_IMAGE=.*|BACKEND_IMAGE=${{ inputs.backend_image }}|" deploy-bundle/infra/.env.production
+          fi
+
+          if [ -n "${{ inputs.frontend_image }}" ]; then
+            sed -i "s|^FRONTEND_IMAGE=.*|FRONTEND_IMAGE=${{ inputs.frontend_image }}|" deploy-bundle/infra/.env.production
+          fi
+
+      - name: Copy bundle to server
+        shell: bash
+        run: |
+          ssh -p "${{ secrets.DEPLOY_PORT }}" "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" "mkdir -p '${{ secrets.DEPLOY_PATH }}'"
+          scp -P "${{ secrets.DEPLOY_PORT }}" -r deploy-bundle/. "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/"
+
+      - name: Deploy stack on server
+        shell: bash
+        run: |
+          ssh -p "${{ secrets.DEPLOY_PORT }}" "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" "
+            echo '${{ secrets.DOCKERHUB_TOKEN }}' | docker login -u '${{ secrets.DOCKERHUB_USERNAME }}' --password-stdin &&
+            cd '${{ secrets.DEPLOY_PATH }}/infra' &&
+            docker compose --env-file .env.production -f docker-compose.prod.yml pull &&
+            docker compose --env-file .env.production -f docker-compose.prod.yml up -d
+          "
