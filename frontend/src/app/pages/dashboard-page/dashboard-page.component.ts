@@ -8,6 +8,7 @@ import { Task, TaskStatus } from '../../core/dto/task';
 
 type HealthTone = 'good' | 'warning' | 'danger' | 'neutral';
 type ChartTone = 'good' | 'warning' | 'danger' | 'neutral';
+type SprintAnalyticsView = 'progress' | 'lifecycle' | 'tasks';
 
 interface PortfolioWatchItem {
   project: Project;
@@ -91,6 +92,7 @@ export class DashboardPageComponent implements OnChanges {
   selectedProjectChartId: number | 'ALL' = 'ALL';
   selectedSprintChartId: number | 'ALL' = 'ALL';
   selectedTaskChartId: number | 'ALL' = 'ALL';
+  activeSprintAnalyticsView: SprintAnalyticsView = 'progress';
   private lastFocusProjectId: number | undefined;
   private lastFocusSprintId: number | undefined;
   private lastFocusTaskId: number | undefined;
@@ -455,6 +457,10 @@ export class DashboardPageComponent implements OnChanges {
 
   taskStatusConicForSelection(): string {
     return this.conicGradient(this.taskStatusChartForSelection());
+  }
+
+  setSprintAnalyticsView(view: SprintAnalyticsView): void {
+    this.activeSprintAnalyticsView = view;
   }
 
   selectedProjectChart(): Project | undefined {

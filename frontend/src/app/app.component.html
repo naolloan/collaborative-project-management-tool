@@ -869,7 +869,7 @@
   </section>
 
   <section class="detail-workspace" *ngIf="authenticated() && activeWorkspace() === 'tasks'">
-    <article class="panel detail-panel">
+    <article class="panel detail-panel" #taskDetailPanel>
       <div class="panel-heading">
         <h2>Task Details</h2>
         <span class="status-pill" *ngIf="selectedTask()">{{ formatStatus(selectedTask()?.status || '') }}</span>
@@ -1016,7 +1016,7 @@
       </ng-container>
     </article>
 
-    <article class="panel activity-panel">
+    <article class="panel activity-panel" [style.max-height.px]="taskDetailPanelHeight()">
       <div class="panel-heading">
         <h2>Activity</h2>
         <span class="muted">{{ activityStatus() }}</span>

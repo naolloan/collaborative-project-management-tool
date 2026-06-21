@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ViewEncapsulation, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, ViewEncapsulation, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { KeycloakProfile } from 'keycloak-js';
@@ -31,7 +31,7 @@ type SprintScope = 'ALL' | 'BACKLOG' | number;
   styleUrl: './app.component.css',
   encapsulation: ViewEncapsulation.None
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   private static readonly WORKSPACE_STORAGE_KEY = 'collabPm.activeWorkspace';
   private static readonly PROJECT_STORAGE_KEY = 'collabPm.selectedProjectId';
   private static readonly TASK_STORAGE_KEY = 'collabPm.selectedTaskId';
@@ -54,6 +54,7 @@ export class AppComponent implements OnInit {
   comments = signal<Comment[]>([]);
   activities = signal<Activity[]>([]);
   projectActivities = signal<Activity[]>([]);
+  taskDetailPanelHeight = signal<number | null>(null);
   activeWorkspace = signal<WorkspaceView>('dashboard');
   apiStatus = signal('Not checked');
   projectStatus = signal('Not loaded');
@@ -180,6 +181,33 @@ export class AppComponent implements OnInit {
     dueDate: ''
   };
   newComment = '';
+  private observedTaskDetailPanel: HTMLElement | null = null;
+  private taskDetailPanelObserver: ResizeObserver | null = null;
+  private taskDetailPanelFrame: number | null = null;
+
+  @ViewChild('taskDetailPanel')
+  set taskDetailPanelRef(elementRef: ElementRef<HTMLElement> | undefined) {
+    const element = elementRef?.nativeElement ?? null;
+
+    if (this.observedTaskDetailPanel === element) {
+      return;
+    }
+
+    this.disconnectTaskDetailPanelObserver();
+    this.observedTaskDetailPanel = element;
+
+    if (!element) {
+      this.taskDetailPanelHeight.set(null);
+      return;
+    }
+
+    this.measureTaskDetailPanel();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      this.taskDetailPanelObserver = new ResizeObserver(() => this.measureTaskDetailPanel());
+      this.taskDetailPanelObserver.observe(element);
+    }
+  }
 
   constructor(
     private readonly authService: AuthService,
@@ -214,6 +242,10 @@ export class AppComponent implements OnInit {
 
   logout(): void {
     void this.authService.logout();
+  }
+
+  ngOnDestroy(): void {
+    this.disconnectTaskDetailPanelObserver();
   }
 
   setWorkspace(view: WorkspaceView): void {
@@ -1760,5 +1792,32 @@ export class AppComponent implements OnInit {
       case 'DONE':
         return 'REVIEW';
     }
+  }
+
+  private measureTaskDetailPanel(): void {
+    if (!this.observedTaskDetailPanel) {
+      this.taskDetailPanelHeight.set(null);
+      return;
+    }
+
+    if (this.taskDetailPanelFrame !== null) {
+      cancelAnimationFrame(this.taskDetailPanelFrame);
+    }
+
+    this.taskDetailPanelFrame = requestAnimationFrame(() => {
+      this.taskDetailPanelFrame = null;
+      const height = this.observedTaskDetailPanel?.offsetHeight ?? 0;
+      this.taskDetailPanelHeight.set(height > 0 ? height : null);
+    });
+  }
+
+  private disconnectTaskDetailPanelObserver(): void {
+    if (this.taskDetailPanelFrame !== null) {
+      cancelAnimationFrame(this.taskDetailPanelFrame);
+      this.taskDetailPanelFrame = null;
+    }
+
+    this.taskDetailPanelObserver?.disconnect();
+    this.taskDetailPanelObserver = null;
   }
 }
